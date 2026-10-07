@@ -28,5 +28,9 @@ jobs:
 
             Fais la revue de cette PR en appliquant les consignes du fichier .claude/agents/reviewer.md.
             Utilise `gh pr diff` pour voir les changements.
-            Publie ton rapport en un seul commentaire avec `gh pr comment`, en français.
-          claude_args: '--allowed-tools "Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"'
+            Rédige ton rapport en français dans le fichier ${{ runner.temp }}/revue-ia.md avec l'outil Write,
+            puis publie-le en un seul commentaire :
+            gh pr comment ${{ github.event.pull_request.number }} --body-file ${{ runner.temp }}/revue-ia.md
+            N'utilise jamais --body : le hook protect-secrets refuse toute commande dont le texte
+            cite un nom de fichier d'environnement, et le rapport ne serait pas publié.
+          claude_args: '--allowed-tools "Read,Grep,Glob,Write,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"'
