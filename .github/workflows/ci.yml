@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verifications:
+    name: Vérifications du template
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Syntaxe des scripts (shellcheck)
+        run: shellcheck .claude/hooks/*.sh tests/*.sh
+
+      - name: Validité de settings.json
+        run: jq empty .claude/settings.json
+
+      - name: Frontmatter des skills et subagents
+        run: |
+          fail=0
+          for f in .claude/agents/*.md .claude/skills/*/SKILL.md; do
+            if ! head -1 "$f" | grep -qx -- '---' || ! grep -q '^name:' "$f" || ! grep -q '^description:' "$f"; then
+              echo "Frontmatter invalide : $f"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Tests des hooks
+        run: bash tests/hooks.sh
+
+  secrets:
+    name: Détection de secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

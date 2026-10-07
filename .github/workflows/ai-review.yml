@@ -1,0 +1,32 @@
+name: Revue IA
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+
+jobs:
+  review:
+    name: Revue IA de la PR
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            REPO : ${{ github.repository }}
+            PR : ${{ github.event.pull_request.number }}
+
+            Fais la revue de cette PR en appliquant les consignes du fichier .claude/agents/reviewer.md.
+            Utilise `gh pr diff` pour voir les changements.
+            Publie ton rapport en un seul commentaire avec `gh pr comment`, en français.
+          claude_args: '--allowed-tools "Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"'
