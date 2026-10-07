@@ -147,3 +147,11 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Réglages Claude Code personnels (non partagés)
+.claude/settings.local.json
