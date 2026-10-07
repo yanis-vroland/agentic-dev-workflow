@@ -2,6 +2,11 @@
 # Vérifie que le hook pre-commit bloque un secret indexé et laisse passer le reste.
 set -u
 
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "ÉCHEC  gitleaks n'est pas installé : test impossible"
+  exit 1
+fi
+
 hooks_dir="$(cd "$(dirname "$0")/../.githooks" && pwd)"
 fail=0
 
@@ -11,10 +16,12 @@ trap 'rm -rf "$work"' EXIT
 repo="$work/repo"
 git init -q "$repo"
 
+# Sortie du dernier commit, pour vérifier la raison d'un refus
+output=""
 commit() {
-  git -C "$repo" -c core.hooksPath="$hooks_dir" \
-    -c user.name=test -c user.email=test@example.com \
-    commit -q -m "test" >/dev/null 2>&1
+  output=$(git -C "$repo" -c core.hooksPath="$hooks_dir" \
+    -c user.name=test -c user.email=test@example.com -c commit.gpgsign=false \
+    commit -q -m "test" 2>&1)
 }
 
 check() {
@@ -27,22 +34,40 @@ check() {
   fi
 }
 
-# Faux jeton GitHub construit à l'exécution : il ne doit jamais apparaître
-# en clair dans ce fichier, sinon le job gitleaks de la CI le détecterait.
-prefix="ghp"
-suffix=$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 36)
-printf 'github = "%s_%s"\n' "$prefix" "$suffix" >"$repo/config.txt"
-git -C "$repo" add config.txt
-commit
-check 1 "Commit avec un secret : refusé" $?
+# Vérifie que le refus vient bien de la détection d'un secret
+check_detected() {
+  local description=$1
+  if grep -q "secret potentiel détecté" <<<"$output"; then
+    echo "OK     $description : secret détecté"
+  else
+    echo "ÉCHEC  $description : refus sans détection (sortie : $output)"
+    fail=1
+  fi
+}
 
-git -C "$repo" rm -q --cached config.txt
-rm "$repo/config.txt"
+# Faux jeton GitHub assemblé à l'exécution : il ne doit jamais apparaître
+# en clair dans ce fichier, sinon le job gitleaks de la CI le détecterait.
+fake_token="ghp""_""R7xK2mQ9vL4tW8nB3c""Y6pZ1sD5fH0jG7aE2u"
 
 echo "Bonjour" >"$repo/README.md"
 git -C "$repo" add README.md
 commit
 check 0 "Commit sans secret : accepté" $?
+
+printf 'github = "%s"\n' "$fake_token" >"$repo/config.txt"
+git -C "$repo" add config.txt
+commit
+check 1 "Nouveau fichier avec un secret : refusé" $?
+check_detected "Nouveau fichier avec un secret"
+git -C "$repo" rm -q --cached config.txt
+rm "$repo/config.txt"
+
+printf 'github = "%s"\n' "$fake_token" >>"$repo/README.md"
+git -C "$repo" add README.md
+commit
+check 1 "Secret ajouté à un fichier suivi : refusé" $?
+check_detected "Secret ajouté à un fichier suivi"
+git -C "$repo" checkout -q HEAD -- README.md
 
 # Sans gitleaks dans le PATH, le hook doit refuser avec un message explicite
 fake_bin="$work/bin"
