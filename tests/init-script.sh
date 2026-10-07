@@ -365,6 +365,7 @@ check_code 0 "CA21 : code de sortie 0"
 check "CA21 : .env ignoré" ignored "$t" .env
 check "CA21 : .env.local ignoré" ignored "$t" .env.local
 check "CA21 : .env.example non ignoré" not_ignored "$t" .env.example
+check "CA21 : aucune ligne dupliquée (ordre initial non inversé)" no_duplicate_lines "$t/.gitignore"
 
 # --- CA8 : core.hooksPath absent --------------------------------------------
 
