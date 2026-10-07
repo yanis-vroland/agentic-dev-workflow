@@ -3,7 +3,7 @@
 <!-- Chemin dans docs/specs/ pour une fonctionnalité (feat).
      « Aucune » pour un changement chore, ci ou docs : décris-le ci-dessous. -->
 
-Spec : 
+Spec : docs/specs/<nom>.md, ou « aucune (chore, ci ou docs) »
 
 ## Description
 
