@@ -1,0 +1,38 @@
+name: CI du template
+
+# Vérifications propres au template : ce workflow n'est pas copié par scripts/init.sh.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  template:
+    name: Vérifications du template
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Syntaxe du script d'initialisation et de son test (shellcheck)
+        run: shellcheck scripts/*.sh tests/init-script.sh
+
+      - name: Validité de settings.json
+        run: jq empty .claude/settings.json
+
+      - name: Frontmatter des skills et subagents
+        run: |
+          fail=0
+          for f in .claude/agents/*.md .claude/skills/*/SKILL.md; do
+            if ! head -1 "$f" | grep -qx -- '---' || ! grep -q '^name:' "$f" || ! grep -q '^description:' "$f"; then
+              echo "Frontmatter invalide : $f"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Test du script d'initialisation
+        run: bash tests/init-script.sh
