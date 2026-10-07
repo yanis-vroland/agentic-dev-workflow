@@ -1,9 +1,10 @@
 ## Spec liée
 
-<!-- Chemin dans docs/specs/ pour une fonctionnalité (feat).
-     « Aucune » pour un changement chore, ci ou docs : décris-le ci-dessous. -->
+<!-- Le comportement observable change (fonctionnalité ou correction) : chemin de la spec
+     dans docs/specs/, quel que soit le préfixe. Pour une correction, cite aussi le test
+     de non-régression. Sinon : « aucune », et décris le changement ci-dessous. -->
 
-Spec : docs/specs/<nom>.md, ou « aucune (chore, ci ou docs) »
+Spec : docs/specs/<nom>.md, ou « aucune (pas de changement de comportement) »
 
 ## Description
 
