@@ -23,7 +23,12 @@ Contexte projet pour l'agent de code. Les sections marquées « À ADAPTER » so
 
 ## Méthode de travail
 
-1. Toute fonctionnalité (feat) exige une spec validée dans `docs/specs/`. Sans spec, proposer d'en rédiger une et attendre la validation. Les changements chore, ci et docs s'appuient sur la description de la PR.
+1. Toute modification du comportement observable exige une spec validée dans `docs/specs/` :
+   - nouvelle fonctionnalité (feat) : nouvelle spec ;
+   - correction (fix) : référence à la spec concernée et test de non-régression qui échoue avant la correction ; si le bug révèle un cas non prévu, compléter d'abord la spec ;
+   - sans changement de comportement (refactor, perf, test, chore, ci, docs) : la description de la PR suffit. Si le changement modifie un comportement malgré son préfixe, il relève des cas précédents.
+
+   Pour les deux premiers cas, sans spec, proposer d'en rédiger une et attendre la validation.
 2. Test-first : écrire les tests à partir des critères d'acceptation, vérifier qu'ils échouent, puis implémenter jusqu'au vert.
 3. Ne jamais modifier ou supprimer un test pour le faire passer sans le signaler explicitement.
 4. Face à un choix d'architecture structurant, s'arrêter et proposer un ADR dans `docs/adr/` au lieu de trancher seul.
