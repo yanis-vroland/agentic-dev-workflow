@@ -3,7 +3,8 @@
 # Chaque vérification cite le critère d'acceptation (CAn) ou le cas limite testé.
 # CA20 n'est pas couvert ici : il est vérifié par la CI elle-même.
 # Les fonctions de vérification sont appelées via check, que shellcheck ne suit pas.
-# shellcheck disable=SC2329
+# Le code d'avertissement dépend de la version : SC2317 avant 0.11, SC2329 ensuite.
+# shellcheck disable=SC2317,SC2329
 set -u
 
 template="$(cd "$(dirname "$0")/.." && pwd -P)"
