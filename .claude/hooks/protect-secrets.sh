@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bloque l'accès de l'agent aux fichiers .env (sauf .env.example).
-# Spec : docs/specs/002-hook-protect-secrets.md
+# Spec : https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/002-hook-protect-secrets.md
 # Exit 2 = action refusée, le message sur stderr est renvoyé à l'agent.
 # Claude Code ne bloque qu'avec le code 2 : toute autre sortie laisserait passer l'action.
 set -euo pipefail

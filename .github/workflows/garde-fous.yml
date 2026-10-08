@@ -1,6 +1,6 @@
 name: Garde-fous
 
-# Workflow générique, copié dans les projets par scripts/init.sh.
+# Workflow générique, copié dans les projets par scripts/init.sh du template agentic-dev-workflow.
 
 on:
   pull_request:

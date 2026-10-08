@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fait échouer le job de revue IA si la revue n'a pas tourné ou si des actions
 # ont été refusées pendant la revue.
-# Spec : docs/specs/002-hook-protect-secrets.md (CA25, CA26)
+# Spec : https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/002-hook-protect-secrets.md (CA25, CA26)
 # Usage : verifier-revue-ia.sh <fichier de résultat de claude-code-action>
 set -euo pipefail
 
