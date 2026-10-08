@@ -23,11 +23,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Syntaxe des hooks et de leurs tests (shellcheck)
-        run: shellcheck .claude/hooks/*.sh .githooks/pre-commit tests/hooks.sh tests/pre-commit.sh
+      - name: Syntaxe des hooks, des scripts et de leurs tests (shellcheck)
+        run: >-
+          shellcheck .claude/hooks/*.sh .githooks/pre-commit .github/scripts/*.sh
+          tests/hooks.sh tests/pre-commit.sh tests/verifier-revue-ia.sh
 
       - name: Tests des hooks de Claude Code
         run: bash tests/hooks.sh
+
+      - name: Test de la vérification de la revue IA
+        run: bash tests/verifier-revue-ia.sh
 
       - name: Installation de gitleaks
         run: |
