@@ -65,4 +65,13 @@ check 2 "CA14 : Edit sans file_path"     '{"tool_name":"Edit","tool_input":{}}'
 check 2 "CA14 : Write sans file_path"    '{"tool_name":"Write","tool_input":{}}'
 check 2 "CA15 : Bash sans command"       '{"tool_name":"Bash","tool_input":{}}'
 
+# CA16 : une commande externe manquante (ici cat) ne doit jamais laisser passer
+no_cat="$work/bin-sans-cat"
+mkdir "$no_cat"
+for cmd in bash jq; do
+  ln -s "$(command -v "$cmd")" "$no_cat/$cmd"
+done
+check 2 "CA16 : cat absent : refus" \
+  '{"tool_name":"Read","tool_input":{"file_path":"/repo/src/app.ts"}}' "$no_cat"
+
 exit $fail
