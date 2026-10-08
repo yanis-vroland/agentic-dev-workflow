@@ -6,9 +6,9 @@ Date : 2026-10-08
 Contexte : `CLAUDE.md` impose le test-first (règle n°2) et interdit d'affaiblir un test sans le signaler (règle n°3). Il reste à décider qui écrit les tests et comment s'assurer qu'ils protègent vraiment. Constats des lots A à D :
 - Le subagent `test-writer`, chargé d'écrire les tests à partir des critères d'acceptation, a produit pour `init.sh` des tests justes sur la forme : 118 échecs avant implémentation. Mais plusieurs vérifications passaient d'office, parce qu'elles cherchaient un nom de fichier que la sortie affichait de toute façon.
 - Le contrôle par mutation (casser volontairement le code et vérifier qu'un test échoue) a trouvé des trous que ni les tests ni la relecture n'avaient vus. Trois exemples :
-  - une insertion désactivée dans le `.gitignore` (lot C) ;
-  - un `grep` manquant qui laissait passer l'action (#7) ;
-  - un compteur non numérique accepté sans erreur (#9).
+  - une insertion désactivée dans le `.gitignore` (PR #8) ;
+  - un `grep` manquant qui laissait passer l'action (PR #11, issue #7) ;
+  - un compteur non numérique accepté sans erreur (PR #12, issue #9).
 - Un test du lot A, qui pouvait passer avec un hook défaillant (PR #4), n'a été repéré que par la revue IA, après coup.
 
 Options envisagées :
