@@ -29,8 +29,9 @@ input=$(cat)
 [ -n "$input" ] || deny "entrée vide, action refusée."
 jq -e 'type == "object"' >/dev/null 2>&1 <<<"$input" || deny "entrée JSON invalide, action refusée."
 
-tool=$(jq -r '.tool_name // empty' <<<"$input")
-[ -n "$tool" ] || deny "tool_name absent, action refusée."
+jq -e '.tool_name | type == "string" and length > 0' >/dev/null <<<"$input" ||
+  deny "tool_name absent ou invalide, action refusée."
+tool=$(jq -r '.tool_name' <<<"$input")
 jq -e '.tool_input | type == "object"' >/dev/null <<<"$input" || deny "tool_input absent, action refusée."
 
 case "$tool" in
