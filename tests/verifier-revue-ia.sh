@@ -63,5 +63,7 @@ f=$(result_file sans-resultat.json '{"type":"assistant"}')
 check 1 "CA26 : aucun message result : échec" "" "$f"
 f=$(result_file sans-compteur.json '{"type":"result","subtype":"success"}')
 check 1 "CA26 : result sans compteur de refus : échec" "" "$f"
+f=$(result_file compteur-null.json '{"type":"result","subtype":"success","permission_denials_count":null}')
+check 1 "CA26 : compteur non numérique : échec" "" "$f"
 
 exit $fail
