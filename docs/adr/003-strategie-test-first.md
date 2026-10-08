@@ -1,6 +1,6 @@
 # ADR-003 : Stratégie test-first
 
-Statut : proposé
+Statut : accepté
 Date : 2026-10-08
 
 Contexte : `CLAUDE.md` impose le test-first (règle n°2) et interdit d'affaiblir un test sans le signaler (règle n°3). Il reste à décider qui écrit les tests et comment s'assurer qu'ils protègent vraiment. Constats des lots A à D :

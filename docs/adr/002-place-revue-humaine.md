@@ -1,6 +1,6 @@
 # ADR-002 : Place de la revue humaine
 
-Statut : proposé
+Statut : accepté
 Date : 2026-10-08
 
 Contexte : l'agent écrit le code, et chaque PR passe par une revue IA (`ai-review.yml`, qui applique `.claude/agents/reviewer.md`). Il faut décider ce que l'humain contrôle lui-même et ce qu'il peut déléguer à cette revue. Constats des lots A à D (PR #4 à #13) :
