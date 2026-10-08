@@ -38,6 +38,8 @@ copied=(
   .github/workflows/garde-fous.yml
   .github/workflows/ai-review.yml
   .github/pull_request_template.md
+  .github/scripts/verifier-revue-ia.sh
+  tests/verifier-revue-ia.sh
 )
 while IFS= read -r file; do
   copied+=("$file")

@@ -94,7 +94,10 @@ Elles s'appliquent dans cet ordre ; la première qui conclut l'emporte.
 
 ### Revue IA en CI (PR de #9)
 
-- CA25 : Étant donné une exécution de la revue IA dont le résultat indique `permission_denials_count` > 0, quand le job se termine, alors il échoue et affiche ce nombre. Ce critère est vérifié par un test du script ou de l'étape qui lit le résultat, sur des fichiers de résultat factices (0 refus : succès ; 3 refus : échec).
+- CA25 : Étant donné une exécution de la revue IA dont le résultat indique `permission_denials_count` > 0, quand le job se termine, alors il échoue et affiche ce nombre. La vérification est faite par le script `.github/scripts/verifier-revue-ia.sh <fichier de résultat>`, appelé par `ai-review.yml`. Le script est testé par `tests/verifier-revue-ia.sh` sur des fichiers de résultat factices (0 refus : succès ; 3 refus : échec).
+- CA26 : Étant donné une exécution où `claude-code-action` n'a pas tourné (action sautée, par exemple quand la PR modifie son propre workflow), quand le job se termine, alors il échoue avec un message qui dit que la revue n'a pas été exécutée. Un fichier de résultat absent, vide, illisible ou sans résultat compte comme une revue non exécutée.
+
+Le script et son test sont copiés par `scripts/init.sh`, comme `ai-review.yml` qui les utilise (spec 001).
 
 ## Principes de test
 
@@ -103,7 +106,7 @@ Les tests vérifient les codes de sortie et, pour CA9, la présence du fragment 
 ## Découpage en PR
 
 - **PR #7** (`fix`) : cette spec, CA1 à CA16.
-- **PR #9** (`fix`) : CA17 à CA25. Les CA1 à CA16 doivent rester au vert.
+- **PR #9** (`fix`) : CA17 à CA26, et la règle 2 alignée sur la définition du chemin protégé (dernier segment du chemin). La PR #7 appliquait encore le motif de mention au chemin complet, si bien que `/repo/.env.d/x.txt` était refusé. Les CA1 à CA16 doivent rester au vert.
 
 ## Cas limites et erreurs
 

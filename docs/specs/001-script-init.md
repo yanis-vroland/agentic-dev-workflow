@@ -17,7 +17,8 @@ Copiés depuis le template (chemins identiques dans la cible) :
 - `docs/templates/`, en entier ;
 - `CLAUDE.md` ;
 - `.github/workflows/garde-fous.yml` et `.github/workflows/ai-review.yml` ;
-- `.github/pull_request_template.md`.
+- `.github/pull_request_template.md` ;
+- `.github/scripts/verifier-revue-ia.sh` et `tests/verifier-revue-ia.sh`, utilisés par `ai-review.yml` (ajout de la spec 002, CA25 et CA26).
 
 Créés s'ils sont absents, jamais copiés depuis le template :
 
@@ -42,7 +43,8 @@ L'actuel `.github/workflows/ci.yml` mélange deux rôles. Il est remplacé par d
   - test de `init.sh`.
 - `garde-fous.yml`, générique et **copié** par `init.sh`. Deux jobs :
   - `garde-fous`, nommé « Tests des garde-fous » :
-    - shellcheck des hooks et de leurs tests ;
+    - shellcheck des hooks, du script de vérification de la revue IA et de leurs tests ;
+    - `tests/verifier-revue-ia.sh` ;
     - `tests/hooks.sh` ;
     - installation de gitleaks (version fixée, somme vérifiée) et `tests/pre-commit.sh`.
   - `secrets`, nommé « Détection de secrets » : binaire gitleaks en version fixée (8.30.1), somme vérifiée, sur tout l'historique Git. `gitleaks-action` n'est plus utilisée : elle exige une licence pour les dépôts d'organisation, et elle ne vérifie pas la somme du binaire.

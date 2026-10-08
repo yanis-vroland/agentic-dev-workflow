@@ -83,4 +83,58 @@ done
 check 2 "CA16 : cat absent : refus" \
   '{"tool_name":"Read","tool_input":{"file_path":"/repo/src/app.ts"}}' "$no_cat"
 
+# --- Chemin protégé : dernier segment du chemin (règle 2) -------------------
+
+check 0 "Règle 2 : Read dans un dossier .env.d" '{"tool_name":"Read","tool_input":{"file_path":"/repo/.env.d/x.txt"}}'
+check 0 "Règle 2 : Read dans un dossier .env"   '{"tool_name":"Read","tool_input":{"file_path":"/home/u/.env/notes.md"}}'
+check 2 "Règle 2 : Edit ./.env.production"      '{"tool_name":"Edit","tool_input":{"file_path":"./.env.production"}}'
+
+# --- Commandes Bash (#9) ----------------------------------------------------
+
+# check_bash <code attendu> <description> <commande> : construit l'entrée avec jq
+check_bash() {
+  check "$1" "$2" "$(jq -nc --arg c "$3" '{tool_name: "Bash", tool_input: {command: $c}}')"
+}
+
+# CA17 : accès réels qui restent refusés
+check_bash 2 "CA17 : cat .env"                 'cat .env'
+check_bash 2 "CA17 : source .env"              'source .env'
+check_bash 2 "CA17 : . .env"                   '. .env'
+check_bash 2 "CA17 : cp .env /tmp/copie"       'cp .env /tmp/copie'
+check_bash 2 "CA17 : wc -l < .env"             'wc -l < .env'
+check_bash 2 "CA17 : cat .env.local"           'cat .env.local'
+check_bash 2 "CA17 : cat ./config/.env"        'cat ./config/.env'
+check_bash 2 "CA17 : cat \".env\""             'cat ".env"'
+check_bash 2 "CA17 : cp .env.example .env"     'cp .env.example .env'
+check_bash 2 "CA17 : tool --file=.env"         'tool --file=.env'
+
+# CA18 : commandes non analysables qui citent un fichier d'environnement
+check_bash 2 "CA18 : guillemet non fermé"      'echo "a .env'
+check_bash 2 "CA18 : heredoc"                  "$(printf 'cat <<EOF\n.env\nEOF')"
+# Guillemets simples voulus : la commande testée contient la substitution telle quelle
+# shellcheck disable=SC2016
+check_bash 2 "CA18 : substitution \$(…)"       'echo $(cat .env)'
+# shellcheck disable=SC2016
+check_bash 2 "CA18 : accents graves"           'echo `cat .env`'
+check_bash 2 "CA18 : substitution de processus" 'diff <(cat .env) x'
+
+# CA19 : texte exécuté comme du code
+check_bash 2 "CA19 : bash -c"                  'bash -c "cat .env"'
+check_bash 2 "CA19 : python3 -c"               "python3 -c \"open('.env').read()\""
+check_bash 2 "CA19 : eval"                     'eval "cat .env"'
+
+# CA20 : motif qui peut s'étendre en fichier d'environnement
+check_bash 2 "CA20 : cat .env*"                'cat .env*'
+
+# CA21 à CA24 : mentions dans un texte, désormais autorisées
+check_bash 0 "CA21 : gh pr comment --body"     'gh pr comment 8 --body "le .gitignore ajoute .env.* puis la négation"'
+check_bash 0 "CA22 : git commit -m"            'git commit -m "chore: ignorer .env.local"'
+check_bash 0 "CA23 : gh issue create --title"  'gh issue create --title "fix: lecture de .env" --body-file /tmp/corps.md'
+check_bash 0 "CA24 : cat .env.example"         'cat .env.example'
+
+# Cas limites de la spec
+check_bash 2 "Limite : --body-file vers un fichier d'environnement" 'gh pr comment 8 --body-file .env'
+check_bash 2 "Limite : option de texte sous une commande non listée" 'foo -m "voir .env"'
+check_bash 0 "Limite : .env.example cité dans un texte" 'echo "copie .env.example"'
+
 exit $fail
