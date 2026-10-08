@@ -11,7 +11,7 @@ Version de Claude Code testée : **2.1.291**, le 2026-10-08.
 | --- | --- | --- |
 | [Claude Code](https://claude.com/claude-code) | l'agent de code | — |
 | [jq](https://jqlang.org) | lu par les hooks de Claude Code | les hooks refusent **toutes** les actions surveillées (Read, Edit, Write, Bash) |
-| [gitleaks](https://github.com/gitleaks/gitleaks) 8.30.1 | détection de secrets avant chaque commit | le hook pre-commit refuse **tous** les commits |
+| [gitleaks](https://github.com/gitleaks/gitleaks), même version que la CI (`GITLEAKS_VERSION` dans `garde-fous.yml`) | détection de secrets avant chaque commit | le hook pre-commit refuse **tous** les commits |
 | [shellcheck](https://www.shellcheck.net) | vérification des scripts shell | seule la CI les vérifie |
 | [gh](https://cli.github.com) | GitHub en ligne de commande | configuration GitHub à faire dans l'interface web |
 
@@ -46,14 +46,21 @@ La CI installe elle-même gitleaks en version fixée, avec vérification de sa s
    git config core.hooksPath .githooks
    ```
 
-5. Committer ce nettoyage, puis passer à la [configuration GitHub](#configuration-github).
+5. Remplacer ce `README.md` par celui du projet, en gardant si besoin un lien vers le template :
+
+   ```bash
+   printf '# <nom du projet>\n\nInitialisé avec https://github.com/yanis-vroland/agentic-dev-workflow\n' > README.md
+   ```
+
+6. Committer ce nettoyage, puis passer à la [configuration GitHub](#configuration-github), à suivre depuis le README du template.
 
 ### Projet existant
 
-Cloner ce template n'importe où, puis lancer depuis ce clone :
+Cloner ce template n'importe où, puis lancer le script depuis ce clone :
 
 ```bash
-scripts/init.sh <chemin-du-projet> [--force]
+git clone https://github.com/yanis-vroland/agentic-dev-workflow.git
+agentic-dev-workflow/scripts/init.sh <chemin-du-projet> [--force]
 ```
 
 Le script :
