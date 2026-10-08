@@ -2,7 +2,7 @@
 
 Template de développement agentique pour les développeurs qui confient du code à Claude Code : de la spec validée à la PR mergée, avec des garde-fous locaux, une CI et une revue IA de chaque PR.
 
-**Statut : en construction, éprouvé sur le projet FieldOps.**
+**Statut : en construction, pas encore éprouvé sur un projet réel. Il le sera d'abord sur le projet FieldOps.**
 Version de Claude Code testée : **2.1.291**, le 2026-10-08.
 
 ## Prérequis
