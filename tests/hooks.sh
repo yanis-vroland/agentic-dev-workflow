@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Vérifie le hook protect-secrets selon la spec docs/specs/002-hook-protect-secrets.md.
+# Vérifie le hook protect-secrets selon la spec https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/002-hook-protect-secrets.md
 set -u
 
 hook="$(cd "$(dirname "$0")/.." && pwd)/.claude/hooks/protect-secrets.sh"
