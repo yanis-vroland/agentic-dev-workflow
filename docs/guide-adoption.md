@@ -28,7 +28,7 @@ Une même personne peut tenir plusieurs rôles. Ce qui compte : chaque PR a un h
 - **Relecture de PR selon l'ADR-002** :
   - relecture intégrale du diff dans les cas listés par l'ADR-002, qui fait foi : notamment quand la revue IA n'a pas tourné (job « Revue IA » rouge), ou quand la PR touche aux garde-fous ou aux secrets ;
   - sinon, relecture guidée par le rapport de la revue IA, la réponse de l'agent et la section « Points d'attention » de la PR.
-- **Réponse aux revues IA** : chaque point du rapport reçoit une suite écrite dans la PR (corrigé, non suivi et pourquoi, reporté). Une revue IA ne relit que l'ouverture de la PR ; les commits de correction relèvent du relecteur humain.
+- **Réponse aux revues IA** : chaque point du rapport reçoit une suite écrite dans un commentaire de la PR (corrigé, non suivi et pourquoi, reporté), que l'agent publie selon la règle n°5 de `CLAUDE.md`. Une revue IA ne relit que l'ouverture de la PR ; les commits de correction relèvent du relecteur humain.
 - **Validation des ADR** : l'agent peut rédiger un ADR au statut « proposé ». Le mainteneur le relit, le modifie si besoin, le passe à « accepté », puis merge.
 
 ## Le label `agent-corrigé` comme indicateur
