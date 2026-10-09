@@ -17,7 +17,7 @@ Comment introduire ce template dans une équipe qui développe déjà, sans chan
 | --- | --- |
 | Auteur du besoin | exprime le besoin, répond aux questions de la spec |
 | Valideur de spec | passe la spec au statut « validée » ; sans cette validation, l'agent n'implémente pas une fonctionnalité ni une correction |
-| Relecteur | relit chaque PR selon l'ADR-002, coche « Ce que l'humain a vérifié », pose le label `agent-corrigé` si besoin |
+| Relecteur | relit chaque PR selon l'ADR-002, coche « Ce que l'humain a vérifié », pose le label `agent-corrigé` dès que du code de l'agent a été refusé ou corrigé |
 | Mainteneur | merge (l'agent ne merge jamais), tranche les choix structurants, valide les ADR proposés par l'agent |
 
 Une même personne peut tenir plusieurs rôles. Ce qui compte : chaque PR a un humain identifié qui la relit et la merge.
@@ -26,7 +26,7 @@ Une même personne peut tenir plusieurs rôles. Ce qui compte : chaque PR a un h
 
 - **Validation de spec** : la spec (`docs/specs/`, modèle `docs/templates/spec.md`) est relue avant tout code. Ses critères d'acceptation deviennent les tests ; une spec floue donne des tests faibles.
 - **Relecture de PR selon l'ADR-002** :
-  - relecture intégrale du diff si la revue IA n'a pas tourné (job « Revue IA » rouge), ou si la PR touche aux garde-fous (`.claude/`, `.githooks/`, `.github/`, `scripts/init.sh`) ou aux secrets ;
+  - relecture intégrale du diff dans les cas listés par l'ADR-002, qui fait foi : notamment quand la revue IA n'a pas tourné (job « Revue IA » rouge), ou quand la PR touche aux garde-fous ou aux secrets ;
   - sinon, relecture guidée par le rapport de la revue IA, la réponse de l'agent et la section « Points d'attention » de la PR.
 - **Réponse aux revues IA** : chaque point du rapport reçoit une suite écrite dans la PR (corrigé, non suivi et pourquoi, reporté). Une revue IA ne relit que l'ouverture de la PR ; les commits de correction relèvent du relecteur humain.
 - **Validation des ADR** : l'agent peut rédiger un ADR au statut « proposé ». Le mainteneur le relit, le modifie si besoin, le passe à « accepté », puis merge.
