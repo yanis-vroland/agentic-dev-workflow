@@ -100,6 +100,25 @@ Compléter les sections **« À ADAPTER »** de `CLAUDE.md` : description du pro
 - **Hook `pre-commit`** (Git) : gitleaks analyse les fichiers indexés et refuse le commit si un secret est détecté. Il se contourne avec `git commit --no-verify` : le vrai filet de sécurité est le job CI « Détection de secrets », qui analyse tout l'historique.
 - **Revue IA** : chaque PR ouverte est relue selon `.claude/agents/reviewer.md`, et le rapport est publié en commentaire. Le job échoue si la revue n'a pas tourné ou si des actions ont été refusées pendant la revue. Une PR qui modifie `ai-review.yml` ne peut pas être relue par l'IA (protection de `claude-code-action`) : son job « Revue IA » est rouge, et elle se relit à la main.
 
+## Limites
+
+Constatées pendant la construction du template ; elles restent vraies aujourd'hui.
+
+**Revue IA**
+- **PR qui modifie `ai-review.yml` :** `claude-code-action` ne s'exécute pas quand le workflow de la PR diffère de celui de `main`. Le job « Revue IA » est rouge et la PR se relit à la main.
+- **Commits de correction :** la revue ne tourne qu'à l'ouverture de la PR (`opened`, `reopened`, `ready_for_review`). Les commits poussés ensuite ne sont pas relus par l'IA. Contournement : relecture humaine des corrections.
+- **Compteur de refus :** `permission_denials_count` compte tous les refus pendant la revue, pas seulement ceux du hook. Une tentative de lancer une commande non autorisée, comme les tests, fait échouer le job. Le prompt rappelle les seules commandes permises.
+- **Format du fichier de résultat :** il n'est pas documenté. `verifier-revue-ia.sh` accepte deux formes et échoue sur un format inattendu, plutôt que de passer en silence.
+
+**Secrets**
+- **`--no-verify` :** le hook pre-commit se contourne avec `git commit --no-verify`. Le job CI « Détection de secrets » reste le filet de sécurité.
+- **Accès indirects :** `protect-secrets.sh` ne détecte pas un accès aux `.env` sans mention littérale, par une variable (`f=.env; cat "$f"`), un motif (`cat .e*`) ou un lien symbolique.
+- **Refus par prudence :** certaines commandes légitimes sont refusées quand elles citent `.env` : une heredoc ou un `$(…)`, `git commit -am`, ou `sudo` et `env` devant `git` ou `gh`. Contournement : `git commit -F <fichier>` et `gh … --body-file <fichier>`.
+- **Version de gitleaks :** la mise à jour est manuelle. Il faut changer ensemble `GITLEAKS_VERSION` et `GITLEAKS_SHA256` dans `garde-fous.yml`, et la version installée en local.
+
+**Processus**
+- **Merge :** « seul l'humain merge » ([ADR-002](docs/adr/002-place-revue-humaine.md)) est une règle de travail, pas une protection technique. Le ruleset impose une PR et des vérifications vertes, mais un agent qui dispose des droits de l'humain via `gh` pourrait merger.
+
 ## Structure
 
 | Élément | Rôle |
