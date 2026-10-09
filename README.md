@@ -113,7 +113,8 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 **Secrets**
 - **`--no-verify` :** le hook pre-commit se contourne avec `git commit --no-verify`. Le job CI « Détection de secrets » reste le filet de sécurité.
 - **Accès indirects :** `protect-secrets.sh` ne détecte pas un accès aux `.env` sans mention littérale, par une variable (`f=.env; cat "$f"`), un motif (`cat .e*`) ou un lien symbolique.
-- **Refus par prudence :** certaines commandes légitimes sont refusées quand elles citent `.env` : une heredoc ou un `$(…)`, `git commit -am`, ou `sudo` et `env` devant `git` ou `gh`. Contournement : `git commit -F <fichier>` et `gh … --body-file <fichier>`.
+- **Refus par prudence :** certaines commandes légitimes sont refusées quand elles citent `.env` : un heredoc ou un `$(…)`, `git commit -am`, ou `sudo` et `env` devant `git` ou `gh`. Contournement : `git commit -F <fichier>` et `gh … --body-file <fichier>`.
+- La référence pour ces cas est la [spec 002](docs/specs/002-hook-protect-secrets.md) (règles et section « Hors périmètre »), vérifiée par `tests/hooks.sh`.
 - **Version de gitleaks :** la mise à jour est manuelle. Il faut changer ensemble `GITLEAKS_VERSION` et `GITLEAKS_SHA256` dans `garde-fous.yml`, et la version installée en local.
 
 **Processus**
