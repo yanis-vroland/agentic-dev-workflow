@@ -1,6 +1,6 @@
 # Spec 004 : reprise de session sans mémoire locale
 
-Statut : brouillon
+Statut : validée
 Date : 2026-10-09
 
 ## Besoin
@@ -34,7 +34,7 @@ Le fichier unique `docs/journal.md` est remplacé par un dossier `docs/journal/`
   - **Prochaine étape** : ce qu'une nouvelle session doit faire en premier pour reprendre.
 - L'agent ajoute une entrée, ou complète celle du jour, à chaque commit de travail, dans le même commit, puis pousse la branche. Une session fermée sans prévenir ne perd donc que le travail non committé.
 - Une fois la branche mergée, son fichier n'est plus jamais modifié. Pour corriger une erreur, une autre branche ajoute une entrée dans son propre fichier.
-- L'ancien `docs/journal.md` est déplacé tel quel dans `docs/journal/<date de sa première entrée>-historique.md`.
+- L'ancien `docs/journal.md` est déplacé tel quel dans `docs/journal/<date de sa première entrée>-historique.md`. Ce fichier garde l'ancien format de titres (`## AAAA-MM-JJ : sujet`) : un fichier dont le nom finit par `-historique.md` n'est contrôlé que sur son nom.
 
 Il n'y a plus de section « Prochaines étapes » commune. La feuille de route est la liste des fonctionnalités du cahier des charges (spec 003) ; la reprise d'un travail en cours est la dernière entrée du journal de sa branche.
 
@@ -95,18 +95,19 @@ Modifie la spec 001 :
 - CA11 : Étant donné un fichier ajouté avec un titre d'entrée invalide (format ou date), quand le script s'exécute, alors il échoue en citant le titre.
 - CA12 : Étant donné un fichier ajouté dont les entrées ne sont pas chronologiques, ou dont une entrée précède la date du nom, quand le script s'exécute, alors il échoue.
 - CA13 : Étant donné une PR qui recrée ou modifie `docs/journal.md`, quand le script s'exécute, alors il échoue.
-- CA14 : Étant donné une PR qui ne touche pas `docs/journal/`, quand le script s'exécute, alors il réussit.
-- CA15 : Étant donné deux branches créées depuis le même `main`, qui ajoutent chacune leur fichier de journal, quand on fusionne l'une puis l'autre dans `main`, alors aucun conflit ne survient, et le script réussit sur la seconde.
+- CA14 : Étant donné une PR qui ne touche pas `docs/journal/`, ou qui supprime `docs/journal.md` (migration), quand le script s'exécute, alors il réussit.
+- CA15 : Étant donné une PR qui ajoute `docs/journal/AAAA-MM-JJ-historique.md` avec des titres à l'ancien format, quand le script s'exécute, alors il réussit.
+- CA16 : Étant donné deux branches créées depuis le même `main`, qui ajoutent chacune leur fichier de journal, quand on fusionne l'une puis l'autre dans `main`, alors aucun conflit ne survient, et le script réussit sur la seconde.
 
 ### `init.sh` (ajouts à `tests/init-script.sh`)
 
-- CA16 : Étant donné une cible vide, quand je lance `init.sh`, alors `docs/journal/.gitkeep` existe et `docs/journal.md` n'existe pas.
-- CA17 : Étant donné une cible avec un `docs/journal.md`, quand je lance `init.sh`, avec ou sans `--force`, alors ce fichier n'est pas modifié, et la sortie propose la commande `git mv` de migration.
+- CA17 : Étant donné une cible vide, quand je lance `init.sh`, alors `docs/journal/.gitkeep` existe et `docs/journal.md` n'existe pas.
+- CA18 : Étant donné une cible avec un `docs/journal.md`, quand je lance `init.sh`, avec ou sans `--force`, alors ce fichier n'est pas modifié, et la sortie propose la commande `git mv` de migration.
 
 ### Relecture humaine (consignes, non testables automatiquement)
 
-- CA18 : `CLAUDE.md` interdit la mémoire locale et impose une entrée de journal à chaque commit de travail ; `/implement` la rappelle.
-- CA19 : `.claude/settings.json` branche `session-start.sh` sur `SessionStart` (`startup`, `resume`, `clear`) et contient `"autoMemoryEnabled": false`. La CI du template vérifie ces deux points par `jq`.
+- CA19 : `CLAUDE.md` interdit la mémoire locale et impose une entrée de journal à chaque commit de travail ; `/implement` la rappelle ; le reviewer signale une PR de travail de l'agent sans entrée de journal.
+- CA20 : `.claude/settings.json` branche `session-start.sh` sur `SessionStart` (`startup`, `resume`, `clear`) et contient `"autoMemoryEnabled": false`. La CI du template vérifie ces deux points par `jq`.
 
 ## Cas limites et erreurs
 
@@ -123,7 +124,11 @@ Modifie la spec 001 :
 - Résumé automatique de la conversation à la fermeture : le hook `SessionEnd` s'exécute après la fin de la session, sans tour de parole pour l'agent, avec un délai de 1,5 seconde par défaut. D'où l'entrée de journal à chaque commit. Un hook `Stop` (à chaque fin de tour) pourrait rappeler une entrée manquante, mais il interviendrait à chaque réponse : écarté pour l'instant.
 - Sauvegarde de la conversation elle-même : `claude --resume` existe, mais il reste local au poste.
 
+## Décisions (validation de Yanis, 2026-10-09)
+
+- Titres d'entrée à l'heure locale de l'auteur : plus lisible ; l'ordre n'est vérifié qu'à l'intérieur d'un fichier, qui n'a qu'un auteur à la fois.
+- Entrée de journal obligatoire dans toute PR de travail de l'agent, imposée par `CLAUDE.md` et vérifiée par le reviewer, mais pas par la CI, qui ne distingue pas de façon fiable une PR de l'agent d'une PR de l'humain ou de Renovate.
+
 ## Questions ouvertes
 
-- Heure locale ou UTC pour les titres d'entrée ? Proposition : heure locale, plus lisible ; l'ordre n'est vérifié qu'à l'intérieur d'un fichier, qui n'a qu'un auteur à la fois.
-- Faut-il exiger une entrée de journal dans toute PR ouverte par l'agent ? Proposition : non en CI (impossible de distinguer l'auteur de façon fiable), oui dans `CLAUDE.md`, et le reviewer le vérifie.
+- Aucune.
