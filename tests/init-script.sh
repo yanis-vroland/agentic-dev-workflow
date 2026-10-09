@@ -510,7 +510,32 @@ check "CA23 : cible non modifiée" equal "$before" "$(snapshot "$t")"
 check "CA23 : core.hooksPath non défini" hooks_path_unset "$t"
 check_output "CA23 : message invite à cloner le template" "git clone"
 
+# Template copié dans un sous-dossier d'un autre dépôt Git
+outer=$(new_repo)
+cp -R "$template/." "$outer/tpl"
+rm -rf "$outer/tpl/.git"
+t=$(new_repo)
+before=$(snapshot "$t")
+output=$(cd "$neutral" && "$outer/tpl/scripts/init.sh" "$t" 2>&1)
+code=$?
+check_code 1 "CA23 : template dans un sous-dossier d'un autre dépôt, code de sortie 1"
+check "CA23 : sous-dossier, cible non modifiée" equal "$before" "$(snapshot "$t")"
+check_output "CA23 : sous-dossier, message cite la racine" "racine"
+
 # --- Cas limites ------------------------------------------------------------
+
+# Fichier suivi par Git mais supprimé du disque dans le template
+tpl=$(new_case)
+cp -R "$template/." "$tpl"
+rm "$tpl/.claude/hooks/format.sh"
+t=$(new_repo)
+before=$(snapshot "$t")
+output=$(cd "$neutral" && "$tpl/scripts/init.sh" "$t" 2>&1)
+code=$?
+check_code 1 "Limite : fichier suivi absent du template, code de sortie 1"
+check "Limite : fichier suivi absent, cible non modifiée" equal "$before" "$(snapshot "$t")"
+check_output "Limite : fichier suivi absent, fichier cité" "format.sh"
+check_output "Limite : fichier suivi absent, git restore proposé" "git restore"
 
 # Sans argument
 c=$(new_case)
