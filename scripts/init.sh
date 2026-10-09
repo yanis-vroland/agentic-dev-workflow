@@ -134,6 +134,14 @@ if [ -e "$old_journal" ]; then
   steps+=("Migrer l'ancien journal vers un fichier par branche (spec 004) : git mv docs/journal.md docs/journal/$first_date-historique.md")
 fi
 
+# Documents de référence (spec 003) : créés à partir des modèles, jamais écrasés
+for doc in cahier-des-charges-fonctionnel.md architecture-technique.md; do
+  if [ ! -e "$target/docs/$doc" ]; then
+    cp "$template/docs/templates/$doc" "$target/docs/$doc"
+    echo "Créé : docs/$doc"
+  fi
+done
+
 # --- .gitignore (complété, jamais remplacé) ----------------------------------
 # La dernière règle qui correspond l'emporte : !.env.example doit rester après .env.*
 
@@ -225,6 +233,7 @@ steps+=(
   "Créer un ruleset sur main : PR obligatoire, vérifications requises « Tests des garde-fous » et « Détection de secrets »."
   "Créer le label agent-corrigé : gh label create agent-corrigé --color D93F0B --description \"Code de l'agent refusé ou corrigé par l'humain\""
   "Compléter les sections « À ADAPTER » du CLAUDE.md."
+  "Compléter docs/cahier-des-charges-fonctionnel.md (acteurs, glossaire, règles métier) et docs/architecture-technique.md (données, contrats, sécurité, infrastructure)."
 )
 
 echo

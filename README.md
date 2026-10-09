@@ -40,19 +40,25 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
    git rm -q 'docs/journal/*.md' && touch docs/journal/.gitkeep && git add docs/journal/.gitkeep
    ```
 
-4. Activer le hook pre-commit (une fois par clone) :
+4. Créer les documents de référence à partir de leurs modèles, puis les compléter :
+
+   ```bash
+   cp docs/templates/cahier-des-charges-fonctionnel.md docs/templates/architecture-technique.md docs/
+   ```
+
+5. Activer le hook pre-commit (une fois par clone) :
 
    ```bash
    git config core.hooksPath .githooks
    ```
 
-5. Remplacer ce `README.md` par celui du projet, en gardant si besoin un lien vers le template :
+6. Remplacer ce `README.md` par celui du projet, en gardant si besoin un lien vers le template :
 
    ```bash
    printf '# <nom du projet>\n\nInitialisé avec https://github.com/yanis-vroland/agentic-dev-workflow\n' > README.md
    ```
 
-6. Committer ce nettoyage, puis passer à la [configuration GitHub](#configuration-github), à suivre depuis le README du template.
+7. Committer ce nettoyage, puis passer à la [configuration GitHub](#configuration-github), à suivre depuis le README du template.
 
 ### Projet existant
 
@@ -145,6 +151,8 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `.github/scripts/verifier-journal.sh` | refuse une PR qui modifie un journal déjà mergé, ou dont les noms et dates du journal sont invalides |
 | `.github/pull_request_template.md` | modèle de PR : spec liée, critères couverts, vérifications humaines, corrections |
 | `docs/templates/spec.md` | modèle de spec |
+| `docs/templates/cahier-des-charges-fonctionnel.md` | modèle du cahier des charges : acteurs, glossaire, règles métier, parcours, fonctionnalités |
+| `docs/templates/architecture-technique.md` | modèle de l'architecture technique : données, contrats, sécurité, infrastructure, index des ADR |
 | `docs/specs/` | specs du projet |
 | `docs/adr/` | décisions d'architecture |
 | `docs/journal/` | journal de bord, un fichier par branche, entrées datées : fait, décisions, corrections et limites, prochaine étape ; sert à reprendre une session |

@@ -612,4 +612,57 @@ check "Limite : autre répertoire courant, .githooks/pre-commit copié" \
 check "Limite : autre répertoire courant, rien écrit dans le répertoire courant" \
   equal "." "$(snapshot "$other")"
 
+
+# --- Spec 003 : documents de référence ----------------------------------------
+# Les critères cités ici sont ceux de docs/specs/003-documents-de-reference.md.
+
+reference_docs=(cahier-des-charges-fonctionnel.md architecture-technique.md)
+
+t=$(new_repo)
+run_init "$t"
+check_code 0 "Spec 003 CA1 : code de sortie 0"
+for doc in "${reference_docs[@]}"; do
+  check "Spec 003 CA1 : docs/$doc identique à son modèle" \
+    same_file "$template/docs/templates/$doc" "$t/docs/$doc"
+  check "Spec 003 CA5 : création de docs/$doc annoncée" \
+    output_line_has "créé" "docs/$doc"
+done
+check "Spec 003 CA5 : étape manuelle pour compléter le cahier des charges" \
+  output_line_has "compléter" "docs/cahier-des-charges-fonctionnel.md"
+check "Spec 003 CA5 : étape manuelle pour compléter l'architecture technique" \
+  output_line_has "compléter" "docs/architecture-technique.md"
+
+for option in "" "--force"; do
+  label=${option:-sans --force}
+  criterion="CA2"
+  [ -z "$option" ] || criterion="CA3"
+  t=$(new_repo)
+  mkdir -p "$t/docs"
+  for doc in "${reference_docs[@]}"; do
+    printf '# Document du projet\n\nContenu propre au projet.\n' >"$t/docs/$doc"
+    cp "$t/docs/$doc" "$work/before-$doc"
+  done
+  if [ -n "$option" ]; then
+    run_init "$t" "$option"
+  else
+    run_init "$t"
+  fi
+  check_code 0 "Spec 003 $criterion : code de sortie 0 ($label)"
+  for doc in "${reference_docs[@]}"; do
+    check "Spec 003 $criterion : docs/$doc non modifié ($label)" \
+      same_file "$work/before-$doc" "$t/docs/$doc"
+  done
+done
+
+t=$(new_repo)
+mkdir -p "$t/docs"
+printf '# Cahier du projet\n' >"$t/docs/cahier-des-charges-fonctionnel.md"
+cp "$t/docs/cahier-des-charges-fonctionnel.md" "$work/cahier-before.md"
+run_init "$t"
+check_code 0 "Spec 003 CA4 : code de sortie 0"
+check "Spec 003 CA4 : cahier des charges existant non modifié" \
+  same_file "$work/cahier-before.md" "$t/docs/cahier-des-charges-fonctionnel.md"
+check "Spec 003 CA4 : architecture technique créée à partir du modèle" \
+  same_file "$template/docs/templates/architecture-technique.md" "$t/docs/architecture-technique.md"
+
 exit $fail

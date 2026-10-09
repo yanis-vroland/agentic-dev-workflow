@@ -36,6 +36,7 @@ Contexte projet pour l'agent de code. Les sections marquées « À ADAPTER » so
    - sur les garde-fous (hooks, scripts de sécurité, vérifications de CI), contrôle par mutation : désactiver chaque protection une fois et vérifier qu'au moins un test échoue.
 3. Ne jamais modifier ou supprimer un test pour le faire passer sans le signaler explicitement.
 4. Face à un choix d'architecture structurant, s'arrêter et proposer un ADR dans `docs/adr/` au lieu de trancher seul. L'agent peut rédiger l'ADR en entier, au statut « proposé » ; il ne passe à « accepté » et n'est mergé qu'après validation humaine ([ADR-002](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/adr/002-place-revue-humaine.md)).
+5. Après la revue IA d'une PR, et une fois les corrections poussées, publier un commentaire `## Réponse à la revue IA` dans la PR. Chaque point du rapport y reçoit une suite : corrigé (avec le SHA du commit), non suivi et pourquoi, ou reporté (avec l'issue). La description de la PR renvoie vers ce commentaire sans le répéter. Ne pas se contenter de modifier la description : cela ne laisse aucune trace dans la chronologie et ne notifie personne.
 
 ## Reprise de session
 
@@ -62,6 +63,22 @@ Le dépôt est la seule mémoire : une session doit pouvoir être fermée à tou
 - Ajouter une dépendance sans la justifier dans la PR.
 - Pousser directement sur `main`.
 - Merger une PR : seul l'humain merge ([ADR-002](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/adr/002-place-revue-humaine.md)).
+
+## Documents de référence
+
+Une information vit à un seul endroit ; les autres documents y renvoient.
+
+- `docs/cahier-des-charges-fonctionnel.md` : le quoi. Acteurs et droits, glossaire, règles métier, parcours, fonctionnalités par phase avec un lien vers leur spec, questions métier ouvertes.
+- `docs/architecture-technique.md` : le comment. Modèle de données, contrats entre composants, conventions d'API, sécurité, infrastructure, index des ADR.
+- `docs/specs/` détaille une fonctionnalité ; `docs/adr/` explique un choix.
+
+Lire le cahier des charges avant d'écrire une spec, et l'architecture technique avant de toucher aux données, à un contrat, à la sécurité ou à l'infrastructure. Les noms du code sont ceux du glossaire.
+
+Mettre à jour dans la même PR :
+- le cahier des charges : nouvelle fonctionnalité, changement d'acteur, de droit, de terme ou de règle métier, changement de statut d'une spec ;
+- l'architecture technique : changement du modèle de données, d'un contrat, de la sécurité ou de l'infrastructure, ADR accepté.
+
+Une règle métier non tranchée va dans les questions ouvertes du cahier des charges : ne jamais l'inventer.
 
 ## Architecture
 
