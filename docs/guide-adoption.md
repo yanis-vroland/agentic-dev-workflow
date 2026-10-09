@@ -43,7 +43,11 @@ Il ne mesure rien si l'équipe ne le pose pas systématiquement. Ce n'est pas un
 
 ## Le journal de bord
 
-`docs/journal.md` consigne ce que l'agent a bien fait, ce qui a été corrigé et pourquoi, et les limites observées. Le lire ensemble à intervalle régulier permet de :
+`docs/journal/` contient un fichier par branche, avec des entrées datées : ce qui a été fait, les décisions et qui les a prises, ce que l'humain a corrigé et pourquoi, les limites observées, et la prochaine étape. C'est aussi ce qui permet de fermer une session et de la reprendre ailleurs : la mémoire locale de l'agent est désactivée, le dépôt est la seule mémoire ([spec 004](specs/004-reprise-de-session.md)).
+
+Un fichier n'est écrit que par sa branche, et jamais modifié après le merge : deux PR ne peuvent pas entrer en conflit sur le journal, et la CI le vérifie.
+
+Le relire ensemble à intervalle régulier permet de :
 
 - décider des ajustements : une règle à ajouter à `CLAUDE.md`, un ADR à rédiger, un garde-fou à durcir ;
 - garder une trace factuelle, utile pour juger s'il faut étendre ou réduire l'usage de l'agent.

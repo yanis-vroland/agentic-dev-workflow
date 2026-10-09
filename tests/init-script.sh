@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Vérifie scripts/init.sh selon la spec docs/specs/001-script-init.md.
+# Vérifie scripts/init.sh selon la spec docs/specs/001-script-init.md, modifiée
+# par la section « Application par init.sh » de docs/specs/004-reprise-de-session.md.
 # Chaque vérification cite le critère d'acceptation (CAn) ou le cas limite testé.
 # CA20 n'est pas couvert ici : il est vérifié par la CI elle-même.
 # Les fonctions de vérification sont appelées via check, que shellcheck ne suit pas.
@@ -40,6 +41,9 @@ copied=(
   .github/pull_request_template.md
   .github/scripts/verifier-revue-ia.sh
   tests/verifier-revue-ia.sh
+  tests/session-start.sh
+  .github/scripts/verifier-journal.sh
+  tests/verifier-journal.sh
 )
 # Seuls les fichiers suivis par Git sont copiés (CA22)
 while IFS= read -r file; do
@@ -177,10 +181,6 @@ has_line() {
   grep -qxF -- "$2" "$1"
 }
 
-has_no_entry() {
-  ! grep -q '^## ' "$1"
-}
-
 # Aucune ligne non vide n'apparaît deux fois
 no_duplicate_lines() {
   [ -z "$(grep -v '^[[:space:]]*$' "$1" | LC_ALL=C sort | uniq -d)" ]
@@ -266,6 +266,15 @@ for file in .githooks/pre-commit .claude/hooks/protect-secrets.sh .claude/hooks/
   tests/hooks.sh tests/pre-commit.sh; do
   check "CA1 : $file exécutable" is_executable "$t/$file"
 done
+# Spec 004 : le hook de début de session et le contrôle du journal sont copiés
+# comme les autres garde-fous. Le hook est aussi couvert par git ls-files .claude,
+# mais seulement une fois suivi : vérification explicite.
+check "Spec 004 : .claude/hooks/session-start.sh copié" \
+  same_file "$template/.claude/hooks/session-start.sh" "$t/.claude/hooks/session-start.sh"
+for file in .claude/hooks/session-start.sh .github/scripts/verifier-journal.sh \
+  tests/session-start.sh tests/verifier-journal.sh; do
+  check "Spec 004 : $file exécutable" is_executable "$t/$file"
+done
 check "CA1 : .claude/settings.local.json non copié" not_exists "$t/.claude/settings.local.json"
 
 # --- CA19 : fichiers propres au template absents (même cible que CA1) -------
@@ -286,18 +295,21 @@ check_output "CA16 : label agent-corrigé mentionné" "agent-corrigé"
 check_output "CA16 : commande gh de création du label" "gh label create"
 check_output "CA16 : sections À ADAPTER du CLAUDE.md mentionnées" "À ADAPTER"
 
-# --- CA2 : dossiers et journal créés ----------------------------------------
+# --- CA2 : dossiers créés ---------------------------------------------------
 
 t=$(new_repo)
 run_init "$t"
 check_code 0 "CA2 : code de sortie 0"
 check "CA2 : docs/adr/.gitkeep créé" test -f "$t/docs/adr/.gitkeep"
 check "CA2 : docs/specs/.gitkeep créé" test -f "$t/docs/specs/.gitkeep"
-check "CA2 : docs/journal.md créé" test -f "$t/docs/journal.md"
-check "CA2 : docs/journal.md contient l'en-tête" grep -q '^# Journal' "$t/docs/journal.md"
-check "CA2 : docs/journal.md sans entrée" has_no_entry "$t/docs/journal.md"
 check "CA2 : docs/adr du template non copié" \
   not_exists "$t/docs/adr/001-authentification-ci.md"
+
+# --- Spec 004 CA17 : dossier de journal au lieu de docs/journal.md -------------
+# Remplace les vérifications de CA2 (spec 001) sur docs/journal.md : la spec 004
+# change le comportement attendu, ce n'est pas un affaiblissement du test.
+check "Spec 004 CA17 : docs/journal/.gitkeep créé" test -f "$t/docs/journal/.gitkeep"
+check "Spec 004 CA17 : docs/journal.md non créé" not_exists "$t/docs/journal.md"
 
 # --- CA3 / CA4 : fichier copié déjà présent -----------------------------------
 
@@ -313,13 +325,16 @@ run_init "$t" --force
 check_code 0 "CA4 : code de sortie 0 avec --force"
 check "CA4 : CLAUDE.md remplacé avec --force" same_file "$template/CLAUDE.md" "$t/CLAUDE.md"
 
-# --- CA5 : journal existant jamais modifié ----------------------------------
+# --- Spec 004 CA18 : ancien journal existant, jamais modifié, migration proposée
+# Remplace les vérifications de CA5 (spec 001) : le fichier reste intact, et la
+# spec 004 ajoute l'étape manuelle de migration. Changement de spec, pas
+# affaiblissement du test.
 
 for option in "" "--force"; do
   label=${option:-sans --force}
   t=$(new_repo)
   mkdir -p "$t/docs"
-  printf '# Journal de bord\n\n## 2026-01-01 : première entrée\n\n- Une note.\n' \
+  printf '# Journal de bord\n\n## 2026-01-01 : première entrée\n\n- Une note.\n\n## 2026-03-15 : autre entrée\n\n- Une autre note.\n' \
     >"$t/docs/journal.md"
   cp "$t/docs/journal.md" "$work/journal-before.md"
   if [ -n "$option" ]; then
@@ -327,9 +342,13 @@ for option in "" "--force"; do
   else
     run_init "$t"
   fi
-  check_code 0 "CA5 : code de sortie 0 ($label)"
-  check "CA5 : journal non modifié ($label)" \
+  check_code 0 "Spec 004 CA18 : code de sortie 0 ($label)"
+  check "Spec 004 CA18 : docs/journal.md non modifié ($label)" \
     same_file "$work/journal-before.md" "$t/docs/journal.md"
+  check_output "Spec 004 CA18 : commande git mv de migration proposée ($label)" \
+    "git mv docs/journal.md docs/journal/"
+  check_output "Spec 004 CA18 : nom cible daté de la première entrée ($label)" \
+    "2026-01-01-historique.md"
 done
 
 # --- CA6 : .gitignore partiel -----------------------------------------------
