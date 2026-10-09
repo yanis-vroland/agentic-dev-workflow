@@ -155,3 +155,6 @@ vite.config.ts.timestamp-*
 
 # Réglages Claude Code personnels (non partagés)
 .claude/settings.local.json
+
+# Configuration des IDE JetBrains (personnelle)
+.idea/
