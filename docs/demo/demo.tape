@@ -12,11 +12,12 @@ Set Height 720
 Set Theme "Catppuccin Mocha"
 Set TypingSpeed 40ms
 Set Padding 20
+Set Framerate 12
 
 # Préparation invisible : projet Git vide, identité Git locale, faux jeton
 # assemblé à l'exécution (il n'apparaît jamais en clair dans ce fichier).
 Hide
-Type `export TEMPLATE="$PWD" PS1='$ ' && cd "$(mktemp -d)" && git init -q projet`
+Type `export TEMPLATE="$PWD" PS1='$ ' GIT_PAGER=cat PAGER=cat && cd "$(mktemp -d)" && git init -q projet`
 Enter
 Type `git -C projet config user.name demo && git -C projet config user.email demo@example.com && git -C projet config commit.gpgsign false`
 Enter

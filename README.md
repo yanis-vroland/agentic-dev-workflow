@@ -5,6 +5,10 @@ Template de développement agentique pour les développeurs qui confient du code
 **Statut : en construction, pas encore éprouvé sur un projet réel. Il le sera d'abord sur le projet FieldOps.**
 Version de Claude Code testée : **2.1.291**, le 2026-10-08.
 
+![Démonstration : init.sh sur un projet vide, commit d'un jeton refusé par gitleaks, accès à un fichier .env refusé par le hook de Claude Code](docs/demo/demo.gif)
+
+*Démonstration générée par [vhs](https://github.com/charmbracelet/vhs) à partir de [`docs/demo/demo.tape`](docs/demo/demo.tape) : `vhs docs/demo/demo.tape` depuis la racine.*
+
 ## Prérequis
 
 | Outil | Rôle | Sans lui |
