@@ -230,7 +230,7 @@ fi
 steps+=(
   "Ajouter le secret CLAUDE_CODE_OAUTH_TOKEN au dépôt GitHub (Settings > Secrets and variables > Actions), pour la revue IA."
   "Installer l'application GitHub Claude sur le dépôt (dans Claude Code : /install-github-app)."
-  "Créer un ruleset sur main : PR obligatoire, vérifications requises « Tests des garde-fous » et « Détection de secrets »."
+  "Créer un ruleset sur main : PR obligatoire, vérifications requises « Tests des garde-fous », « Détection de secrets » et « Journal »."
   "Créer le label agent-corrigé : gh label create agent-corrigé --color D93F0B --description \"Code de l'agent refusé ou corrigé par l'humain\""
   "Compléter les sections « À ADAPTER » du CLAUDE.md."
   "Compléter docs/cahier-des-charges-fonctionnel.md (acteurs, glossaire, règles métier) et docs/architecture-technique.md (données, contrats, sécurité, infrastructure)."
