@@ -30,7 +30,8 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
 
    ```bash
    git rm docs/adr/001-authentification-ci.md docs/specs/001-script-init.md \
-     docs/specs/002-hook-protect-secrets.md scripts/init.sh tests/init-script.sh \
+     docs/specs/002-hook-protect-secrets.md docs/specs/003-documents-de-reference.md \
+     scripts/init.sh tests/init-script.sh \
      .github/workflows/template-ci.yml
    ```
 
@@ -44,19 +45,25 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
    EOF
    ```
 
-4. Activer le hook pre-commit (une fois par clone) :
+4. Créer les documents de référence à partir de leurs modèles, puis les compléter :
+
+   ```bash
+   cp docs/templates/cahier-des-charges-fonctionnel.md docs/templates/architecture-technique.md docs/
+   ```
+
+5. Activer le hook pre-commit (une fois par clone) :
 
    ```bash
    git config core.hooksPath .githooks
    ```
 
-5. Remplacer ce `README.md` par celui du projet, en gardant si besoin un lien vers le template :
+6. Remplacer ce `README.md` par celui du projet, en gardant si besoin un lien vers le template :
 
    ```bash
    printf '# <nom du projet>\n\nInitialisé avec https://github.com/yanis-vroland/agentic-dev-workflow\n' > README.md
    ```
 
-6. Committer ce nettoyage, puis passer à la [configuration GitHub](#configuration-github), à suivre depuis le README du template.
+7. Committer ce nettoyage, puis passer à la [configuration GitHub](#configuration-github), à suivre depuis le README du template.
 
 ### Projet existant
 
@@ -71,7 +78,7 @@ Le script :
 
 - copie les garde-fous, les skills, les workflows génériques, le modèle de PR et `CLAUDE.md` ;
 - n'écrase aucun fichier existant sans `--force`, et liste ceux qu'il a ignorés ;
-- crée `docs/adr/`, `docs/specs/` et `docs/journal.md` ;
+- crée `docs/adr/`, `docs/specs/`, `docs/journal.md` et les deux documents de référence (cahier des charges fonctionnel, architecture technique) ;
 - complète le `.gitignore` (`.env`, `.env.*`, `!.env.example`, `.claude/settings.local.json`) ;
 - active `core.hooksPath` ;
 - affiche à la fin les étapes manuelles restantes.
@@ -144,6 +151,8 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `.github/scripts/verifier-revue-ia.sh` | fait échouer la revue IA si elle n'a pas tourné ou a subi des refus |
 | `.github/pull_request_template.md` | modèle de PR : spec liée, critères couverts, vérifications humaines, corrections |
 | `docs/templates/spec.md` | modèle de spec |
+| `docs/templates/cahier-des-charges-fonctionnel.md` | modèle du cahier des charges : acteurs, glossaire, règles métier, parcours, fonctionnalités |
+| `docs/templates/architecture-technique.md` | modèle de l'architecture technique : données, contrats, sécurité, infrastructure, index des ADR |
 | `docs/specs/` | specs du projet |
 | `docs/adr/` | décisions d'architecture |
 | `docs/journal.md` | journal de bord : ce que l'agent a bien fait, ce qui a été corrigé, les limites |

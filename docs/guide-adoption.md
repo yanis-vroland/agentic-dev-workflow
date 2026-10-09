@@ -25,6 +25,7 @@ Une même personne peut tenir plusieurs rôles. Ce qui compte : chaque PR a un h
 ## Rituels
 
 - **Validation de spec** : la spec (`docs/specs/`, modèle `docs/templates/spec.md`) est relue avant tout code. Ses critères d'acceptation deviennent les tests ; une spec floue donne des tests faibles.
+- **Documents de référence** : `docs/cahier-des-charges-fonctionnel.md` (le quoi) et `docs/architecture-technique.md` (le comment) sont mis à jour dans la PR qui change ce qu'ils décrivent (section « Documents de référence » de `CLAUDE.md`). La revue IA signale un oubli ; le relecteur vérifie la section du même nom dans la PR.
 - **Relecture de PR selon l'ADR-002** :
   - relecture intégrale du diff dans les cas listés par l'ADR-002, qui fait foi : notamment quand la revue IA n'a pas tourné (job « Revue IA » rouge), ou quand la PR touche aux garde-fous ou aux secrets ;
   - sinon, relecture guidée par le rapport de la revue IA, la réponse de l'agent et la section « Points d'attention » de la PR.
