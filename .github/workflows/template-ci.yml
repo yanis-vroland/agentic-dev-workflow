@@ -23,6 +23,13 @@ jobs:
       - name: Validité de settings.json
         run: jq empty .claude/settings.json
 
+      - name: Mémoire locale désactivée et hook de début de session branché (spec 004)
+        run: |
+          jq -e '.autoMemoryEnabled == false' .claude/settings.json
+          jq -e '[.hooks.SessionStart[] | select(.matcher == "startup|resume|clear")
+            | .hooks[].command | select(endswith("/.claude/hooks/session-start.sh"))] | length == 1' \
+            .claude/settings.json
+
       - name: Frontmatter des skills et subagents
         run: |
           fail=0

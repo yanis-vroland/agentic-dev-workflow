@@ -80,6 +80,9 @@ files=(
   .github/pull_request_template.md
   .github/scripts/verifier-revue-ia.sh
   tests/verifier-revue-ia.sh
+  .github/scripts/verifier-journal.sh
+  tests/verifier-journal.sh
+  tests/session-start.sh
 )
 while IFS= read -r file; do
   files+=("$file")
@@ -115,7 +118,7 @@ done
 
 # --- Dossiers et journal du projet (jamais écrasés) --------------------------
 
-for dir in docs/adr docs/specs; do
+for dir in docs/adr docs/specs docs/journal; do
   mkdir -p "$target/$dir"
   if [ -z "$(ls -A "$target/$dir")" ]; then
     : >"$target/$dir/.gitkeep"
@@ -123,14 +126,12 @@ for dir in docs/adr docs/specs; do
   fi
 done
 
-journal="$target/docs/journal.md"
-if [ ! -e "$journal" ]; then
-  cat >"$journal" <<'EOF'
-# Journal de bord
-
-Ce que l'agent a bien fait, ce que j'ai corrigé et pourquoi, les limites observées.
-EOF
-  echo "Créé : docs/journal.md"
+# Ancien journal unique (spec 004) : jamais modifié, migration proposée
+old_journal="$target/docs/journal.md"
+if [ -e "$old_journal" ]; then
+  first_date=$(grep -m 1 -oE '^## [0-9]{4}-[0-9]{2}-[0-9]{2}' "$old_journal" | cut -c4- || true)
+  [ -n "$first_date" ] || first_date=$(date +%Y-%m-%d)
+  steps+=("Migrer l'ancien journal vers un fichier par branche (spec 004) : git mv docs/journal.md docs/journal/$first_date-historique.md")
 fi
 
 # --- .gitignore (complété, jamais remplacé) ----------------------------------
