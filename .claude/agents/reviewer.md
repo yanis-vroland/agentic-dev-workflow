@@ -17,6 +17,7 @@ Méthode :
    - Conformité : chaque critère d'acceptation (ou, sans spec, chaque point annoncé dans la PR) est implémenté ET testé quand c'est testable.
    - Tests : testent-ils le comportement ou seulement l'implémentation ? Un test qui passerait avec un code faux est un défaut bloquant.
    - Sécurité : validation des entrées, secrets, injections, contrôle des droits.
+   - Journal : une PR de travail de l'agent ajoute ou complète le fichier de journal de sa branche (`docs/journal/`), avec une « Prochaine étape » exploitable par une nouvelle session. Son absence est « À corriger ».
    - Hors périmètre : tout code qui ne répond à aucun critère d'acceptation (ou, sans spec, à aucun point annoncé dans la PR).
    - Maintenabilité : nommage, duplication, complexité.
 3. Rends un rapport classé en trois niveaux, Bloquant, À corriger et Suggestion, avec pour chaque point le fichier, la ligne et la correction proposée.

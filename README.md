@@ -30,18 +30,14 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
 
    ```bash
    git rm docs/adr/001-authentification-ci.md docs/specs/001-script-init.md \
-     docs/specs/002-hook-protect-secrets.md scripts/init.sh tests/init-script.sh \
-     .github/workflows/template-ci.yml
+     docs/specs/002-hook-protect-secrets.md docs/specs/004-reprise-de-session.md \
+     scripts/init.sh tests/init-script.sh .github/workflows/template-ci.yml
    ```
 
-3. Remplacer `docs/journal.md` par un journal vide :
+3. Vider le journal du template (un fichier par branche, créé par l'agent au premier commit) :
 
    ```bash
-   cat > docs/journal.md <<'EOF'
-   # Journal de bord
-
-   Ce que l'agent a bien fait, ce que j'ai corrigé et pourquoi, les limites observées.
-   EOF
+   git rm -q 'docs/journal/*.md' && touch docs/journal/.gitkeep && git add docs/journal/.gitkeep
    ```
 
 4. Activer le hook pre-commit (une fois par clone) :
@@ -71,7 +67,7 @@ Le script :
 
 - copie les garde-fous, les skills, les workflows génériques, le modèle de PR et `CLAUDE.md` ;
 - n'écrase aucun fichier existant sans `--force`, et liste ceux qu'il a ignorés ;
-- crée `docs/adr/`, `docs/specs/` et `docs/journal.md` ;
+- crée `docs/adr/`, `docs/specs/` et `docs/journal/` ; si un `docs/journal.md` existe déjà, il propose la commande `git mv` pour le migrer ;
 - complète le `.gitignore` (`.env`, `.env.*`, `!.env.example`, `.claude/settings.local.json`) ;
 - active `core.hooksPath` ;
 - affiche à la fin les étapes manuelles restantes.
@@ -103,6 +99,8 @@ Compléter les sections **« À ADAPTER »** de `CLAUDE.md` : description du pro
 - **Hook `protect-secrets.sh`** (Claude Code) : refuse à l'agent l'accès aux fichiers `.env` et `.env.*`, sauf `.env.example`. Une simple mention dans un message de commit ou un corps de PR reste permise. En cas de doute (commande non analysable, erreur interne, jq absent), il refuse. Comportement détaillé : [`docs/specs/002-hook-protect-secrets.md`](docs/specs/002-hook-protect-secrets.md).
 - **Hook `pre-commit`** (Git) : gitleaks analyse les fichiers indexés et refuse le commit si un secret est détecté. Il se contourne avec `git commit --no-verify` : le vrai filet de sécurité est le job CI « Détection de secrets », qui analyse tout l'historique.
 - **Revue IA** : chaque PR ouverte est relue selon `.claude/agents/reviewer.md`, et le rapport est publié en commentaire. Le job échoue si la revue n'a pas tourné ou si des actions ont été refusées pendant la revue. Une PR qui modifie `ai-review.yml` ne peut pas être relue par l'IA (protection de `claude-code-action`) : son job « Revue IA » est rouge, et elle se relit à la main.
+- **Journal sans conflit** : un fichier de journal par branche (`docs/journal/`), jamais modifié après son merge. Le job CI « Journal » refuse une PR qui touche un journal déjà mergé, ou dont les noms et les dates sont invalides. Deux PR ne peuvent donc pas entrer en conflit sur le journal. Comportement détaillé : [`docs/specs/004-reprise-de-session.md`](docs/specs/004-reprise-de-session.md).
+- **Début de session** : le hook `session-start.sh` récupère `origin` et avance la branche seulement si l'arbre est propre et qu'aucune divergence n'existe. Il ne rebase et ne fusionne jamais.
 
 ## Limites
 
@@ -122,6 +120,7 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 - **Version de gitleaks :** sur ce template, Renovate propose la mise à jour de `GITLEAKS_VERSION` dans `garde-fous.yml`. La version installée en local se met à jour à la main (`brew upgrade gitleaks`). Dans un projet initialisé, `renovate.json` n'est pas copié : la mise à jour y reste manuelle. L'empreinte de l'archive vient du fichier publié avec la release : elle protège d'un téléchargement corrompu, pas d'une release compromise.
 
 **Processus**
+- **Reprise de session :** une session fermée sans prévenir perd le travail non committé, car l'agent ne peut pas agir à la fermeture (spec 004). La mémoire locale est désactivée par `.claude/settings.json`, mais un réglage personnel (`.claude/settings.local.json`) peut la réactiver.
 - **Merge :** « seul l'humain merge » ([ADR-002](docs/adr/002-place-revue-humaine.md)) est une règle de travail, pas une protection technique. Le ruleset impose une PR et des vérifications vertes, mais un agent qui dispose des droits de l'humain via `gh` pourrait merger.
 
 ## Structure
@@ -132,21 +131,23 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `.claude/settings.json` | permissions refusées à l'agent et branchement des hooks |
 | `.claude/hooks/protect-secrets.sh` | refus des accès aux fichiers `.env` |
 | `.claude/hooks/format.sh` | formatage par Prettier après chaque modification, s'il est installé dans le projet |
+| `.claude/hooks/session-start.sh` | au début de chaque session : récupération, mise à jour sans risque, état de la branche, dernière entrée de journal, PR ouvertes |
 | `.claude/skills/spec/` | `/spec` : rédiger une spec à partir d'un besoin |
 | `.claude/skills/implement/` | `/implement` : implémenter une spec validée en test-first |
 | `.claude/skills/review/` | `/review` : relire la branche avant la PR |
 | `.claude/agents/reviewer.md` | subagent de revue, utilisé aussi par la revue IA en CI |
 | `.claude/agents/test-writer.md` | subagent qui écrit les tests à partir des critères d'acceptation |
 | `.githooks/pre-commit` | détection de secrets avant chaque commit |
-| `.github/workflows/garde-fous.yml` | CI générique : tests des hooks, test du pre-commit, détection de secrets |
+| `.github/workflows/garde-fous.yml` | CI générique : tests des hooks, test du pre-commit, détection de secrets, contrôle du journal |
 | `.github/workflows/ai-review.yml` | revue IA de chaque PR |
 | `.github/workflows/template-ci.yml` | CI propre au template, non copiée par `init.sh` |
 | `.github/scripts/verifier-revue-ia.sh` | fait échouer la revue IA si elle n'a pas tourné ou a subi des refus |
+| `.github/scripts/verifier-journal.sh` | refuse une PR qui modifie un journal déjà mergé, ou dont les noms et dates du journal sont invalides |
 | `.github/pull_request_template.md` | modèle de PR : spec liée, critères couverts, vérifications humaines, corrections |
 | `docs/templates/spec.md` | modèle de spec |
 | `docs/specs/` | specs du projet |
 | `docs/adr/` | décisions d'architecture |
-| `docs/journal.md` | journal de bord : ce que l'agent a bien fait, ce qui a été corrigé, les limites |
+| `docs/journal/` | journal de bord, un fichier par branche, entrées datées : fait, décisions, corrections et limites, prochaine étape ; sert à reprendre une session |
 | `docs/guide-adoption.md` | introduire le template dans une équipe : rôles, rituels, démarrage progressif |
 | `scripts/init.sh` | application du template à un projet existant |
 | `renovate.json` | mises à jour proposées par Renovate : gitleaks et `claude-code-action` (non copié par `init.sh`) |

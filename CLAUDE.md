@@ -37,11 +37,22 @@ Contexte projet pour l'agent de code. Les sections marquées « À ADAPTER » so
 3. Ne jamais modifier ou supprimer un test pour le faire passer sans le signaler explicitement.
 4. Face à un choix d'architecture structurant, s'arrêter et proposer un ADR dans `docs/adr/` au lieu de trancher seul. L'agent peut rédiger l'ADR en entier, au statut « proposé » ; il ne passe à « accepté » et n'est mergé qu'après validation humaine ([ADR-002](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/adr/002-place-revue-humaine.md)).
 
+## Reprise de session
+
+Le dépôt est la seule mémoire : une session doit pouvoir être fermée à tout moment et reprise plus tard, sur n'importe quel poste, sans perte ([spec 004](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/004-reprise-de-session.md)).
+
+- Ne jamais enregistrer une règle, une décision ou un état dans la mémoire locale de Claude Code (désactivée par `autoMemoryEnabled` dans `.claude/settings.json`). Une règle de travail va dans `CLAUDE.md`, un skill ou un subagent, par une PR ; un état va dans le journal de la branche.
+- Journal : un fichier par branche, `docs/journal/AAAA-MM-JJ-<branche>.md` (`/` remplacés par `-`, date de création), créé au premier commit de la branche. Chaque entrée commence par `## AAAA-MM-JJ HH:MM` (heure locale) et contient quatre rubriques : **Fait**, **Décisions** (et qui a décidé), **Corrections et limites**, **Prochaine étape**.
+- À chaque commit de travail : ajouter une entrée ou compléter celle du jour dans le même commit, puis pousser la branche.
+- Ne jamais modifier le fichier de journal d'une autre branche, ni un fichier déjà mergé : la CI le refuse (`verifier-journal.sh`).
+- Au début d'une session, le hook `session-start.sh` met la branche à jour si c'est sans risque, et affiche son état et la dernière entrée de journal. Repartir de la « Prochaine étape » de cette entrée. Si la branche est en retard sur `main`, proposer un rebase sans le faire.
+
 ## Définition du « done »
 
 - Chaque critère d'acceptation de la spec est couvert par au moins un test.
 - Lint, format et tests au vert.
 - Aucun TODO sans ticket associé.
+- Entrée de journal de la branche à jour et poussée.
 - Documentation mise à jour si un comportement public change.
 
 ## Interdits
