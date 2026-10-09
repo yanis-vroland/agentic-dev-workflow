@@ -5,6 +5,10 @@ Template de développement agentique pour les développeurs qui confient du code
 **Statut : en construction, pas encore éprouvé sur un projet réel. Il le sera d'abord sur le projet FieldOps.**
 Version de Claude Code testée : **2.1.291**, le 2026-10-08.
 
+![Démonstration : init.sh, secret refusé par gitleaks, fichier .env refusé par le hook](docs/demo/demo.gif)
+
+*Démonstration générée par [vhs](https://github.com/charmbracelet/vhs) (facultatif, sert uniquement à la régénérer) à partir de [`docs/demo/demo.tape`](docs/demo/demo.tape) : `vhs docs/demo/demo.tape` depuis la racine. À régénérer si l'affichage de `init.sh` ou des hooks change.*
+
 ## Prérequis
 
 | Outil | Rôle | Sans lui |
