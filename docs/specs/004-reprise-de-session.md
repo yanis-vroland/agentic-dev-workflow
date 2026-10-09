@@ -74,6 +74,7 @@ Modifie la spec 001 :
 - `init.sh` crée `docs/journal/` avec un `.gitkeep`, au lieu de `docs/journal.md`.
 - Si la cible a déjà un `docs/journal.md`, il n'est pas modifié, et le script affiche une étape manuelle : le déplacer dans `docs/journal/` avec la commande `git mv` à utiliser.
 - `session-start.sh`, `verifier-journal.sh` et leurs tests sont copiés comme les autres garde-fous.
+- L'étape manuelle du ruleset de `main` cite la vérification « Journal » parmi les vérifications requises (ajout du 2026-10-09, oubli constaté après le merge).
 
 ## Critères d'acceptation
 
@@ -103,6 +104,7 @@ Modifie la spec 001 :
 
 - CA17 : Étant donné une cible vide, quand je lance `init.sh`, alors `docs/journal/.gitkeep` existe et `docs/journal.md` n'existe pas.
 - CA18 : Étant donné une cible avec un `docs/journal.md`, quand je lance `init.sh`, avec ou sans `--force`, alors ce fichier n'est pas modifié, et la sortie propose la commande `git mv` de migration.
+- CA21 : Étant donné une initialisation réussie, quand le script se termine, alors l'étape manuelle du ruleset de `main` cite la vérification « Journal » (ajout du 2026-10-09).
 
 ### Relecture humaine (consignes, non testables automatiquement)
 
