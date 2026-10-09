@@ -123,6 +123,7 @@ Compléter les sections **« À ADAPTER »** de `CLAUDE.md` : description du pro
 | `docs/specs/` | specs du projet |
 | `docs/adr/` | décisions d'architecture |
 | `docs/journal.md` | journal de bord : ce que l'agent a bien fait, ce qui a été corrigé, les limites |
+| `docs/guide-adoption.md` | introduire le template dans une équipe : rôles, rituels, démarrage progressif |
 | `scripts/init.sh` | application du template à un projet existant |
 | `tests/` | tests des hooks, du pre-commit, de la vérification de la revue et de `init.sh` |
 
