@@ -18,6 +18,7 @@ Contexte projet pour l'agent de code. Les sections marquées « À ADAPTER » so
 
 - Code en anglais : variables, fonctions, classes, entités, tables, routes d'API.
 - Tout le reste en français : README, ADR, specs, commentaires, messages de commit, PR.
+- Réponses à l'humain en français, y compris les points d'étape et les messages courts pendant une tâche longue.
 - Commits au format Conventional Commits, préfixe en anglais, message en français :
   `feat: ajout du CRUD des machines`
 
@@ -54,7 +55,7 @@ Le dépôt est la seule mémoire : une session doit pouvoir être fermée à tou
 - Lint, format et tests au vert.
 - Aucun TODO sans ticket associé.
 - Entrée de journal de la branche à jour et poussée.
-- Documentation mise à jour si un comportement public change.
+- Documentation mise à jour si un comportement public change, dont le cahier des charges et l'architecture technique (section « Documents de référence »).
 
 ## Interdits
 
@@ -63,6 +64,7 @@ Le dépôt est la seule mémoire : une session doit pouvoir être fermée à tou
 - Ajouter une dépendance sans la justifier dans la PR.
 - Pousser directement sur `main`.
 - Merger une PR : seul l'humain merge ([ADR-002](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/adr/002-place-revue-humaine.md)).
+- Créer une issue ou poser un label sans l'accord de l'humain. Seule exception : le label `bug` sur une issue de bug.
 
 ## Documents de référence
 

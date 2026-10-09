@@ -30,8 +30,8 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
 
    ```bash
    git rm docs/adr/001-authentification-ci.md docs/specs/001-script-init.md \
-     docs/specs/002-hook-protect-secrets.md docs/specs/004-reprise-de-session.md \
-     scripts/init.sh tests/init-script.sh .github/workflows/template-ci.yml
+     docs/specs/002-hook-protect-secrets.md docs/specs/003-documents-de-reference.md \
+     docs/specs/004-reprise-de-session.md scripts/init.sh tests/init-script.sh .github/workflows/template-ci.yml
    ```
 
 3. Vider le journal du template (un fichier par branche, créé par l'agent au premier commit) :
@@ -73,7 +73,7 @@ Le script :
 
 - copie les garde-fous, les skills, les workflows génériques, le modèle de PR et `CLAUDE.md` ;
 - n'écrase aucun fichier existant sans `--force`, et liste ceux qu'il a ignorés ;
-- crée `docs/adr/`, `docs/specs/` et `docs/journal/` ; si un `docs/journal.md` existe déjà, il propose la commande `git mv` pour le migrer ;
+- crée `docs/adr/`, `docs/specs/`, `docs/journal/` et les deux documents de référence (cahier des charges fonctionnel, architecture technique) ; si un `docs/journal.md` existe déjà, il propose la commande `git mv` pour le migrer ;
 - complète le `.gitignore` (`.env`, `.env.*`, `!.env.example`, `.claude/settings.local.json`) ;
 - active `core.hooksPath` ;
 - affiche à la fin les étapes manuelles restantes.
@@ -93,7 +93,7 @@ Compléter les sections **« À ADAPTER »** de `CLAUDE.md` : description du pro
 3. **Ruleset sur `main`** (*Settings > Rules > Rulesets*) :
    - PR obligatoire ;
    - suppression et force-push interdits ;
-   - vérifications requises : « Tests des garde-fous » et « Détection de secrets ». Sur ce template, s'y ajoute « Vérifications du template ».
+   - vérifications requises : « Tests des garde-fous », « Détection de secrets » et « Journal ». Sur ce template, s'y ajoute « Vérifications du template ».
 4. **Label `agent-corrigé`**, qui marque les PR où du code de l'agent a été refusé ou corrigé :
 
    ```bash

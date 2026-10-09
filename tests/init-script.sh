@@ -291,6 +291,8 @@ check "CA19 : test de init.sh absent" \
 check_output "CA16 : secret CLAUDE_CODE_OAUTH_TOKEN mentionné" "CLAUDE_CODE_OAUTH_TOKEN"
 check_output_i "CA16 : installation de l'application GitHub mentionnée" "application"
 check_output_i "CA16 : ruleset sur main mentionné" "ruleset"
+check "Spec 004 CA21 : vérification « Journal » exigée par le ruleset" \
+  output_line_has "ruleset" "« Journal »"
 check_output "CA16 : label agent-corrigé mentionné" "agent-corrigé"
 check_output "CA16 : commande gh de création du label" "gh label create"
 check_output "CA16 : sections À ADAPTER du CLAUDE.md mentionnées" "À ADAPTER"
