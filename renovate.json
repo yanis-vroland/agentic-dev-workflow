@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "dependencyDashboard": false,
+  "enabledManagers": ["custom.regex", "github-actions"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Version de gitleaks fixée dans garde-fous.yml",
+      "managerFilePatterns": ["/^\\.github/workflows/garde-fous\\.yml$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\s+GITLEAKS_VERSION: (?<currentValue>\\S+)"
+      ],
+      "extractVersionTemplate": "^v?(?<version>.*)$"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Seule claude-code-action est suivie parmi les actions GitHub (épinglée par SHA)",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["!anthropics/claude-code-action"],
+      "enabled": false
+    }
+  ]
+}
