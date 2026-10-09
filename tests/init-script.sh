@@ -41,10 +41,11 @@ copied=(
   .github/scripts/verifier-revue-ia.sh
   tests/verifier-revue-ia.sh
 )
+# Seuls les fichiers suivis par Git sont copiés (CA22)
 while IFS= read -r file; do
   copied+=("$file")
-done < <(cd "$template" && find .claude .githooks docs/templates -type f \
-  ! -path .claude/settings.local.json | LC_ALL=C sort)
+done < <(git -C "$template" ls-files -- .claude .githooks docs/templates |
+  grep -vxF .claude/settings.local.json | LC_ALL=C sort)
 
 # Entrées attendues dans le .gitignore de la cible
 gitignore_entries=(".env" ".env.*" "!.env.example" ".claude/settings.local.json")
@@ -478,6 +479,36 @@ check_code 0 "CA18 : code de sortie 0 sans jq"
 check "CA18 : message final cite jq" grep -qw jq <<<"$output"
 check "CA18 : message final lie jq et protect-secrets.sh" \
   output_line_has "jq" "protect-secrets"
+
+# --- CA22 : fichier non suivi dans le template --------------------------------
+
+# Copie du template (dépôt Git compris) pour ne pas toucher au vrai dépôt
+tpl=$(new_case)
+cp -R "$template/." "$tpl"
+mkdir -p "$tpl/.claude/worktrees/agent-test"
+echo "copie locale" >"$tpl/.claude/worktrees/agent-test/CLAUDE.md"
+echo "note personnelle" >"$tpl/.claude/notes-perso.md"
+t=$(new_repo)
+output=$(cd "$neutral" && "$tpl/scripts/init.sh" "$t" 2>&1)
+code=$?
+check_code 0 "CA22 : code de sortie 0"
+check "CA22 : fichier non suivi non copié" not_exists "$t/.claude/notes-perso.md"
+check "CA22 : worktree non copié" not_exists "$t/.claude/worktrees"
+check "CA22 : fichiers suivis copiés" same_file "$template/.claude/settings.json" "$t/.claude/settings.json"
+
+# --- CA23 : template qui n'est pas un dépôt Git -------------------------------
+
+tpl=$(new_case)
+cp -R "$template/." "$tpl"
+rm -rf "$tpl/.git"
+t=$(new_repo)
+before=$(snapshot "$t")
+output=$(cd "$neutral" && "$tpl/scripts/init.sh" "$t" 2>&1)
+code=$?
+check_code 1 "CA23 : template sans Git, code de sortie 1"
+check "CA23 : cible non modifiée" equal "$before" "$(snapshot "$t")"
+check "CA23 : core.hooksPath non défini" hooks_path_unset "$t"
+check_output "CA23 : message invite à cloner le template" "git clone"
 
 # --- Cas limites ------------------------------------------------------------
 
