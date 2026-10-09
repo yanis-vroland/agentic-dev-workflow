@@ -20,6 +20,8 @@ Copiés depuis le template (chemins identiques dans la cible) :
 - `.github/pull_request_template.md` ;
 - `.github/scripts/verifier-revue-ia.sh` et `tests/verifier-revue-ia.sh`, utilisés par `ai-review.yml` (ajout de la spec 002, CA25 et CA26).
 
+Seuls les fichiers **suivis par Git** dans le template sont copiés. Un fichier présent sur le disque mais non suivi (worktree d'agent sous `.claude/worktrees/`, fichier temporaire, notes personnelles) ne l'est jamais. Le template doit donc être un clone Git (issue #27).
+
 Créés s'ils sont absents, jamais copiés depuis le template :
 
 - `docs/adr/` et `docs/specs/`, chacun avec un `.gitkeep` ;
@@ -87,6 +89,8 @@ Les tests vérifient les codes de sortie, les fichiers et la configuration Git p
 - CA19 : Étant donné une initialisation réussie, quand je liste les fichiers de la cible, alors elle ne contient ni `template-ci.yml`, ni `ci.yml`, ni le test de `init.sh`.
 - CA20 : Étant donné le template après ce changement, quand la CI s'exécute sur une PR, alors les jobs de `template-ci.yml` et de `garde-fous.yml` passent, et `.github/workflows/ci.yml` n'existe plus. Ce critère est vérifié par la CI elle-même, pas par un test.
 - CA21 : Étant donné une cible dont le `.gitignore` contient déjà `!.env.example` mais pas `.env.*`, quand je lance le script, alors `git check-ignore` confirme que `.env` et `.env.local` sont ignorés et que `.env.example` ne l'est pas.
+- CA22 : Étant donné un template qui contient, sous `.claude/`, un fichier non suivi par Git, quand je lance le script, alors ce fichier n'est pas copié dans la cible, et les fichiers suivis le sont normalement.
+- CA23 : Étant donné un template qui n'est pas la racine de son propre dépôt Git (extrait d'une archive ZIP, ou copié dans un sous-dossier d'un autre dépôt), quand je lance le script, alors il sort avec le code 1, sans rien modifier dans la cible, et son message invite à cloner le template avec Git.
 
 ## Cas limites et erreurs
 
@@ -95,6 +99,7 @@ Les tests vérifient les codes de sortie, les fichiers et la configuration Git p
 - Cible qui est le template lui-même : le script refuse et sort avec le code 1.
 - `.gitignore` sans saut de ligne final : le script ajoute un saut de ligne avant les nouvelles entrées, pour ne pas coller deux lignes.
 - Le script se lance depuis n'importe quel répertoire courant : il retrouve le template à partir de son propre emplacement.
+- Fichier suivi par Git mais absent du disque dans le template : le script refuse avec le code 1 **avant toute copie**, liste les fichiers manquants et propose `git restore` (décision de Yanis, revue de la PR #28).
 
 ## Hors périmètre
 

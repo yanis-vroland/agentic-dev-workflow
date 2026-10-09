@@ -41,6 +41,20 @@ if [ "$target" = "$template" ]; then
   exit 1
 fi
 
+# Seuls les fichiers suivis par Git sont copiés : le template doit être un clone
+clone_hint="Clone-le avec Git : git clone https://github.com/yanis-vroland/agentic-dev-workflow.git"
+if ! git_output=$(git -C "$template" rev-parse --show-toplevel 2>&1); then
+  echo "Erreur : le template ($template) n'est pas un dépôt Git." >&2
+  echo "Git : $git_output" >&2
+  echo "$clone_hint" >&2
+  exit 1
+fi
+if [ "$(cd "$git_output" && pwd -P)" != "$template" ]; then
+  echo "Erreur : le template ($template) n'est pas la racine de son dépôt Git ($git_output)." >&2
+  echo "$clone_hint" >&2
+  exit 1
+fi
+
 is_git=0
 if git -C "$target" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   root="$(cd "$(git -C "$target" rev-parse --show-toplevel)" && pwd -P)"
@@ -69,8 +83,20 @@ files=(
 )
 while IFS= read -r file; do
   files+=("$file")
-done < <(cd "$template" && find .claude .githooks docs/templates -type f \
-  ! -path .claude/settings.local.json | LC_ALL=C sort)
+done < <(git -C "$template" ls-files -- .claude .githooks docs/templates |
+  grep -vxF .claude/settings.local.json | LC_ALL=C sort)
+
+# Fichier suivi mais supprimé du disque : refus avant toute copie
+missing_files=()
+for file in "${files[@]}"; do
+  [ -e "$template/$file" ] || missing_files+=("$file")
+done
+if [ "${#missing_files[@]}" -gt 0 ]; then
+  echo "Erreur : fichiers suivis par Git mais absents du template :" >&2
+  printf '  %s\n' "${missing_files[@]}" >&2
+  echo "Restaure-les avant de relancer : cd $template && git restore ${missing_files[*]}" >&2
+  exit 1
+fi
 
 for file in "${files[@]}"; do
   dest="$target/$file"
