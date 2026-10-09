@@ -41,6 +41,14 @@ if [ "$target" = "$template" ]; then
   exit 1
 fi
 
+# Seuls les fichiers suivis par Git sont copiés : le template doit être un clone
+template_root=$(git -C "$template" rev-parse --show-toplevel 2>/dev/null || true)
+if [ -z "$template_root" ] || [ "$(cd "$template_root" && pwd -P)" != "$template" ]; then
+  echo "Erreur : le template ($template) n'est pas un dépôt Git." >&2
+  echo "Clone-le avec Git : git clone https://github.com/yanis-vroland/agentic-dev-workflow.git" >&2
+  exit 1
+fi
+
 is_git=0
 if git -C "$target" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   root="$(cd "$(git -C "$target" rev-parse --show-toplevel)" && pwd -P)"
@@ -69,8 +77,8 @@ files=(
 )
 while IFS= read -r file; do
   files+=("$file")
-done < <(cd "$template" && find .claude .githooks docs/templates -type f \
-  ! -path .claude/settings.local.json | LC_ALL=C sort)
+done < <(git -C "$template" ls-files -- .claude .githooks docs/templates |
+  grep -vxF .claude/settings.local.json | LC_ALL=C sort)
 
 for file in "${files[@]}"; do
   dest="$target/$file"
