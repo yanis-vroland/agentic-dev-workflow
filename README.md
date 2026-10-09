@@ -19,7 +19,7 @@ Version de Claude Code testée : **2.1.291**, le 2026-10-08.
 | [shellcheck](https://www.shellcheck.net) | vérification des scripts shell | seule la CI les vérifie |
 | [gh](https://cli.github.com) | GitHub en ligne de commande | configuration GitHub à faire dans l'interface web |
 
-La CI installe elle-même gitleaks en version fixée, avec vérification de sa somme de contrôle.
+La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec le fichier d'empreintes publié avec la release. Sur ce template, Renovate propose les nouvelles versions par PR (`renovate.json`).
 
 ## Installation
 
@@ -119,7 +119,7 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 - **Accès indirects :** `protect-secrets.sh` ne détecte pas un accès aux `.env` sans mention littérale, par une variable (`f=.env; cat "$f"`), un motif (`cat .e*`) ou un lien symbolique.
 - **Refus par prudence :** certaines commandes légitimes sont refusées quand elles citent `.env` : un heredoc ou un `$(…)`, `git commit -am`, ou `sudo` et `env` devant `git` ou `gh`. Contournement : `git commit -F <fichier>` et `gh … --body-file <fichier>`.
 - La référence pour ces cas est la [spec 002](docs/specs/002-hook-protect-secrets.md) (règles et section « Hors périmètre »), vérifiée par `tests/hooks.sh`.
-- **Version de gitleaks :** la mise à jour est manuelle. Il faut changer ensemble `GITLEAKS_VERSION` et `GITLEAKS_SHA256` dans `garde-fous.yml`, et la version installée en local.
+- **Version de gitleaks :** sur ce template, Renovate propose la mise à jour de `GITLEAKS_VERSION` dans `garde-fous.yml`. La version installée en local se met à jour à la main (`brew upgrade gitleaks`). Dans un projet initialisé, `renovate.json` n'est pas copié : la mise à jour y reste manuelle. L'empreinte de l'archive vient du fichier publié avec la release : elle protège d'un téléchargement corrompu, pas d'une release compromise.
 
 **Processus**
 - **Merge :** « seul l'humain merge » ([ADR-002](docs/adr/002-place-revue-humaine.md)) est une règle de travail, pas une protection technique. Le ruleset impose une PR et des vérifications vertes, mais un agent qui dispose des droits de l'humain via `gh` pourrait merger.
@@ -149,6 +149,7 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `docs/journal.md` | journal de bord : ce que l'agent a bien fait, ce qui a été corrigé, les limites |
 | `docs/guide-adoption.md` | introduire le template dans une équipe : rôles, rituels, démarrage progressif |
 | `scripts/init.sh` | application du template à un projet existant |
+| `renovate.json` | mises à jour proposées par Renovate : gitleaks et `claude-code-action` (non copié par `init.sh`) |
 | `tests/` | tests des hooks, du pre-commit, de la vérification de la revue et de `init.sh` |
 
 ## Licence
