@@ -26,6 +26,7 @@ Créés s'ils sont absents, jamais copiés depuis le template :
 
 - `docs/adr/` et `docs/specs/`, chacun avec un `.gitkeep` ;
 - `docs/journal.md`, avec l'en-tête du journal et sans entrée.
+- `docs/cahier-des-charges-fonctionnel.md` et `docs/architecture-technique.md`, à partir de leurs modèles (ajout de la spec 003).
 
 Ajoutés au `.gitignore` de la cible, seulement s'ils manquent : `.env`, `.env.*`, `!.env.example`, `.claude/settings.local.json`.
 
