@@ -38,6 +38,7 @@ Contexte projet pour l'agent de code. Les sections marquées « À ADAPTER » so
 3. Ne jamais modifier ou supprimer un test pour le faire passer sans le signaler explicitement.
 4. Face à un choix d'architecture structurant, s'arrêter et proposer un ADR dans `docs/adr/` au lieu de trancher seul. L'agent peut rédiger l'ADR en entier, au statut « proposé » ; il ne passe à « accepté » et n'est mergé qu'après validation humaine ([ADR-002](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/adr/002-place-revue-humaine.md)).
 5. Après la revue IA d'une PR, et une fois les corrections poussées, publier un commentaire `## Réponse à la revue IA` dans la PR. Chaque point du rapport y reçoit une suite : corrigé (avec le SHA du commit), non suivi et pourquoi, ou reporté (avec l'issue). La description de la PR renvoie vers ce commentaire sans le répéter. Ne pas se contenter de modifier la description : cela ne laisse aucune trace dans la chronologie et ne notifie personne.
+6. PR : toujours basée sur `main` (`gh pr create --base main`), jamais sur la branche d'une autre PR ; si un travail dépend d'une PR non mergée, attendre son merge ou regrouper les deux. Une PR qui touche les mêmes fichiers qu'une PR encore ouverte est rebasée par l'agent après le merge de la première, au lieu de laisser la résolution du conflit à l'humain. Pousser tous les commits avant d'annoncer qu'une PR est prête, et vérifier après le merge que son dernier commit est bien sur `main`.
 
 ## Reprise de session
 
