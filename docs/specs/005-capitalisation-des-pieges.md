@@ -9,7 +9,7 @@ En tant que développeur qui confie des fonctionnalités à l'agent, je veux que
 
 Constats d'origine (2026-10-11) :
 
-- `/implement` s'arrête quand les tests automatiques passent. Rien n'oblige à vérifier la fonctionnalité dans l'application démarrée, où apparaissent les erreurs que ni la spec ni les tests n'avaient prévues : valeur par défaut non propagée, mécanisme existant non réutilisé, ordre d'appel non évident.
+- `/implement` s'arrête quand les tests automatiques passent. Rien n'oblige à vérifier la fonctionnalité dans l'application démarrée, où apparaissent les erreurs que ni la spec ni les tests n'avaient prévues. Par exemple, sur FieldOps : une règle métier appliquée sur un seul chemin (quantité disponible recalculée à la création d'une réservation, pas à son annulation), une convention commune non réutilisée (pagination de l'API), un ordre non évident (données fictives chargées avant la migration).
 - Quand un tel piège est corrigé, la leçon finit dans la rubrique « Corrections et limites » du journal de la branche. Ce journal décrit l'état d'une branche : personne ne le relit au cadrage d'une fonctionnalité voisine. L'agent redécouvre donc le même piège plus tard.
 
 ## Principes
@@ -32,7 +32,7 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 
 ## Les pièges : `docs/learnings/`
 
-- **Un fichier par piège** : `docs/learnings/<slug>.md`, où `<slug>` décrit le piège en kebab-case (exemple : `valeur-par-defaut-non-propagee.md`).
+- **Un fichier par piège** : `docs/learnings/<slug>.md`, où `<slug>` décrit le piège en kebab-case (exemple : `quantite-disponible-non-recalculee-a-l-annulation.md`).
 - **Contenu** : un titre `# <titre actionnable>`, une ligne `Domaine :` (un terme du glossaire ou un module de l'architecture technique, sinon `transverse`), une ligne `Statut :` (`actif`, `promu` ou `obsolète`), une ligne `Date :`, puis cinq rubriques :
   - **Symptôme** : ce que l'humain a observé au test ;
   - **Cause racine** : le mécanisme, pas le symptôme ;

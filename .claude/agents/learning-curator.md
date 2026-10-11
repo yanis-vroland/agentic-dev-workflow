@@ -16,7 +16,11 @@ N'écris rien pour :
 - une règle déjà écrite dans `CLAUDE.md`, un skill ou un subagent : signale alors la règle existante qui n'a pas été appliquée ;
 - une préférence de travail de l'humain : c'est une règle pour `CLAUDE.md`, à proposer par une PR, pas un piège.
 
-À capturer : un piège qui se reproduira sur une fonctionnalité analogue (mécanisme existant non réutilisé, valeur par défaut non propagée, contrat implicite, ordre d'appel non évident, effet de bord d'un composant partagé).
+À capturer : un piège qui se reproduira sur une fonctionnalité analogue. Exemples, sur un projet de maintenance industrielle :
+- règle métier appliquée sur un seul chemin : la quantité disponible d'une pièce est recalculée à la création d'une réservation, mais pas à son annulation ;
+- convention commune non réutilisée : une nouvelle liste ne passe pas par la pagination commune de l'API et renvoie toutes les lignes ;
+- ordre non évident : les données fictives sont chargées avant la migration qui crée leur table ;
+- contrat implicite entre deux briques : l'application mobile attend le code de machine en majuscules, l'API l'accepte en minuscules.
 
 En cas de doute, n'écris rien : un store maigre et fiable vaut mieux qu'un store gonflé.
 

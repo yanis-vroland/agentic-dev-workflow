@@ -64,3 +64,21 @@ Branche `docs/spec-005-capitalisation-des-pieges`.
 
 - Relecture de la PR #35 par Yanis, puis merge.
 - Reporter la chaîne dans FieldOps (`init.sh --force` sur les fichiers de la chaîne) et y exercer CA12 sur la prochaine fonctionnalité.
+
+## 2026-10-11 21:27
+
+### Fait
+
+- Exemples de pièges de la spec 005 et de `learning-curator` remplacés par des exemples tirés du glossaire de FieldOps (réservation, quantité disponible, pagination, migration, code de machine).
+
+### Décisions
+
+- Exemples ancrés dans FieldOps plutôt qu'abstraits (Yanis).
+
+### Corrections et limites
+
+- Les exemples précédents étaient génériques mais inspirés d'un cas observé hors de ce dépôt : remplacés pour qu'aucune ressemblance ne subsiste.
+
+### Prochaine étape
+
+- Relecture de la PR #35 par Yanis, puis merge.
