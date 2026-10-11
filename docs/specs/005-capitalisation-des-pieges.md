@@ -1,6 +1,6 @@
 # Spec 005 : test humain et capitalisation des pièges
 
-Statut : brouillon
+Statut : validée
 Date : 2026-10-11
 
 ## Besoin
@@ -22,7 +22,7 @@ Constats d'origine (2026-10-11) :
 
 ## Test humain dans `/implement`
 
-Nouvelle étape, après « lint et tests au vert » et avant la mise à jour des documents de référence :
+Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, après « lint et tests au vert » et avant la mise à jour des documents de référence :
 
 1. L'agent demande à l'humain de tester la fonctionnalité dans l'application démarrée. Il propose les scénarios à jouer : le parcours nominal et chaque cas limite de la spec. Il attend le retour.
 2. **Retour négatif** (bug, comportement inattendu, configuration manquante) : l'agent consigne le symptôme rapporté, cherche la cause, ajoute un test qui échoue sur ce cas, corrige jusqu'au vert, puis redemande un test. Il ne considère jamais un correctif comme suffisant sans un nouveau retour, quel que soit le nombre de boucles.
@@ -87,7 +87,7 @@ Nouvelle étape, après « lint et tests au vert » et avant la mise à jour des
 
 ### Démonstration
 
-- CA12 : Avant le merge, la chaîne est exercée une fois en vrai sur FieldOps : une fonctionnalité avec au moins une boucle négative produit un fichier de piège, cité dans la PR FieldOps. Sans ce cas réel, la spec n'est pas « livrée ».
+- CA12 : La chaîne est exercée une fois en vrai sur FieldOps : une fonctionnalité avec au moins une boucle négative produit un fichier de piège, cité dans la PR FieldOps et dans le README du template. C'est la condition du statut « livrée », pas du merge.
 
 ## Cas limites et erreurs
 
@@ -104,8 +104,13 @@ Nouvelle étape, après « lint et tests au vert » et avant la mise à jour des
 - Capitalisation à partir des corrections de l'humain en revue (label `agent-corrigé`) ou des points de la revue IA : seule la boucle de test humain déclenche la capitalisation, pour garder un signal fiable.
 - Recherche sémantique dans les pièges : un `grep` par domaine et par chemin suffit à ce volume.
 
+## Décisions (validation de Yanis, 2026-10-11)
+
+- Le test humain s'applique aux nouvelles fonctionnalités comme aux corrections : toute correction change un comportement observable.
+- CA12 conditionne le statut « livrée » de la spec, pas le merge, pour ne pas bloquer le template sur FieldOps.
+- Pas de piège d'exemple fictif dans le template : le premier vrai piège de FieldOps sert d'exemple, cité dans le README.
+- Un fichier par piège, pour éviter les conflits entre PR (même principe que la spec 004).
+
 ## Questions ouvertes
 
-- Le test humain s'applique-t-il aussi aux corrections (`fix`), ou seulement aux nouvelles fonctionnalités ? Proposition : aux deux, puisque toute correction change un comportement observable.
-- CA12 (démonstration sur FieldOps avant le merge) : condition du merge, ou seulement du passage au statut « livrée » ? Proposition : condition du statut « livrée », pour ne pas bloquer le template sur FieldOps.
-- Faut-il un premier fichier de piège d'exemple dans le template (fictif, retiré par `init.sh`), pour montrer le format au lecteur du dépôt ? Proposition : non, le premier vrai piège de FieldOps sert d'exemple, cité dans le README.
+- Aucune.
