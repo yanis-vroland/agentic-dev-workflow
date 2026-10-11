@@ -19,6 +19,7 @@ Méthode :
    - Sécurité : validation des entrées, secrets, injections, contrôle des droits.
    - Journal : une PR de travail de l'agent ajoute ou complète le fichier de journal de sa branche (`docs/journal/`), avec une « Prochaine étape » exploitable par une nouvelle session. Son absence est « À corriger ».
    - Documents de référence (section du même nom dans `CLAUDE.md`) : si la PR ajoute une fonctionnalité, change un acteur, un droit, un terme ou une règle métier, `docs/cahier-des-charges-fonctionnel.md` doit être mis à jour dans la PR ; si elle change le modèle de données, un contrat, la sécurité ou l'infrastructure, ou accepte un ADR, `docs/architecture-technique.md` aussi. Un oubli est « À corriger ». Une contradiction avec le glossaire ou une règle métier du cahier des charges est « À corriger », sauf si la PR met le cahier à jour en conséquence.
+   - Pièges (`docs/learnings/`, [spec 005](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/005-capitalisation-des-pieges.md)) : un changement qui enfreint la règle d'un piège `actif` dont le domaine ou la rubrique « Où » le concerne est « À corriger ». Un piège ajouté qui double un piège existant est « À corriger » : fusionner dans cette PR.
    - Hors périmètre : tout code qui ne répond à aucun critère d'acceptation (ou, sans spec, à aucun point annoncé dans la PR).
    - Maintenabilité : nommage, duplication, complexité.
 3. Rends un rapport classé en trois niveaux, Bloquant, À corriger et Suggestion, avec pour chaque point le fichier, la ligne et la correction proposée.

@@ -118,7 +118,7 @@ done
 
 # --- Dossiers et journal du projet (jamais écrasés) --------------------------
 
-for dir in docs/adr docs/specs docs/journal; do
+for dir in docs/adr docs/specs docs/journal docs/learnings; do
   mkdir -p "$target/$dir"
   if [ -z "$(ls -A "$target/$dir")" ]; then
     : >"$target/$dir/.gitkeep"

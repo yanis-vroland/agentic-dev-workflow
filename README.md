@@ -31,7 +31,7 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
    ```bash
    git rm docs/adr/001-authentification-ci.md docs/specs/001-script-init.md \
      docs/specs/002-hook-protect-secrets.md docs/specs/003-documents-de-reference.md \
-     docs/specs/004-reprise-de-session.md scripts/init.sh tests/init-script.sh .github/workflows/template-ci.yml
+     docs/specs/004-reprise-de-session.md docs/specs/005-capitalisation-des-pieges.md scripts/init.sh tests/init-script.sh .github/workflows/template-ci.yml
    ```
 
 3. Vider le journal du template (un fichier par branche, créé par l'agent au premier commit) :
@@ -73,7 +73,7 @@ Le script :
 
 - copie les garde-fous, les skills, les workflows génériques, le modèle de PR et `CLAUDE.md` ;
 - n'écrase aucun fichier existant sans `--force`, et liste ceux qu'il a ignorés ;
-- crée `docs/adr/`, `docs/specs/`, `docs/journal/` et les deux documents de référence (cahier des charges fonctionnel, architecture technique) ; si un `docs/journal.md` existe déjà, il propose la commande `git mv` pour le migrer ;
+- crée `docs/adr/`, `docs/specs/`, `docs/journal/`, `docs/learnings/` et les deux documents de référence (cahier des charges fonctionnel, architecture technique) ; si un `docs/journal.md` existe déjà, il propose la commande `git mv` pour le migrer ;
 - complète le `.gitignore` (`.env`, `.env.*`, `!.env.example`, `.claude/settings.local.json`) ;
 - active `core.hooksPath` ;
 - affiche à la fin les étapes manuelles restantes.
@@ -106,6 +106,7 @@ Compléter les sections **« À ADAPTER »** de `CLAUDE.md` : description du pro
 - **Hook `pre-commit`** (Git) : gitleaks analyse les fichiers indexés et refuse le commit si un secret est détecté. Il se contourne avec `git commit --no-verify` : le vrai filet de sécurité est le job CI « Détection de secrets », qui analyse tout l'historique.
 - **Revue IA** : chaque PR ouverte est relue selon `.claude/agents/reviewer.md`, et le rapport est publié en commentaire. Le job échoue si la revue n'a pas tourné ou si des actions ont été refusées pendant la revue. Une PR qui modifie `ai-review.yml` ne peut pas être relue par l'IA (protection de `claude-code-action`) : son job « Revue IA » est rouge, et elle se relit à la main.
 - **Journal sans conflit** : un fichier de journal par branche (`docs/journal/`), jamais modifié après son merge. Le job CI « Journal » refuse une PR qui touche un journal déjà mergé, ou dont les noms et les dates sont invalides. Deux PR ne peuvent donc pas entrer en conflit sur le journal. Comportement détaillé : [`docs/specs/004-reprise-de-session.md`](docs/specs/004-reprise-de-session.md).
+- **Test humain et pièges** : `/implement` ne termine qu'après un test humain positif dans l'application démarrée. Chaque retour négatif ajoute un test qui échoue, puis un correctif, puis un nouveau test humain. Après au moins une boucle négative, le subagent `learning-curator` capitalise le piège dans `docs/learnings/` (un fichier par piège, seulement s'il se généralise). `/spec`, `/implement` et le reviewer relisent les pièges actifs au cadrage suivant. Comportement détaillé : [`docs/specs/005-capitalisation-des-pieges.md`](docs/specs/005-capitalisation-des-pieges.md).
 - **Début de session** : le hook `session-start.sh` récupère `origin` et avance la branche seulement si l'arbre est propre et qu'aucune divergence n'existe. Il ne rebase et ne fusionne jamais.
 
 ## Limites
@@ -127,6 +128,7 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 
 **Processus**
 - **Reprise de session :** une session fermée sans prévenir perd le travail non committé, car l'agent ne peut pas agir à la fermeture (spec 004). La mémoire locale est désactivée par `.claude/settings.json`, mais un réglage personnel (`.claude/settings.local.json`) peut la réactiver.
+- **Test humain et pièges :** le test humain et la capitalisation sont des règles de travail (`/implement`, `CLAUDE.md`), pas des vérifications de CI : rien n'empêche techniquement de les sauter, seul le reviewer le signale. `learning-curator` n'a pas `Bash`, mais rien ne l'empêche techniquement d'écrire hors de `docs/learnings/` : la relecture de la PR le vérifie.
 - **Merge :** « seul l'humain merge » ([ADR-002](docs/adr/002-place-revue-humaine.md)) est une règle de travail, pas une protection technique. Le ruleset impose une PR et des vérifications vertes, mais un agent qui dispose des droits de l'humain via `gh` pourrait merger.
 
 ## Structure
@@ -143,6 +145,7 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `.claude/skills/review/` | `/review` : relire la branche avant la PR |
 | `.claude/agents/reviewer.md` | subagent de revue, utilisé aussi par la revue IA en CI |
 | `.claude/agents/test-writer.md` | subagent qui écrit les tests à partir des critères d'acceptation |
+| `.claude/agents/learning-curator.md` | subagent qui capitalise un piège découvert au test humain, sans `Bash` |
 | `.githooks/pre-commit` | détection de secrets avant chaque commit |
 | `.github/workflows/garde-fous.yml` | CI générique : tests des hooks, test du pre-commit, détection de secrets, contrôle du journal |
 | `.github/workflows/ai-review.yml` | revue IA de chaque PR |
@@ -156,6 +159,7 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `docs/specs/` | specs du projet |
 | `docs/adr/` | décisions d'architecture |
 | `docs/journal/` | journal de bord, un fichier par branche, entrées datées : fait, décisions, corrections et limites, prochaine étape ; sert à reprendre une session |
+| `docs/learnings/` | pièges découverts au test humain, un fichier par piège : symptôme, cause racine, règle pour la prochaine fois ; relus au cadrage |
 | `docs/guide-adoption.md` | introduire le template dans une équipe : rôles, rituels, démarrage progressif |
 | `scripts/init.sh` | application du template à un projet existant |
 | `renovate.json` | mises à jour proposées par Renovate : gitleaks et `claude-code-action` (non copié par `init.sh`) |

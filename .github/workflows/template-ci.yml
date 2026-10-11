@@ -41,5 +41,13 @@ jobs:
           done
           exit $fail
 
+      - name: Outils du subagent learning-curator, sans Bash (spec 005)
+        run: |
+          tools=$(sed -n 's/^tools: *//p' .claude/agents/learning-curator.md)
+          if [ "$tools" != "Read, Grep, Glob, Write, Edit" ]; then
+            echo "Outils inattendus pour learning-curator : « $tools »"
+            exit 1
+          fi
+
       - name: Test du script d'initialisation
         run: bash tests/init-script.sh

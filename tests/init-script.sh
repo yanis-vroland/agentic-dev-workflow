@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Vérifie scripts/init.sh selon la spec docs/specs/001-script-init.md, modifiée
-# par la section « Application par init.sh » de docs/specs/004-reprise-de-session.md.
+# par la section « Application par init.sh » de docs/specs/004-reprise-de-session.md,
+# et par les critères CA1 à CA3 de docs/specs/005-capitalisation-des-pieges.md.
 # Chaque vérification cite le critère d'acceptation (CAn) ou le cas limite testé.
 # CA20 n'est pas couvert ici : il est vérifié par la CI elle-même.
 # Les fonctions de vérification sont appelées via check, que shellcheck ne suit pas.
@@ -666,5 +667,35 @@ check "Spec 003 CA4 : cahier des charges existant non modifié" \
   same_file "$work/cahier-before.md" "$t/docs/cahier-des-charges-fonctionnel.md"
 check "Spec 003 CA4 : architecture technique créée à partir du modèle" \
   same_file "$template/docs/templates/architecture-technique.md" "$t/docs/architecture-technique.md"
+
+# --- Spec 005 : dossier des pièges et subagent learning-curator ----------------
+
+t=$(new_repo)
+run_init "$t"
+check_code 0 "Spec 005 CA1 : code de sortie 0"
+check "Spec 005 CA1 : docs/learnings/.gitkeep créé" test -f "$t/docs/learnings/.gitkeep"
+check "Spec 005 CA1 : .claude/agents/learning-curator.md copié" \
+  same_file "$template/.claude/agents/learning-curator.md" "$t/.claude/agents/learning-curator.md"
+# Les pièges du template ne concernent pas la cible : seul .gitkeep est créé
+check "Spec 005 CA2 : aucun piège du template copié" \
+  equal ".gitkeep" "$(ls -A "$t/docs/learnings" 2>/dev/null)"
+
+for option in "" "--force"; do
+  label=${option:-sans --force}
+  t=$(new_repo)
+  mkdir -p "$t/docs/learnings"
+  printf '# Piège du projet\n\nStatut : actif\n' >"$t/docs/learnings/piege-du-projet.md"
+  cp "$t/docs/learnings/piege-du-projet.md" "$work/piege-before.md"
+  if [ -n "$option" ]; then
+    run_init "$t" "$option"
+  else
+    run_init "$t"
+  fi
+  check_code 0 "Spec 005 CA3 : code de sortie 0 ($label)"
+  check "Spec 005 CA3 : piège existant non modifié ($label)" \
+    same_file "$work/piege-before.md" "$t/docs/learnings/piege-du-projet.md"
+  check "Spec 005 CA3 : pas de .gitkeep ajouté à un dossier non vide ($label)" \
+    not_exists "$t/docs/learnings/.gitkeep"
+done
 
 exit $fail
