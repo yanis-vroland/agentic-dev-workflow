@@ -44,7 +44,7 @@ Contexte projet pour l'agent de code. Les sections marquées « À ADAPTER » so
 
 Le dépôt est la seule mémoire : une session doit pouvoir être fermée à tout moment et reprise plus tard, sur n'importe quel poste, sans perte ([spec 004](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/004-reprise-de-session.md)).
 
-- Ne jamais enregistrer une règle, une décision ou un état dans la mémoire locale de Claude Code (désactivée par `autoMemoryEnabled` dans `.claude/settings.json`). Une règle de travail va dans `CLAUDE.md`, un skill ou un subagent, par une PR ; un état va dans le journal de la branche.
+- Ne jamais enregistrer une règle, une décision ou un état dans la mémoire locale de Claude Code (désactivée par `autoMemoryEnabled` dans `.claude/settings.json`). Une règle de travail va dans `CLAUDE.md`, un skill ou un subagent, par une PR ; un état va dans le journal de la branche ; un piège du code découvert au test humain va dans `docs/learnings/` (un fichier par piège), relu au cadrage des fonctionnalités suivantes.
 - Journal : un fichier par branche, `docs/journal/AAAA-MM-JJ-<branche>.md` (`/` remplacés par `-`, date de création), créé au premier commit de la branche. Chaque entrée commence par `## AAAA-MM-JJ HH:MM` (heure locale) et contient quatre rubriques : **Fait**, **Décisions** (et qui a décidé), **Corrections et limites**, **Prochaine étape**.
 - À chaque commit de travail : ajouter une entrée ou compléter celle du jour dans le même commit, puis pousser la branche.
 - Ne jamais modifier le fichier de journal d'une autre branche, ni un fichier déjà mergé : la CI le refuse (`verifier-journal.sh`).
@@ -54,6 +54,8 @@ Le dépôt est la seule mémoire : une session doit pouvoir être fermée à tou
 
 - Chaque critère d'acceptation de la spec est couvert par au moins un test.
 - Lint, format et tests au vert.
+- Test humain positif dans l'application démarrée, pour une fonctionnalité comme pour une correction, ou son impossibilité consignée dans le journal et la PR ([spec 005](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/005-capitalisation-des-pieges.md)).
+- Après une boucle négative au test humain : piège capitalisé dans `docs/learnings/` par le subagent `learning-curator`, ou « rien écrit » motivé dans le journal.
 - Aucun TODO sans ticket associé.
 - Entrée de journal de la branche à jour et poussée.
 - Documentation mise à jour si un comportement public change, dont le cahier des charges et l'architecture technique (section « Documents de référence »).

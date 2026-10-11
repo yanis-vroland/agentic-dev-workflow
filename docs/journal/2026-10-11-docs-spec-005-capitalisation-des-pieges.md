@@ -42,3 +42,25 @@ Branche `docs/spec-005-capitalisation-des-pieges`.
 ### Prochaine étape
 
 - Implémenter : `init.sh`, subagent `learning-curator`, `/implement`, `/spec`, `reviewer`, `CLAUDE.md`, modèle de PR, README. Puis contrôle par mutation de l'étape CI.
+
+## 2026-10-11 21:20
+
+### Fait
+
+- Implémentation : `init.sh` crée `docs/learnings/` ; subagent `learning-curator` (sans `Bash`) ; `/implement` (relecture des pièges, test humain avec boucle, capitalisation) ; `/spec` (relecture des pièges) ; `reviewer` (pièges enfreints ou doublons) ; définition du « done » de `CLAUDE.md` ; modèle de PR ; README (garde-fous, limites, structure, fichiers à retirer).
+- `tests/init-script.sh` : 225 vérifications au vert. Étape CI CA4 au vert. shellcheck au vert.
+- Contrôle par mutation : `Bash` ajouté aux outils de `learning-curator` → détecté par l'étape CI ; `docs/learnings` retiré de `init.sh` → 2 échecs (CA1, CA2).
+
+### Décisions
+
+- Rien de nouveau.
+
+### Corrections et limites
+
+- Le premier passage des tests échouait sur CA1 : `init.sh` ne copie que les fichiers suivis par Git, il fallait indexer le nouveau subagent. Comportement voulu (spec 001, CA22), pas un défaut.
+- CA5 à CA11 sont des consignes, vérifiées par relecture humaine. CA12 (vrai piège sur FieldOps) reste à faire : la spec n'est pas « livrée » tant qu'il manque.
+
+### Prochaine étape
+
+- Relecture de la PR #35 par Yanis, puis merge.
+- Reporter la chaîne dans FieldOps (`init.sh --force` sur les fichiers de la chaîne) et y exercer CA12 sur la prochaine fonctionnalité.

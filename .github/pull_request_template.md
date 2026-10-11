@@ -29,10 +29,14 @@ Spec : docs/specs/<nom>.md, ou « aucune (pas de changement de comportement) »
 
 - [ ] 
 
+Test humain dans l'application démarrée : positif après N boucle(s) négative(s), ou impossible (raison).
+
 ## Corrections apportées au travail de l'agent
 
 <!-- Code de l'agent refusé, réécrit ou corrigé, et pourquoi. « Aucune » sinon.
      S'il y en a, ajoute le label `agent-corrigé` à cette PR. -->
+
+Pièges créés ou enrichis dans `docs/learnings/` : liens, ou « aucun ».
 
 ## Points d'attention pour la revue
 

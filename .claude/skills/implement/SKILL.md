@@ -9,9 +9,16 @@ Implémente la spec : $ARGUMENTS
 
 1. Vérifie que la spec a le statut « validée ». Sinon, arrête-toi et dis-le.
 2. Crée une branche `feat/<nom-court>` depuis `main` à jour, et son fichier de journal (section « Reprise de session » de `CLAUDE.md`). À chaque commit, ajoute ou complète l'entrée du jour, puis pousse la branche.
-3. Délègue au subagent `test-writer` l'écriture des tests couvrant chaque critère d'acceptation.
-4. Lance les tests et montre-moi qu'ils échouent pour la bonne raison. Attends mon accord avant d'implémenter.
-5. Implémente le minimum pour faire passer les tests. Ne modifie aucun test : si un test te semble faux, arrête-toi et explique pourquoi.
-6. Lance le lint et les tests jusqu'au vert.
-7. Mets à jour les documents de référence (section « Documents de référence » de `CLAUDE.md`) : statut « livrée » de la fonctionnalité dans le cahier des charges, et architecture technique si le modèle de données, un contrat, la sécurité ou l'infrastructure a changé.
-8. Termine par un récapitulatif : chaque critère et son ou ses tests, les documents de référence mis à jour, les fichiers modifiés, les dépendances ajoutées et pourquoi, les points d'attention pour la revue.
+3. Lis les pièges `actif` de `docs/learnings/` dont le domaine ou la rubrique « Où » recoupe la spec. Chaque règle qui s'applique devient un test ou une consigne transmise au subagent `test-writer`.
+4. Délègue au subagent `test-writer` l'écriture des tests couvrant chaque critère d'acceptation.
+5. Lance les tests et montre-moi qu'ils échouent pour la bonne raison. Attends mon accord avant d'implémenter.
+6. Implémente le minimum pour faire passer les tests. Ne modifie aucun test : si un test te semble faux, arrête-toi et explique pourquoi.
+7. Lance le lint et les tests jusqu'au vert.
+8. Test humain ([spec 005](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/005-capitalisation-des-pieges.md)) : tu n'as pas accès à l'application démarrée, tu ne peux donc ni simuler ni sauter cette étape.
+   - Demande-moi de tester dans l'application démarrée, en proposant les scénarios : le parcours nominal et chaque cas limite de la spec. Attends mon retour.
+   - Retour négatif : consigne le symptôme, cherche la cause, ajoute un test qui échoue sur ce cas, corrige jusqu'au vert, puis redemande-moi un test. Un correctif n'est jamais suffisant sans un nouveau retour, quel que soit le nombre de boucles. Si la cause révèle un cas que la spec n'avait pas prévu, complète la spec.
+   - Consigne chaque boucle négative dans la rubrique « Corrections et limites » du journal : symptôme, cause, correctif et commit.
+   - Si je déclare le test impossible, consigne-le dans le journal et dans la section « Ce que l'humain a vérifié » de la PR, puis continue.
+9. Après un retour positif précédé d'au moins une boucle négative, ou si je te demande de retenir quelque chose, délègue au subagent `learning-curator` la capitalisation : spec, branche, symptôme, cause, correctif et date du jour. Le fichier de piège est committé dans la branche. Sans boucle négative, n'invoque pas le subagent.
+10. Mets à jour les documents de référence (section « Documents de référence » de `CLAUDE.md`) : statut « livrée » de la fonctionnalité dans le cahier des charges, et architecture technique si le modèle de données, un contrat, la sécurité ou l'infrastructure a changé.
+11. Termine par un récapitulatif : chaque critère et son ou ses tests, le résultat du test humain et le nombre de boucles, les pièges appliqués et les pièges créés ou enrichis, les documents de référence mis à jour, les fichiers modifiés, les dépendances ajoutées et pourquoi, les points d'attention pour la revue.
