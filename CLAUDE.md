@@ -14,6 +14,8 @@ Contexte projet pour l'agent de code. Les sections marquées « À ADAPTER » so
 - Tests : `pnpm test`
 - Lint : `pnpm lint`
 
+Les hooks de Claude Code lisent les commandes de lint (sur un fichier) et de tests dans `.claude/quality.json`, à tenir à jour avec cette section ([spec 006](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/006-revue-securite-et-hooks-qualite.md)) : clés `lint` et `test`, vides tant qu'elles ne sont pas déclarées.
+
 ## Langue
 
 - Code en anglais : variables, fonctions, classes, entités, tables, routes d'API.

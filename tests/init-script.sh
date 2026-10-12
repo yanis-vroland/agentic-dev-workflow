@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Vérifie scripts/init.sh selon la spec docs/specs/001-script-init.md, modifiée
 # par la section « Application par init.sh » de docs/specs/004-reprise-de-session.md,
-# et par les critères CA1 à CA3 de docs/specs/005-capitalisation-des-pieges.md.
+# par les critères CA1 à CA3 de docs/specs/005-capitalisation-des-pieges.md,
+# et par les critères CA17, CA18 et CA23 de docs/specs/006-revue-securite-et-hooks-qualite.md.
 # Chaque vérification cite le critère d'acceptation (CAn) ou le cas limite testé.
 # CA20 n'est pas couvert ici : il est vérifié par la CI elle-même.
 # Les fonctions de vérification sont appelées via check, que shellcheck ne suit pas.
@@ -46,11 +47,13 @@ copied=(
   .github/scripts/verifier-journal.sh
   tests/verifier-journal.sh
 )
-# Seuls les fichiers suivis par Git sont copiés (CA22)
+# Seuls les fichiers suivis par Git sont copiés (CA22). Spec 006 CA17 :
+# .claude/quality.json n'est pas copié mais créé avec des clés vides, il est
+# donc exclu de cette liste (vérifié dans la section « Spec 006 »).
 while IFS= read -r file; do
   copied+=("$file")
 done < <(git -C "$template" ls-files -- .claude .githooks docs/templates |
-  grep -vxF .claude/settings.local.json | LC_ALL=C sort)
+  grep -vxF -e .claude/settings.local.json -e .claude/quality.json | LC_ALL=C sort)
 
 # Entrées attendues dans le .gitignore de la cible
 gitignore_entries=(".env" ".env.*" "!.env.example" ".claude/settings.local.json")
@@ -696,6 +699,52 @@ for option in "" "--force"; do
     same_file "$work/piege-before.md" "$t/docs/learnings/piege-du-projet.md"
   check "Spec 005 CA3 : pas de .gitkeep ajouté à un dossier non vide ($label)" \
     not_exists "$t/docs/learnings/.gitkeep"
+done
+
+# --- Spec 006 : revue de sécurité et hooks de lint et de tests ---------------
+
+# Contenu de .claude/quality.json : les deux clés, vides
+quality_keys_empty() {
+  jq -e 'keys == ["lint", "test"] and .lint == "" and .test == ""' "$1" >/dev/null 2>&1
+}
+
+t=$(new_repo)
+run_init "$t"
+check_code 0 "Spec 006 CA17 : code de sortie 0"
+for file in .claude/agents/security-reviewer.md .claude/hooks/lint.sh \
+  .claude/hooks/run-tests.sh tests/quality-hooks.sh; do
+  check "Spec 006 CA17 : $file copié" same_file "$template/$file" "$t/$file"
+done
+for file in .claude/hooks/lint.sh .claude/hooks/run-tests.sh tests/quality-hooks.sh; do
+  check "Spec 006 CA17 : $file exécutable" is_executable "$t/$file"
+done
+check "Spec 006 CA17 : .claude/quality.json créé" test -f "$t/.claude/quality.json"
+# Celui du template déclare ses propres commandes (CA23) : elles ne sont pas reprises
+check "Spec 006 CA17 : .claude/quality.json avec les deux clés vides" \
+  quality_keys_empty "$t/.claude/quality.json"
+check "Spec 006 CA23 : précondition, scripts/lint-shell.sh suivi par Git dans le template" \
+  equal "scripts/lint-shell.sh" "$(git -C "$template" ls-files -- scripts/lint-shell.sh)"
+check "Spec 006 CA23 : scripts/lint-shell.sh non copié (garde, voir la précondition)" \
+  not_exists "$t/scripts/lint-shell.sh"
+check "Spec 006 CA23 : tests/lint-shell.sh non copié (garde)" not_exists "$t/tests/lint-shell.sh"
+
+# Sans quality.json suivi dans le template, --force n'aurait rien à écraser
+check "Spec 006 CA18 : précondition, .claude/quality.json suivi par Git dans le template" \
+  equal ".claude/quality.json" "$(git -C "$template" ls-files -- .claude/quality.json)"
+for option in "" "--force"; do
+  label=${option:-sans --force}
+  t=$(new_repo)
+  mkdir -p "$t/.claude"
+  printf '{\n  "lint": "npx eslint",\n  "test": "npm test"\n}\n' >"$t/.claude/quality.json"
+  cp "$t/.claude/quality.json" "$work/quality-before.json"
+  if [ -n "$option" ]; then
+    run_init "$t" "$option"
+  else
+    run_init "$t"
+  fi
+  check_code 0 "Spec 006 CA18 : code de sortie 0 ($label)"
+  check "Spec 006 CA18 : .claude/quality.json existant non modifié ($label)" \
+    same_file "$work/quality-before.json" "$t/.claude/quality.json"
 done
 
 exit $fail
