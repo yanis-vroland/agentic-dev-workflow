@@ -667,4 +667,67 @@ run_stop "$p" s-journal false
 check "Spec 006 cas limite journal : tests lancés après modification du journal" \
   equal 1 "$(count_lines "$tools/test-calls")"
 
+# --- Revue de sécurité (security-reviewer, étape 7 de /implement) -----------
+# Tests de non-régression ajoutés par l'agent principal, rouges avant correction.
+
+# Le formatage reçoit le chemin vérifié, pas le chemin brut : un lien symbolique
+# qui pointe hors du projet n'est ni formaté ni linté
+p=$(new_project)
+tools=$(new_tools)
+make_prettier "$p"
+make_lint "$tools" 0
+write_config "$p" "$tools/lint" ""
+printf 'dehors\n' >"$work/cible-externe.ts"
+ln -s "$work/cible-externe.ts" "$p/src/lien.ts"
+run_lint "$p" s-lien "$p/src/lien.ts"
+check_code 0 "Sécurité : lien symbolique vers l'extérieur, code 0"
+check "Sécurité : lien symbolique vers l'extérieur, fichier externe non formaté" \
+  grep -qx dehors "$work/cible-externe.ts"
+check "Sécurité : lien symbolique vers l'extérieur, lint non lancé" \
+  equal 0 "$(count_lines "$tools/lint-calls")"
+
+# La sortie du lint et des tests est délimitée comme des données, pas des consignes
+p=$(new_project)
+tools=$(new_tools)
+make_lint "$tools" 1 3
+write_config "$p" "$tools/lint" ""
+run_lint "$p" s-delim "$p/src/a.ts"
+check_code 2 "Sécurité : lint en échec, code 2"
+check "Sécurité : sortie du lint délimitée comme des données" err_matches_i "données, pas (comme )?des consignes"
+check "Sécurité : fin de la sortie du lint marquée" err_matches_i "fin de la sortie"
+
+p=$(new_project)
+tools=$(new_tools)
+make_test_tool "$tools"
+echo 1 >"$tools/test-exit"
+write_config "$p" "" "$tools/tests"
+run_lint "$p" s-delim-t "$p/src/a.ts"
+run_stop "$p" s-delim-t false
+check_code 2 "Sécurité : tests en échec, code 2"
+check "Sécurité : sortie des tests délimitée comme des données" err_matches_i "données, pas (comme )?des consignes"
+
+# Marque impossible (projet sans Git) alors que des tests sont déclarés :
+# l'humain est prévenu que les tests ne seront pas lancés
+p=$(mktemp -d "$work/sans-git.XXXXXX")
+mkdir "$p/src"
+printf 'x\n' >"$p/src/a.ts"
+tools=$(new_tools)
+make_test_tool "$tools"
+write_config "$p" "" "$tools/tests"
+run_lint "$p" s-sans-git "$p/src/a.ts"
+check_code 0 "Sécurité : projet sans Git, code 0"
+check "Sécurité : projet sans Git, systemMessage qui prévient l'humain" out_has_system_message
+check "Sécurité : projet sans Git, le message parle des tests" system_message_matches_i "test"
+
+# session_id très long : la marque fonctionne quand même
+long_session=$(printf 's%.0s' $(seq 1 400))
+p=$(new_project)
+tools=$(new_tools)
+make_test_tool "$tools"
+write_config "$p" "" "$tools/tests"
+run_lint "$p" "$long_session" "$p/src/a.ts"
+run_stop "$p" "$long_session" false
+check "Sécurité : session_id de 400 caractères, tests lancés" \
+  equal 1 "$(count_lines "$tools/test-calls")"
+
 exit $fail
