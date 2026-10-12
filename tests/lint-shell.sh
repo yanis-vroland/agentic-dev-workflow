@@ -165,4 +165,10 @@ check_code 0 "Spec 006 CA23 : #! bash hors de la première ligne, code 0"
 check "Spec 006 CA23 : #! bash hors de la première ligne, shellcheck non lancé (garde)" \
   not_exists "$trace"
 
+# Non-régression (vu par le hook de lint sur ce template) : lancé sur un seul
+# fichier, le lint doit suivre un fichier sourcé déclaré par une directive
+# « shellcheck source= », comme le fait shellcheck sur l'ensemble des hooks en CI
+run_lint "$template/.claude/hooks/lint.sh"
+check_code 0 "Spec 006 CA23 : hook qui source quality-common.sh, lint seul au vert"
+
 exit $fail
