@@ -24,3 +24,21 @@ Branche `docs/readme-flux-et-adr-004`.
 ### Prochaine étape
 
 - Relecture de la PR par Yanis, validation ou modification de l'ADR-004, puis merge.
+
+## 2026-10-12 10:29
+
+### Fait
+
+- Réponse à la revue IA de #36 : écarts au processus datés, phrase sous le schéma sur les étapes 2 et 10 de `/implement` qu'il omet.
+
+### Décisions
+
+- Pas d'issue créée pour la spec 003 et la contradiction sur le rebase : leur création revient à Yanis (agent).
+
+### Corrections et limites
+
+- Vérifiés : l'ancre `#configuration-github` existe ; l'ADR-001 parle déjà de Claude ; la CI du template vérifie les outils de `learning-curator`.
+
+### Prochaine étape
+
+- Relecture de la PR par Yanis, validation ou modification de l'ADR-004, puis merge.

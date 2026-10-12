@@ -55,7 +55,7 @@ Chaque étape et le fichier qui la porte :
 | Réponse à la revue IA | règle n°5 de [`CLAUDE.md`](CLAUDE.md) |
 | Merge humain | règle de travail ([ADR-002](docs/adr/002-place-revue-humaine.md)) et ruleset de `main` (voir [Configuration GitHub](#configuration-github)) |
 
-À chaque commit, l'agent complète aussi le journal de sa branche (`docs/journal/`), qui permet de reprendre une session interrompue ([spec 004](docs/specs/004-reprise-de-session.md)).
+Le schéma omet deux étapes de `/implement` sans décision humaine : la création de la branche et de son journal (étape 2), et la mise à jour des documents de référence (étape 10). À chaque commit, l'agent complète aussi le journal de sa branche (`docs/journal/`), qui permet de reprendre une session interrompue ([spec 004](docs/specs/004-reprise-de-session.md)).
 
 ## Prérequis
 
@@ -192,7 +192,7 @@ Les décisions qui ont le plus changé le résultat sont venues de l'humain ([AD
 
 Le contrôle par mutation a trouvé des trous que ni les tests ni la relecture n'avaient vus : une insertion désactivée dans le `.gitignore` (#8), un `grep` manquant qui laissait passer l'action (#11), un compteur non numérique accepté (#12) ([ADR-003](docs/adr/003-strategie-test-first.md)).
 
-**Écarts au processus**
+**Écarts au processus** (constatés au 2026-10-12)
 
 - Le label `agent-corrigé` n'a été posé sur aucune PR, alors que l'humain a corrigé le travail de l'agent sur plusieurs d'entre elles : il ne mesure encore rien.
 - Les PR #31 à #35 n'ont pas de commentaire « Réponse à la revue IA ».
