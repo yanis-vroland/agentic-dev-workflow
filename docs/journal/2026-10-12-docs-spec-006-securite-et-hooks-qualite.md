@@ -128,3 +128,23 @@ Branche `docs/spec-006-securite-et-hooks-qualite`.
 ### Prochaine étape
 
 - Test humain par Yanis dans une session Claude Code ouverte sur cette branche (étape 8 de `/implement`), avec les scénarios proposés.
+
+## 2026-10-12 13:36
+
+### Fait
+
+- Test humain : retour positif de Yanis (« je valide »), sans boucle négative. Le résultat de chaque scénario n'a pas été détaillé.
+- Pas d'appel à `learning-curator` : aucune boucle négative au test humain.
+- Documents de référence : sans objet (spec 003, le template ne se les applique pas).
+
+### Décisions
+
+- Exécution sans demande du code écrit par l'agent : risque documenté dans les Limites, sans interdiction de modifier `.claude/hooks/` ni `.claude/quality.json`. Lu comme accepté dans « je valide » (Yanis, à confirmer à la relecture de la PR).
+
+### Corrections et limites
+
+- Rien de nouveau.
+
+### Prochaine étape
+
+- Relecture et merge de la PR #37 par Yanis. Si la PR #36 est mergée avant, rebaser cette branche (conflit attendu dans le README) avant le merge.
