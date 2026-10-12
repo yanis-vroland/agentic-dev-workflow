@@ -25,3 +25,29 @@ Branche `fix/spec-006-revue-securite`.
 ### Prochaine étape
 
 - Relecture et merge de cette PR par Yanis, puis vérifier que son dernier commit est sur `main`.
+
+## 2026-10-12 13:48
+
+### Fait
+
+- PR #38 ouverte. CI verte, revue IA publiée : rien de bloquant, cinq « À corriger », cinq suggestions. Pas encore de réponse : Yanis clôt la session.
+- Correspondance des SHA : c8eb709, af16026 et 14a9431 (branche de #37, non mergés) sont repris ici en 2b8be8f, 5c7074a et b83d576.
+
+### Décisions
+
+- Corrections reportées à la prochaine session (Yanis clôt la session).
+
+### Corrections et limites
+
+- Rien de nouveau.
+
+### Prochaine étape
+
+- Traiter la revue IA de #38, puis publier « Réponse à la revue IA » (règle n°5) :
+  1. compléter la spec 006 avec des critères pour les cas révélés par la revue de sécurité (lien symbolique vers l'extérieur, avertissement sans marque, identifiant long, sorties délimitées, lint d'un fichier sourcé), et renommer les tests « Sécurité : … » avec leur numéro de critère ;
+  2. documents de référence : non fondé sur le template (spec 003), à expliquer ;
+  3. demander à Yanis un test humain des corrections (lien symbolique, avertissement hors Git, sortie délimitée) ;
+  4. tester le marqueur de fin de la sortie des tests ;
+  5. `lint.sh` valide désormais aussi la clé `test` et ne pose plus la marque si `quality.json` est invalide : tester et documenter, ou revenir à l'ancien ordre.
+- Suggestions à considérer : lien symbolique vers un fichier du projet et chaîne de liens, test « projet sans Git » isolé par `GIT_CEILING_DIRECTORIES`, marqueur de fin aléatoire.
+- Décision de Yanis à consigner : pas d'interdiction de modifier `.claude/hooks/` ni `.claude/quality.json` (confirmer ou non).
