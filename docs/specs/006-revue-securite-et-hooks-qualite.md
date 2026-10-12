@@ -30,6 +30,7 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 - **Référence** : OWASP Top 10, édition 2025 (A01 à A10). Le subagent lit aussi les fichiers voisins du diff quand il en a besoin (contrôle des droits appliqué ailleurs, validation commune, configuration).
 - **Rapport** : trois niveaux, comme le `reviewer` (Bloquant, À corriger, Suggestion). Pour chaque point : catégorie OWASP, fichier et ligne, scénario d'exploitation concret, correction proposée. Un point sans scénario plausible est au plus une suggestion. Si rien n'est à signaler, une ligne.
 - **Invocation** : par `/implement`, nouvelle étape après « lint et tests au vert » et avant le test humain, pour que les correctifs de sécurité passent eux aussi par le test humain. Un point « Bloquant » est corrigé avant de continuer ; les autres sont corrigés ou repris dans « Points d'attention » de la PR.
+- **Fichiers d'environnement** : comme tout agent du projet, il ne lit jamais un fichier `.env*` (Interdits de `CLAUDE.md`), et le hook `protect-secrets` s'applique aussi à ses `Read` et `Grep`.
 - Le `reviewer` garde sa rubrique « Sécurité » : il relit aussi les PR où `/implement` n'a pas servi, et c'est lui qui tourne en CI.
 
 ## Hooks de lint et de tests
@@ -43,9 +44,10 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 }
 ```
 
-- `lint` : commande lancée avec le chemin du fichier modifié en dernier argument.
+- `lint` : commande lancée avec le chemin **absolu** du fichier modifié en dernier argument. Le chemin est passé comme argument séparé, jamais interpolé dans le texte de la commande : un nom de fichier qui commence par `-` ou contient des caractères spéciaux du shell ne peut pas changer la commande.
 - `test` : commande lancée sans argument, depuis la racine du projet.
 - Fichier absent, ou clé absente ou vide : le hook correspondant ne fait rien.
+- Le fichier contient des commandes shell exécutées automatiquement sur le poste de quiconque utilise Claude Code dans le projet, comme `.claude/settings.json`. Il est sous `.claude/` : une PR qui le modifie relève de la relecture intégrale de l'ADR-002.
 - `init.sh` ne copie pas le fichier du template (ses commandes sont celles du template) ; il le crée s'il est absent, avec les deux clés vides, et ne l'écrase jamais, même avec `--force`.
 
 ### Lint : `.claude/hooks/lint.sh`, après chaque modification
@@ -53,7 +55,9 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 - Branché sur `PostToolUse`, pour `Edit|Write|MultiEdit`.
 - Claude Code lance en parallèle les hooks d'un même événement : le lint ne doit pas s'appliquer à un fichier pas encore formaté. Le formatage et le lint s'enchaînent donc dans un ordre garanti (le moyen relève de l'implémentation).
 - Lint en échec : code 2, avec sur stderr le fichier et la fin de la sortie du lint (50 dernières lignes au plus). Claude Code la transmet à l'agent.
+- Commande introuvable : le premier mot de la commande configurée est cherché (`command -v`) avant de la lancer. S'il est introuvable, le hook ne lance rien et ne bloque pas. Une fois la commande lancée, tout code de sortie non nul, 127 compris, est un échec du lint.
 - Toute modification d'un fichier du projet marque les tests « à lancer » pour la fin du tour, que le lint soit configuré ou non.
+- **La marque « à lancer »** est propre à la session (`session_id` de l'entrée du hook) et au worktree. Elle est rangée dans le répertoire Git du worktree (`git rev-parse --git-path`), jamais dans l'arbre de travail : elle n'est ni versionnée ni partagée entre deux sessions ou deux worktrees.
 
 ### Tests : `.claude/hooks/run-tests.sh`, à la fin de chaque tour de l'agent
 
@@ -68,13 +72,14 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 ### Hook de lint (nouveau `tests/quality-hooks.sh`)
 
 - CA1 : Étant donné un projet sans `.claude/quality.json`, quand l'agent modifie un fichier, alors `lint.sh` sort avec le code 0 sans rien lancer.
-- CA2 : Étant donné une commande `lint` configurée qui réussit, quand l'agent modifie `src/a.ts`, alors la commande reçoit `src/a.ts` en dernier argument et `lint.sh` sort avec le code 0.
+- CA2 : Étant donné une commande `lint` configurée qui réussit, quand l'agent modifie `src/a.ts`, alors la commande reçoit le chemin absolu de `src/a.ts` en dernier argument et `lint.sh` sort avec le code 0.
 - CA3 : Étant donné une commande `lint` qui échoue, quand l'agent modifie un fichier, alors `lint.sh` sort avec le code 2, et stderr contient le chemin du fichier et la sortie du lint.
 - CA4 : Étant donné une sortie de lint de plus de 50 lignes, quand le lint échoue, alors stderr n'en contient que les 50 dernières.
 - CA5 : Étant donné une entrée sans `file_path`, ou un fichier hors du projet, quand le hook s'exécute, alors il sort avec le code 0 sans lancer le lint.
+- CA5 bis : Étant donné un fichier nommé `-x.ts` ou `a;touch pwned.ts`, quand le lint est lancé, alors la commande reçoit ce chemin comme un seul argument, et aucune autre commande n'est exécutée.
 - CA6 : Étant donné Prettier installé et un lint configuré, quand l'agent modifie un fichier mal formaté, alors le lint reçoit le fichier déjà formaté.
 - CA7 : Étant donné un `.claude/quality.json` invalide, ou `jq` absent, quand le hook s'exécute, alors il sort avec un code autre que 0 et 2 (erreur non bloquante, visible par l'humain), avec un message qui nomme la cause.
-- CA8 : Étant donné une commande `lint` introuvable, quand le hook s'exécute, alors il ne sort pas avec le code 2 : une commande mal configurée est un problème pour l'humain, pas une erreur à corriger par l'agent à chaque modification.
+- CA8 : Étant donné une commande `lint` dont le premier mot est introuvable, quand le hook s'exécute, alors il ne lance rien et ne sort pas avec le code 2 ; une commande trouvée qui sort avec le code 127 donne, elle, le code 2 (CA3) : une commande mal configurée est un problème pour l'humain, pas une erreur à corriger par l'agent à chaque modification.
 
 ### Hook de tests
 
@@ -82,7 +87,10 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 - CA10 : Étant donné une modification pendant le tour et des tests qui passent, quand l'agent s'arrête, alors les tests sont lancés une fois, le hook sort avec le code 0, et un arrêt suivant sans nouvelle modification ne les relance pas.
 - CA11 : Étant donné une modification et des tests qui échouent, avec `stop_hook_active` faux, quand l'agent s'arrête, alors le hook sort avec le code 2, et stderr contient la sortie des tests et la consigne sur les tests rouges attendus.
 - CA12 : Étant donné des tests qui échouent, avec `stop_hook_active` vrai, quand l'agent s'arrête, alors le hook ne sort pas avec le code 2, et un arrêt suivant relance les tests.
+- CA12 bis : Étant donné deux sessions (deux `session_id`) dans le même worktree, quand la première modifie un fichier, alors un arrêt de la seconde ne lance pas les tests, et aucune marque n'apparaît dans l'arbre de travail (`git status` inchangé).
 - CA13 : Étant donné aucune commande `test` configurée, quand l'agent s'arrête après une modification, alors le hook sort avec le code 0.
+
+CA7, CA8 et CA12 sont **provisoires** : ils supposent qu'un code de sortie autre que 0 et 2 ne bloque pas l'agent et que son message est visible par l'humain. À vérifier sur Claude Code 2.1.291 avant les tests (question ouverte n°5).
 
 ### Branchement et CI
 
@@ -97,7 +105,7 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 
 ### Contrôle par mutation (règle n°2 de `CLAUDE.md`)
 
-- CA19 : Chaque protection est désactivée une fois, et au moins un test échoue : code 2 du lint, argument du fichier, limite de 50 lignes, ordre formatage puis lint, garde `stop_hook_active`, marque « à lancer », vérification des outils de `security-reviewer`.
+- CA19 : Chaque protection est désactivée une fois, et au moins un test échoue : code 2 du lint, argument du fichier passé sans interpolation, détection de la commande introuvable, marque propre à la session, limite de 50 lignes, ordre formatage puis lint, garde `stop_hook_active`, marque « à lancer », vérification des outils de `security-reviewer`.
 
 ### Relecture humaine (consignes, non testables automatiquement)
 

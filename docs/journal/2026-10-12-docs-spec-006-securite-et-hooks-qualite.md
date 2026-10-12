@@ -21,3 +21,21 @@ Branche `docs/spec-006-securite-et-hooks-qualite`.
 ### Prochaine étape
 
 - Attendre la validation de la spec par Yanis et ses réponses aux cinq questions ouvertes. Ensuite seulement : tests (CA1 à CA19) par `test-writer`, committés en échec, puis implémentation.
+
+## 2026-10-12 10:29
+
+### Fait
+
+- Réponse à la revue IA de #37 : marque « à lancer » propre à la session et au worktree (CA12 bis), règle de détection d'une commande introuvable (CA8), chemin absolu passé sans interpolation (CA5 bis), CA7, CA8 et CA12 marqués provisoires, rappel sur les fichiers d'environnement pour `security-reviewer`, risque des commandes de `.claude/quality.json`.
+
+### Décisions
+
+- Marque rangée dans le répertoire Git du worktree et nommée d'après `session_id` ; commande introuvable détectée par `command -v` avant exécution (propositions de l'agent, à valider avec la spec).
+
+### Corrections et limites
+
+- Une commande qui citait les fichiers d'environnement dans un heredoc a été refusée par `protect-secrets` (refus par prudence documenté dans les Limites du README) : modifications refaites par un script et l'outil d'édition.
+
+### Prochaine étape
+
+- Attendre la validation de la spec par Yanis et ses réponses aux cinq questions ouvertes. Aucun test ni code avant.
