@@ -39,3 +39,22 @@ Branche `docs/spec-006-securite-et-hooks-qualite`.
 ### Prochaine étape
 
 - Attendre la validation de la spec par Yanis et ses réponses aux cinq questions ouvertes. Aucun test ni code avant.
+
+## 2026-10-12 12:01
+
+### Fait
+
+- Spec 006 validée par Yanis, avec les cinq propositions. Question n°5 vérifiée dans la documentation des hooks : CA7 (code 1), CA8 et CA12 (code 0 et `systemMessage`) réécrits. Nouveaux CA23 et CA24 : le template s'applique ses propres hooks (`scripts/lint-shell.sh`, `bash tests/hooks.sh`).
+
+### Décisions
+
+- Les cinq propositions de la spec, validées par Yanis (section « Décisions » de la spec).
+- ADR-004 (#36) laissé au statut « proposé » : la consigne initiale de Yanis était de ne pas le passer à « accepté » (agent).
+
+### Corrections et limites
+
+- Rien.
+
+### Prochaine étape
+
+- Tests de CA1 à CA19, CA23 et CA24 par `test-writer`, committés en échec, puis accord de Yanis avant l'implémentation (étape 5 de `/implement`).

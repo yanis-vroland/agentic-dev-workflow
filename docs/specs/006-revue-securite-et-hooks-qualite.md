@@ -1,6 +1,6 @@
 # Spec 006 : revue de sécurité et hooks de lint et de tests
 
-Statut : brouillon
+Statut : validée
 Date : 2026-10-12
 
 ## Besoin
@@ -64,7 +64,7 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 - Branché sur `Stop` : quand l'agent s'apprête à rendre la main, et seulement si des tests sont « à lancer ».
 - Tests au vert : code 0, la marque « à lancer » est retirée.
 - Tests en échec, premier arrêt (`stop_hook_active` faux) : code 2, avec la fin de la sortie (50 dernières lignes au plus) et une consigne. L'agent corrige le code ; si les tests rouges sont attendus (phase test-first), il le dit et s'arrête sans modifier les tests.
-- Tests en échec, arrêt déjà relancé par ce hook (`stop_hook_active` vrai) : le hook ne bloque pas une seconde fois, pour éviter une boucle sans fin. L'échec est signalé à l'humain et la marque reste : les tests seront relancés au tour suivant.
+- Tests en échec, arrêt déjà relancé par ce hook (`stop_hook_active` vrai) : le hook ne bloque pas une seconde fois, pour éviter une boucle sans fin. L'échec est signalé à l'humain par un avertissement (code 0 et `systemMessage` en JSON sur stdout) et la marque reste : les tests seront relancés au tour suivant.
 - Durées maximales déclarées dans `.claude/settings.json` : 60 s pour le lint, 300 s pour les tests. Un dépassement n'est jamais présenté comme un succès.
 
 ## Critères d'acceptation
@@ -78,19 +78,17 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 - CA5 : Étant donné une entrée sans `file_path`, ou un fichier hors du projet, quand le hook s'exécute, alors il sort avec le code 0 sans lancer le lint.
 - CA5 bis : Étant donné un fichier nommé `-x.ts` ou `a;touch pwned.ts`, quand le lint est lancé, alors la commande reçoit ce chemin comme un seul argument, et aucune autre commande n'est exécutée.
 - CA6 : Étant donné Prettier installé et un lint configuré, quand l'agent modifie un fichier mal formaté, alors le lint reçoit le fichier déjà formaté.
-- CA7 : Étant donné un `.claude/quality.json` invalide, ou `jq` absent, quand le hook s'exécute, alors il sort avec un code autre que 0 et 2 (erreur non bloquante, visible par l'humain), avec un message qui nomme la cause.
-- CA8 : Étant donné une commande `lint` dont le premier mot est introuvable, quand le hook s'exécute, alors il ne lance rien et ne sort pas avec le code 2 ; une commande trouvée qui sort avec le code 127 donne, elle, le code 2 (CA3) : une commande mal configurée est un problème pour l'humain, pas une erreur à corriger par l'agent à chaque modification.
+- CA7 : Étant donné un `.claude/quality.json` invalide, ou `jq` absent, quand le hook s'exécute, alors il sort avec le code 1 (erreur non bloquante : Claude Code affiche à l'humain la première ligne de stderr), et cette première ligne nomme la cause.
+- CA8 : Étant donné une commande `lint` dont le premier mot est introuvable, quand le hook s'exécute, alors il ne lance rien, sort avec le code 0 et écrit sur stdout un JSON `systemMessage` qui nomme la commande introuvable ; une commande trouvée qui sort avec le code 127 donne, elle, le code 2 (CA3) : une commande mal configurée est un problème pour l'humain, pas une erreur à corriger par l'agent à chaque modification.
 
 ### Hook de tests
 
 - CA9 : Étant donné un tour sans modification de fichier, quand l'agent s'arrête, alors `run-tests.sh` sort avec le code 0 sans lancer les tests.
 - CA10 : Étant donné une modification pendant le tour et des tests qui passent, quand l'agent s'arrête, alors les tests sont lancés une fois, le hook sort avec le code 0, et un arrêt suivant sans nouvelle modification ne les relance pas.
 - CA11 : Étant donné une modification et des tests qui échouent, avec `stop_hook_active` faux, quand l'agent s'arrête, alors le hook sort avec le code 2, et stderr contient la sortie des tests et la consigne sur les tests rouges attendus.
-- CA12 : Étant donné des tests qui échouent, avec `stop_hook_active` vrai, quand l'agent s'arrête, alors le hook ne sort pas avec le code 2, et un arrêt suivant relance les tests.
+- CA12 : Étant donné des tests qui échouent, avec `stop_hook_active` vrai, quand l'agent s'arrête, alors le hook sort avec le code 0 et un JSON `systemMessage` qui signale l'échec à l'humain, et un arrêt suivant relance les tests.
 - CA12 bis : Étant donné deux sessions (deux `session_id`) dans le même worktree, quand la première modifie un fichier, alors un arrêt de la seconde ne lance pas les tests, et aucune marque n'apparaît dans l'arbre de travail (`git status` inchangé).
 - CA13 : Étant donné aucune commande `test` configurée, quand l'agent s'arrête après une modification, alors le hook sort avec le code 0.
-
-CA7, CA8 et CA12 sont **provisoires** : ils supposent qu'un code de sortie autre que 0 et 2 ne bloque pas l'agent et que son message est visible par l'humain. À vérifier sur Claude Code 2.1.291 avant les tests (question ouverte n°5).
 
 ### Branchement et CI
 
@@ -103,9 +101,14 @@ CA7, CA8 et CA12 sont **provisoires** : ils supposent qu'un code de sortie autre
 - CA17 : Étant donné une cible vide, quand je lance `init.sh`, alors `security-reviewer.md`, `lint.sh`, `run-tests.sh` et `tests/quality-hooks.sh` sont copiés, et `.claude/quality.json` est créé avec les deux clés vides, quel que soit le contenu de celui du template.
 - CA18 : Étant donné une cible qui a déjà un `.claude/quality.json`, quand je lance `init.sh`, avec ou sans `--force`, alors ce fichier n'est pas modifié.
 
+### Application au template lui-même
+
+- CA23 : Le template a son propre `.claude/quality.json` : `lint` lance `scripts/lint-shell.sh`, qui passe shellcheck sur un fichier shell (extension `.sh`, ou première ligne `#!` qui cite `sh` ou `bash`) et ne fait rien sur les autres ; `test` lance `bash tests/hooks.sh`. `scripts/lint-shell.sh` n'est pas copié par `init.sh`.
+- CA24 : Étant donné un script shell avec une erreur shellcheck, quand `scripts/lint-shell.sh` le reçoit, alors il sort avec un code non nul ; étant donné un fichier Markdown, alors il sort avec le code 0 sans lancer shellcheck.
+
 ### Contrôle par mutation (règle n°2 de `CLAUDE.md`)
 
-- CA19 : Chaque protection est désactivée une fois, et au moins un test échoue : code 2 du lint, argument du fichier passé sans interpolation, détection de la commande introuvable, marque propre à la session, limite de 50 lignes, ordre formatage puis lint, garde `stop_hook_active`, marque « à lancer », vérification des outils de `security-reviewer`.
+- CA19 : Chaque protection est désactivée une fois, et au moins un test échoue : filtre shell de `scripts/lint-shell.sh`, code 2 du lint, argument du fichier passé sans interpolation, détection de la commande introuvable, marque propre à la session, limite de 50 lignes, ordre formatage puis lint, garde `stop_hook_active`, marque « à lancer », vérification des outils de `security-reviewer`.
 
 ### Relecture humaine (consignes, non testables automatiquement)
 
@@ -131,12 +134,14 @@ CA7, CA8 et CA12 sont **provisoires** : ils supposent qu'un code de sortie autre
 - Subagent de documentation : en partie couvert par `learning-curator` ; à réévaluer séparément.
 - `reviewer` sans `Bash` : point reporté de la fiche du projet.
 
+## Décisions (validation de Yanis, 2026-10-12)
+
+1. Lint après chaque modification (`PostToolUse`), tests à la fin du tour s'il y a eu une modification (`Stop`).
+2. Commandes déclarées dans `.claude/quality.json`.
+3. Le template s'applique ses propres hooks : shellcheck en lint, `bash tests/hooks.sh` en tests (CA23, CA24).
+4. `security-reviewer` passe dans `/implement` avant le test humain.
+5. Vérifié dans la documentation des hooks de Claude Code (2026-10-12) : un code autre que 0 et 2 n'affiche à l'humain que la première ligne de stderr, comme une erreur de hook ; un avertissement non bloquant passe par le code 0 et un JSON `systemMessage` ; le hook `Stop` reçoit `stop_hook_active` ; les hooks d'un même événement tournent en parallèle ; les appels d'outils des subagents déclenchent les mêmes `PostToolUse`. CA7, CA8 et CA12 sont écrits en conséquence.
+
 ## Questions ouvertes
 
-Propositions de l'agent, à trancher par Yanis :
-
-1. **Tests à la fin du tour plutôt qu'après chaque modification.** Le besoin dit « après chaque modification ». Une suite de tests lancée à chaque `Edit` coûte vite plusieurs minutes par tâche, et échoue sur des états intermédiaires que l'agent n'a pas fini d'écrire. Proposition : lint après chaque modification, tests à la fin de chaque tour s'il y a eu une modification (hook `Stop`). Autre option : tests aussi sur `PostToolUse`, au prix de cette lenteur.
-2. **Configuration dans `.claude/quality.json`.** Autres options : variables d'environnement dans le bloc `env` de `.claude/settings.json` (copié tel quel par `init.sh`, donc avec les valeurs du template), ou lecture de la section « Stack et commandes » de `CLAUDE.md` (texte libre, fragile à analyser).
-3. **Le template s'applique-t-il ces hooks ?** Proposition : oui, avec `shellcheck` en lint et `bash tests/hooks.sh` en tests (rapide), pour que le template prouve ce qu'il fournit. Sinon, ses hooks restent inactifs sur lui-même.
-4. **Place de `security-reviewer` dans `/implement`** : avant le test humain (proposition), ou juste avant l'ouverture de la PR.
-5. **Échec signalé à l'humain sans bloquer** (CA7, CA8, CA12) : le moyen exact d'afficher un message à l'humain depuis un hook sans bloquer l'agent est à vérifier sur la version de Claude Code testée (2.1.291) avant l'implémentation.
+- Aucune.
