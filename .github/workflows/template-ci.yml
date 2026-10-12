@@ -17,8 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Syntaxe du script d'initialisation et de son test (shellcheck)
-        run: shellcheck scripts/*.sh tests/init-script.sh
+      - name: Syntaxe des scripts du template et de leurs tests (shellcheck)
+        run: shellcheck scripts/*.sh tests/init-script.sh tests/lint-shell.sh
 
       - name: Validité de settings.json
         run: jq empty .claude/settings.json
@@ -48,6 +48,42 @@ jobs:
             echo "Outils inattendus pour learning-curator : « $tools »"
             exit 1
           fi
+
+      # format.sh n'est plus branché à part : les hooks d'un même événement tournent
+      # en parallèle, et lint.sh l'appelle avant le lint (CA6).
+      - name: Hooks de lint et de tests branchés, formatage porté par lint.sh (spec 006, CA14)
+        run: |
+          jq -e '[.hooks.PostToolUse[] | select(.matcher == "Edit|Write|MultiEdit") | .hooks[]
+            | select(.command | endswith("/.claude/hooks/lint.sh")) | select(.timeout == 60)]
+            | length == 1' .claude/settings.json
+          jq -e '[.hooks.Stop[] | .hooks[]
+            | select(.command | endswith("/.claude/hooks/run-tests.sh")) | select(.timeout == 300)]
+            | length == 1' .claude/settings.json
+          jq -e '[.hooks.PostToolUse[] | .hooks[].command
+            | select(endswith("/.claude/hooks/format.sh"))] | length == 0' .claude/settings.json
+          test -x .claude/hooks/format.sh
+
+      - name: Outils du subagent security-reviewer, lecture seule (spec 006, CA15)
+        run: |
+          f=.claude/agents/security-reviewer.md
+          if [ ! -f "$f" ]; then
+            echo "Subagent absent : $f"
+            exit 1
+          fi
+          tools=$(sed -n 's/^tools: *//p' "$f")
+          if [ "$tools" != "Read, Grep, Glob" ]; then
+            echo "Outils inattendus pour security-reviewer : « $tools »"
+            exit 1
+          fi
+
+      - name: Configuration des hooks de qualité du template (spec 006, CA23)
+        run: |
+          jq -e '.lint == "scripts/lint-shell.sh" and .test == "bash tests/hooks.sh"' \
+            .claude/quality.json
+          test -x scripts/lint-shell.sh
+
+      - name: Test du lint shell du template (spec 006, CA23 et CA24)
+        run: bash tests/lint-shell.sh
 
       - name: Test du script d'initialisation
         run: bash tests/init-script.sh

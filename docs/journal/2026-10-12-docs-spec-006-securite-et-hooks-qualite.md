@@ -58,3 +58,25 @@ Branche `docs/spec-006-securite-et-hooks-qualite`.
 ### Prochaine étape
 
 - Tests de CA1 à CA19, CA23 et CA24 par `test-writer`, committés en échec, puis accord de Yanis avant l'implémentation (étape 5 de `/implement`).
+
+## 2026-10-12 12:35
+
+### Fait
+
+- Tests écrits par `test-writer`, à partir de la spec seule : `tests/quality-hooks.sh` (CA1 à CA13), `tests/lint-shell.sh` (CA24), section « Spec 006 » de `tests/init-script.sh` (CA17, CA18, CA23), étapes de CI (CA14, CA15, CA16, CA23).
+- Relus et renforcés par l'agent principal : sortie d'erreur du lint transmise (CA3), formatage par `lint.sh` même sans configuration (CA6), fichier hors du projet sans tests lancés, `format.sh` plus branché à part en CI.
+- En échec pour la bonne raison (hooks, scripts, configuration et subagent absents) : `quality-hooks` 25 OK et 79 ÉCHEC, `lint-shell` 3 OK et 13 ÉCHEC, `init-script` 232 OK et 11 ÉCHEC ; `hooks` 52 OK, sans régression. Les vérifications déjà vertes sont des gardes négatives, annoncées comme telles.
+
+### Décisions
+
+- `format.sh` n'est plus branché directement : `lint.sh` l'appelle avant le lint, car Claude Code lance en parallèle les hooks d'un même événement (agent).
+- Test existant modifié par `test-writer` : `.claude/quality.json` retiré de la liste `copied` de `tests/init-script.sh`, car CA17 exige un fichier aux clés vides et non une copie du template. Signalé dans la PR (règle n°3).
+
+### Corrections et limites
+
+- CA7 (configuration invalide, jq absent) n'est testé que sur `lint.sh`, comme l'écrit la spec ; `run-tests.sh` n'a pas de critère équivalent.
+- CA19 (mutation) et CA20 à CA22 (relecture) viendront avec l'implémentation.
+
+### Prochaine étape
+
+- Attendre l'accord de Yanis sur les tests rouges, puis implémenter : `lint.sh`, `run-tests.sh`, `scripts/lint-shell.sh`, `.claude/quality.json`, `security-reviewer`, `settings.json`, `init.sh`, `/implement`, `CLAUDE.md`, README.
