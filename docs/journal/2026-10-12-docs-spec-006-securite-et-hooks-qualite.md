@@ -101,3 +101,30 @@ Branche `docs/spec-006-securite-et-hooks-qualite`.
 ### Prochaine étape
 
 - Revue de sécurité du diff par `security-reviewer`, puis test humain par Yanis dans une session Claude Code (étape 8 de `/implement`).
+
+## 2026-10-12 13:34
+
+### Fait
+
+- Revue de sécurité du diff (étape 7 de `/implement`) : rien de bloquant, un point « À corriger », trois suggestions.
+- Corrigés en test-first (tests rouges dans c8eb709, puis correction) :
+  - sortie du lint et des tests délimitée comme des données, pas des consignes ;
+  - lien symbolique vers l'extérieur du projet ni formaté ni linté, et `format.sh` reçoit le chemin vérifié ;
+  - avertissement à l'humain quand la marque ne peut pas être posée alors que des tests sont déclarés (projet hors Git) ;
+  - identifiant de session raccourci à 64 caractères.
+- Les hooks, actifs dans cette session, ont bloqué deux de mes modifications : `scripts/lint-shell.sh` ne suivait pas `quality-common.sh`, sourcé par les hooks (SC1091), alors que la CI, qui passe tous les hooks ensemble, ne le voyait pas. Test de non-régression rouge dans un commit séparé, puis `shellcheck -x`.
+- Mutation : 23 protections détectées. Une mutation équivalente : transmettre le chemin brut à `format.sh` ne change rien d'observable, car `lint.sh` sort avant le formatage pour tout chemin qui mène hors du projet ; conservé comme défense en profondeur.
+- Tous les tests au vert : `quality-hooks` 114, `lint-shell` 16, `init-script` 253, `hooks` 52, `session-start` 50, `verifier-journal` 31, `verifier-revue-ia` 12, `pre-commit` 7.
+
+### Décisions
+
+- Point « À corriger » de la revue (les hooks exécutent sans demande le code que l'agent vient d'écrire) : documenté dans les Limites du README, sans interdire à l'agent de modifier `.claude/hooks/` ni `.claude/quality.json`, ce qui l'empêcherait de développer le template. Décision soumise à Yanis (agent).
+
+### Corrections et limites
+
+- Le subagent `security-reviewer`, créé pendant la session, n'était pas encore chargé : la revue a été faite par un agent généraliste qui appliquait ses consignes, limité à `Read`, `Grep` et `Glob`.
+- Le commit c8eb709 (tests rouges) n'a pas d'entrée de journal propre : elle est dans celle-ci.
+
+### Prochaine étape
+
+- Test humain par Yanis dans une session Claude Code ouverte sur cette branche (étape 8 de `/implement`), avec les scénarios proposés.
