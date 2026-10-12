@@ -9,6 +9,54 @@ Version de Claude Code testée : **2.1.291**, le 2026-10-08.
 
 *Démonstration générée par [vhs](https://github.com/charmbracelet/vhs) (facultatif, sert uniquement à la régénérer) à partir de [`docs/demo/demo.tape`](docs/demo/demo.tape) : `vhs docs/demo/demo.tape` depuis la racine. À régénérer si l'affichage de `init.sh` ou des hooks change.*
 
+## Le flux, de la spec au merge
+
+Les losanges sont les points de contrôle humains ([ADR-002](docs/adr/002-place-revue-humaine.md)) ; tout le reste est fait par l'agent ou par la CI.
+
+```mermaid
+flowchart TD
+  besoin([Besoin exprimé en une phrase]) --> spec["/spec<br/>spec au statut « brouillon »"]
+  spec --> h1{"Humain :<br/>valide la spec"}
+  h1 -- "statut « validée »" --> tw
+
+  subgraph implement ["/implement"]
+    tw["subagent test-writer<br/>tests rouges, commit séparé"] --> h2{"Humain :<br/>accord sur les tests rouges"}
+    h2 --> code["Implémentation<br/>jusqu'au vert"]
+    code --> h3{"Humain :<br/>test dans l'application démarrée"}
+    h3 -- "négatif : test rouge, puis correctif" --> code
+    h3 -- "positif après au moins<br/>une boucle négative" --> lc["subagent learning-curator<br/>piège dans docs/learnings/"]
+  end
+
+  hooks[["Hooks<br/>protect-secrets avant chaque action<br/>format après chaque modification<br/>gitleaks à chaque commit"]] -.-> code
+  lc -.->|relu par /spec, /implement et le reviewer| spec
+
+  h3 -- "positif sans boucle" --> pr
+  lc --> pr["PR ouverte par l'agent"]
+  pr --> ci["CI garde-fous<br/>tests des hooks, secrets, journal"]
+  pr --> ia["Revue IA<br/>consignes du subagent reviewer"]
+  ia --> rep["Réponse à la revue IA,<br/>point par point"]
+  ci --> h4{"Humain :<br/>relit et merge"}
+  rep --> h4
+```
+
+Chaque étape et le fichier qui la porte :
+
+| Étape | Fichier |
+| --- | --- |
+| `/spec` | [`.claude/skills/spec/SKILL.md`](.claude/skills/spec/SKILL.md), modèle [`docs/templates/spec.md`](docs/templates/spec.md) |
+| Validation humaine de la spec | statut « validée » exigé par l'étape 1 de `/implement` ; [ADR-002](docs/adr/002-place-revue-humaine.md) |
+| `test-writer` | [`.claude/agents/test-writer.md`](.claude/agents/test-writer.md), appelé par l'étape 4 de `/implement` ; [ADR-003](docs/adr/003-strategie-test-first.md) |
+| `/implement` | [`.claude/skills/implement/SKILL.md`](.claude/skills/implement/SKILL.md) |
+| Hooks | [`.claude/hooks/protect-secrets.sh`](.claude/hooks/protect-secrets.sh), [`.claude/hooks/format.sh`](.claude/hooks/format.sh), branchés dans [`.claude/settings.json`](.claude/settings.json) ; [`.githooks/pre-commit`](.githooks/pre-commit) |
+| Test humain | étape 8 de `/implement` ; [spec 005](docs/specs/005-capitalisation-des-pieges.md) |
+| `learning-curator` | [`.claude/agents/learning-curator.md`](.claude/agents/learning-curator.md), appelé par l'étape 9 de `/implement` |
+| CI | [`.github/workflows/garde-fous.yml`](.github/workflows/garde-fous.yml) |
+| `reviewer` et revue IA | [`.claude/agents/reviewer.md`](.claude/agents/reviewer.md), en local par [`/review`](.claude/skills/review/SKILL.md) et sur chaque PR par [`.github/workflows/ai-review.yml`](.github/workflows/ai-review.yml), contrôlé par [`verifier-revue-ia.sh`](.github/scripts/verifier-revue-ia.sh) |
+| Réponse à la revue IA | règle n°5 de [`CLAUDE.md`](CLAUDE.md) |
+| Merge humain | règle de travail ([ADR-002](docs/adr/002-place-revue-humaine.md)) et ruleset de `main` (voir [Configuration GitHub](#configuration-github)) |
+
+Le schéma omet deux étapes de `/implement` sans décision humaine : la création de la branche et de son journal (étape 2), et la mise à jour des documents de référence (étape 10). À chaque commit, l'agent complète aussi le journal de sa branche (`docs/journal/`), qui permet de reprendre une session interrompue ([spec 004](docs/specs/004-reprise-de-session.md)).
+
 ## Prérequis
 
 | Outil | Rôle | Sans lui |
@@ -108,6 +156,51 @@ Compléter les sections **« À ADAPTER »** de `CLAUDE.md` : description du pro
 - **Journal sans conflit** : un fichier de journal par branche (`docs/journal/`), jamais modifié après son merge. Le job CI « Journal » refuse une PR qui touche un journal déjà mergé, ou dont les noms et les dates sont invalides. Deux PR ne peuvent donc pas entrer en conflit sur le journal. Comportement détaillé : [`docs/specs/004-reprise-de-session.md`](docs/specs/004-reprise-de-session.md).
 - **Test humain et pièges** : `/implement` ne termine qu'après un test humain positif dans l'application démarrée. Chaque retour négatif ajoute un test qui échoue, puis un correctif, puis un nouveau test humain. Après au moins une boucle négative, le subagent `learning-curator` capitalise le piège dans `docs/learnings/` (un fichier par piège, seulement s'il se généralise). `/spec`, `/implement` et le reviewer relisent les pièges actifs au cadrage suivant. Comportement détaillé : [`docs/specs/005-capitalisation-des-pieges.md`](docs/specs/005-capitalisation-des-pieges.md).
 - **Début de session** : le hook `session-start.sh` récupère `origin` et avance la branche seulement si l'arbre est propre et qu'aucune divergence n'existe. Il ne rebase et ne fusionne jamais.
+
+## Comment ce projet a été construit
+
+Le template a été construit avec sa propre chaîne, du 7 au 11 octobre 2026 : 25 PR ouvertes par l'agent, relues et mergées par l'humain (#1 à #35, numérotation partagée avec les issues). Les sources sont les PR, leurs commentaires et le journal de chaque branche (`docs/journal/`).
+
+**Specs et décisions**
+
+| Document | PR |
+| --- | --- |
+| [Spec 001](docs/specs/001-script-init.md), script d'initialisation | #8, puis #28 (issue #27 : copie de fichiers non suivis) |
+| [Spec 002](docs/specs/002-hook-protect-secrets.md), hook `protect-secrets` | #11 (issue #7 : fermeture en cas de panne), #12 (issue #9 : faux positifs) |
+| [Spec 003](docs/specs/003-documents-de-reference.md), documents de référence | #31, puis #33 (lignes perdues à la résolution d'un conflit) |
+| [Spec 004](docs/specs/004-reprise-de-session.md), reprise de session | #32, complétée par #33 |
+| [Spec 005](docs/specs/005-capitalisation-des-pieges.md), test humain et pièges | #35 |
+| [ADR-001](docs/adr/001-authentification-ci.md) à [ADR-003](docs/adr/003-strategie-test-first.md) | ADR-001 dans #1 ; ADR-002 et ADR-003 dans #21, tirés des constats des PR #4 à #13 |
+
+**Ce que la revue IA a trouvé**
+
+- **#4 :** un test du hook pre-commit passait aussi avec un hook qui refuse tout. Corrigé, et vérifié par mutation. Dans la même revue, un point sur des versions de gitleaks désalignées a été jugé non fondé, logs du job à l'appui.
+- **#28 :** deux cas limites de `init.sh` (template dans un sous-dossier d'un autre dépôt, fichier suivi mais supprimé du disque). La spec a été complétée, et les tests ont été rouges avant la correction.
+- **#32 :** trois points bloquants sur la spec 004 avant la moindre ligne de code, dont une migration de l'ancien journal que la CI aurait refusée.
+
+Depuis la #4, l'agent répond point par point dans un commentaire « Réponse à la revue IA » : corrigé, non suivi et pourquoi, ou reporté. C'est devenu la règle n°5 de `CLAUDE.md` (#30).
+
+**Ce que la revue IA n'a pas vu**
+
+- **#8 :** aucun rapport publié, job vert. Le hook `protect-secrets` refusait la publication d'un rapport qui citait des fichiers `.env`. Corrigé par #10 (rapport publié depuis un fichier).
+- **#10 et #12 :** l'action ne s'exécute pas quand une PR modifie son propre workflow, et le job restait vert. Depuis #12, `verifier-revue-ia.sh` le fait échouer.
+- Les commits de correction poussés après l'ouverture ne sont pas relus (voir [Limites](#limites)).
+
+**Ce que l'humain a décidé**
+
+Les décisions qui ont le plus changé le résultat sont venues de l'humain ([ADR-002](docs/adr/002-place-revue-humaine.md)) : la règle de spec fondée sur la nature du changement plutôt que sur le préfixe (#6), la fermeture en cas de panne de `protect-secrets` (#11), le parcours d'installation du README (#13), les exemples de pièges de la spec 005 tirés de FieldOps (#35).
+
+Le contrôle par mutation a trouvé des trous que ni les tests ni la relecture n'avaient vus : une insertion désactivée dans le `.gitignore` (#8), un `grep` manquant qui laissait passer l'action (#11), un compteur non numérique accepté (#12) ([ADR-003](docs/adr/003-strategie-test-first.md)).
+
+**Écarts au processus** (constatés au 2026-10-12)
+
+- Le label `agent-corrigé` n'a été posé sur aucune PR, alors que l'humain a corrigé le travail de l'agent sur plusieurs d'entre elles : il ne mesure encore rien.
+- Les PR #31 à #35 n'ont pas de commentaire « Réponse à la revue IA ».
+- Les tests de la spec 005 ont été écrits par l'agent principal, pas par `test-writer` : la session, lancée depuis un dossier parent, ne chargeait pas les subagents du dépôt (journal de la branche).
+
+**Exemple FieldOps à venir (#15)**
+
+*Emplacement réservé : un exemple réel de code de l'agent refusé ou corrigé sur FieldOps, avec le piège capitalisé qui en résulte (CA12 de la spec 005).*
 
 ## Limites
 
