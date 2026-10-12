@@ -11,9 +11,9 @@ En tant que développeur qui veut adopter le template sur un projet existant, je
 
 Copiés depuis le template (chemins identiques dans la cible) :
 
-- `.claude/`, sauf `.claude/settings.local.json` (réglages personnels) ;
+- `.claude/`, sauf `.claude/settings.local.json` (réglages personnels) et `.claude/quality.json` (commandes propres au template, spec 006) ;
 - `.githooks/` ;
-- `tests/hooks.sh` et `tests/pre-commit.sh` : un garde-fou voyage avec son test ;
+- `tests/hooks.sh` et `tests/pre-commit.sh` : un garde-fou voyage avec son test ; de même `tests/quality-hooks.sh` (ajout de la spec 006, CA17) ;
 - `docs/templates/`, en entier ;
 - `CLAUDE.md` ;
 - `.github/workflows/garde-fous.yml` et `.github/workflows/ai-review.yml` ;
@@ -27,6 +27,7 @@ Créés s'ils sont absents, jamais copiés depuis le template :
 - `docs/adr/` et `docs/specs/`, chacun avec un `.gitkeep` ;
 - `docs/journal.md`, avec l'en-tête du journal et sans entrée.
 - `docs/cahier-des-charges-fonctionnel.md` et `docs/architecture-technique.md`, à partir de leurs modèles (ajout de la spec 003).
+- `.claude/quality.json`, avec les clés `lint` et `test` vides, jamais écrasé, même avec `--force` (ajout de la spec 006, CA17 et CA18).
 
 Ajoutés au `.gitignore` de la cible, seulement s'ils manquent : `.env`, `.env.*`, `!.env.example`, `.claude/settings.local.json`.
 

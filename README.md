@@ -31,7 +31,15 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
    ```bash
    git rm docs/adr/001-authentification-ci.md docs/specs/001-script-init.md \
      docs/specs/002-hook-protect-secrets.md docs/specs/003-documents-de-reference.md \
-     docs/specs/004-reprise-de-session.md docs/specs/005-capitalisation-des-pieges.md scripts/init.sh tests/init-script.sh .github/workflows/template-ci.yml
+     docs/specs/004-reprise-de-session.md docs/specs/005-capitalisation-des-pieges.md \
+     docs/specs/006-revue-securite-et-hooks-qualite.md scripts/init.sh scripts/lint-shell.sh \
+     tests/init-script.sh tests/lint-shell.sh .github/workflows/template-ci.yml
+   ```
+
+   Puis vider les commandes de lint et de tests du template, à remplacer par celles du projet :
+
+   ```bash
+   printf '{\n  "lint": "",\n  "test": ""\n}\n' > .claude/quality.json
    ```
 
 3. Vider le journal du template (un fichier par branche, créé par l'agent au premier commit) :
@@ -74,6 +82,7 @@ Le script :
 - copie les garde-fous, les skills, les workflows génériques, le modèle de PR et `CLAUDE.md` ;
 - n'écrase aucun fichier existant sans `--force`, et liste ceux qu'il a ignorés ;
 - crée `docs/adr/`, `docs/specs/`, `docs/journal/`, `docs/learnings/` et les deux documents de référence (cahier des charges fonctionnel, architecture technique) ; si un `docs/journal.md` existe déjà, il propose la commande `git mv` pour le migrer ;
+- crée `.claude/quality.json` avec des commandes de lint et de tests vides, sans jamais remplacer un fichier existant, même avec `--force` ;
 - complète le `.gitignore` (`.env`, `.env.*`, `!.env.example`, `.claude/settings.local.json`) ;
 - active `core.hooksPath` ;
 - affiche à la fin les étapes manuelles restantes.
@@ -85,6 +94,17 @@ Si le projet a déjà un `.claude/settings.json`, le script ne l'écrase pas, et
 ### Dans les deux cas
 
 Compléter les sections **« À ADAPTER »** de `CLAUDE.md` : description du projet, commandes, architecture.
+
+Déclarer dans `.claude/quality.json` les commandes que les hooks lancent ([spec 006](docs/specs/006-revue-securite-et-hooks-qualite.md)) :
+
+```json
+{
+  "lint": "pnpm exec eslint",
+  "test": "pnpm test"
+}
+```
+
+`lint` reçoit le chemin absolu du fichier modifié en dernier argument, et doit ignorer les fichiers qu'il ne sait pas traiter. `test` est lancé sans argument depuis la racine. Une clé vide désactive le hook correspondant.
 
 ## Configuration GitHub
 
@@ -107,6 +127,8 @@ Compléter les sections **« À ADAPTER »** de `CLAUDE.md` : description du pro
 - **Revue IA** : chaque PR ouverte est relue selon `.claude/agents/reviewer.md`, et le rapport est publié en commentaire. Le job échoue si la revue n'a pas tourné ou si des actions ont été refusées pendant la revue. Une PR qui modifie `ai-review.yml` ne peut pas être relue par l'IA (protection de `claude-code-action`) : son job « Revue IA » est rouge, et elle se relit à la main.
 - **Journal sans conflit** : un fichier de journal par branche (`docs/journal/`), jamais modifié après son merge. Le job CI « Journal » refuse une PR qui touche un journal déjà mergé, ou dont les noms et les dates sont invalides. Deux PR ne peuvent donc pas entrer en conflit sur le journal. Comportement détaillé : [`docs/specs/004-reprise-de-session.md`](docs/specs/004-reprise-de-session.md).
 - **Test humain et pièges** : `/implement` ne termine qu'après un test humain positif dans l'application démarrée. Chaque retour négatif ajoute un test qui échoue, puis un correctif, puis un nouveau test humain. Après au moins une boucle négative, le subagent `learning-curator` capitalise le piège dans `docs/learnings/` (un fichier par piège, seulement s'il se généralise). `/spec`, `/implement` et le reviewer relisent les pièges actifs au cadrage suivant. Comportement détaillé : [`docs/specs/005-capitalisation-des-pieges.md`](docs/specs/005-capitalisation-des-pieges.md).
+- **Lint et tests** : après chaque modification de l'agent, le hook `lint.sh` formate le fichier (`format.sh`), puis lance le lint déclaré dans `.claude/quality.json` ; un échec est renvoyé à l'agent, qui corrige. À la fin de chaque tour où un fichier a été modifié, `run-tests.sh` lance les tests ; un échec est renvoyé une fois à l'agent, puis signalé à l'humain sans bloquer, pour ne pas pousser l'agent à modifier des tests rouges attendus en phase test-first. Comportement détaillé : [`docs/specs/006-revue-securite-et-hooks-qualite.md`](docs/specs/006-revue-securite-et-hooks-qualite.md).
+- **Revue de sécurité** : avant le test humain, `/implement` transmet le diff au subagent `security-reviewer`, qui le relit selon l'OWASP Top 10 2025. Il n'a que `Read`, `Grep` et `Glob` : il ne peut rien exécuter ni modifier, ce que la CI du template vérifie.
 - **Début de session** : le hook `session-start.sh` récupère `origin` et avance la branche seulement si l'arbre est propre et qu'aucune divergence n'existe. Il ne rebase et ne fusionne jamais.
 
 ## Limites
@@ -129,6 +151,9 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 **Processus**
 - **Reprise de session :** une session fermée sans prévenir perd le travail non committé, car l'agent ne peut pas agir à la fermeture (spec 004). La mémoire locale est désactivée par `.claude/settings.json`, mais un réglage personnel (`.claude/settings.local.json`) peut la réactiver.
 - **Test humain et pièges :** le test humain et la capitalisation sont des règles de travail (`/implement`, `CLAUDE.md`), pas des vérifications de CI : rien n'empêche techniquement de les sauter, seul le reviewer le signale. `learning-curator` n'a pas `Bash`, mais rien ne l'empêche techniquement d'écrire hors de `docs/learnings/` : la relecture de la PR le vérifie.
+- **Commandes de `.claude/quality.json` :** ce sont des commandes shell exécutées automatiquement sur le poste de quiconque utilise Claude Code dans le projet, comme celles de `.claude/settings.json`. Une PR qui modifie ce fichier se relit en entier ([ADR-002](docs/adr/002-place-revue-humaine.md)).
+- **Lint et tests :** les tests ne tournent qu'à la fin d'un tour, pas après chaque modification ; leur durée s'ajoute à chaque tour qui modifie un fichier, documentation comprise. Un hook qui dépasse sa durée maximale (60 s pour le lint, 300 s pour les tests) est interrompu par Claude Code.
+- **Revue de sécurité :** elle n'est appelée que par `/implement`, pas par la revue IA en CI. Une PR faite sans `/implement` n'a que la rubrique « Sécurité » du reviewer.
 - **Merge :** « seul l'humain merge » ([ADR-002](docs/adr/002-place-revue-humaine.md)) est une règle de travail, pas une protection technique. Le ruleset impose une PR et des vérifications vertes, mais un agent qui dispose des droits de l'humain via `gh` pourrait merger.
 
 ## Structure
@@ -138,7 +163,11 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `CLAUDE.md` | règles de travail de l'agent : langue, spec avant code, test-first, définition du « done », interdits |
 | `.claude/settings.json` | permissions refusées à l'agent et branchement des hooks |
 | `.claude/hooks/protect-secrets.sh` | refus des accès aux fichiers `.env` |
-| `.claude/hooks/format.sh` | formatage par Prettier après chaque modification, s'il est installé dans le projet |
+| `.claude/hooks/format.sh` | formatage par Prettier, s'il est installé dans le projet ; appelé par `lint.sh` |
+| `.claude/hooks/lint.sh` | après chaque modification : formatage, puis lint déclaré dans `.claude/quality.json` |
+| `.claude/hooks/run-tests.sh` | à la fin de chaque tour où un fichier a été modifié : tests déclarés dans `.claude/quality.json` |
+| `.claude/hooks/quality-common.sh` | fonctions partagées par `lint.sh` et `run-tests.sh` |
+| `.claude/quality.json` | commandes de lint et de tests du projet (sur ce template : shellcheck et `tests/hooks.sh`) |
 | `.claude/hooks/session-start.sh` | au début de chaque session : récupération, mise à jour sans risque, état de la branche, dernière entrée de journal, PR ouvertes |
 | `.claude/skills/spec/` | `/spec` : rédiger une spec à partir d'un besoin |
 | `.claude/skills/implement/` | `/implement` : implémenter une spec validée en test-first |
@@ -146,6 +175,7 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `.claude/agents/reviewer.md` | subagent de revue, utilisé aussi par la revue IA en CI |
 | `.claude/agents/test-writer.md` | subagent qui écrit les tests à partir des critères d'acceptation |
 | `.claude/agents/learning-curator.md` | subagent qui capitalise un piège découvert au test humain, sans `Bash` |
+| `.claude/agents/security-reviewer.md` | subagent de revue de sécurité du diff (OWASP Top 10 2025), en lecture seule |
 | `.githooks/pre-commit` | détection de secrets avant chaque commit |
 | `.github/workflows/garde-fous.yml` | CI générique : tests des hooks, test du pre-commit, détection de secrets, contrôle du journal |
 | `.github/workflows/ai-review.yml` | revue IA de chaque PR |
@@ -162,8 +192,9 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `docs/learnings/` | pièges découverts au test humain, un fichier par piège : symptôme, cause racine, règle pour la prochaine fois ; relus au cadrage |
 | `docs/guide-adoption.md` | introduire le template dans une équipe : rôles, rituels, démarrage progressif |
 | `scripts/init.sh` | application du template à un projet existant |
+| `scripts/lint-shell.sh` | lint du template : shellcheck sur les fichiers shell (non copié par `init.sh`) |
 | `renovate.json` | mises à jour proposées par Renovate : gitleaks et `claude-code-action` (non copié par `init.sh`) |
-| `tests/` | tests des hooks, du pre-commit, de la vérification de la revue et de `init.sh` |
+| `tests/` | tests des hooks, du pre-commit, de la vérification de la revue, de `init.sh` et du lint du template |
 
 ## Licence
 

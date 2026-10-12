@@ -83,11 +83,12 @@ files=(
   .github/scripts/verifier-journal.sh
   tests/verifier-journal.sh
   tests/session-start.sh
+  tests/quality-hooks.sh
 )
 while IFS= read -r file; do
   files+=("$file")
 done < <(git -C "$template" ls-files -- .claude .githooks docs/templates |
-  grep -vxF .claude/settings.local.json | LC_ALL=C sort)
+  grep -vxF -e .claude/settings.local.json -e .claude/quality.json | LC_ALL=C sort)
 
 # Fichier suivi mais supprimé du disque : refus avant toute copie
 missing_files=()
@@ -141,6 +142,15 @@ for doc in cahier-des-charges-fonctionnel.md architecture-technique.md; do
     echo "Créé : docs/$doc"
   fi
 done
+
+# Commandes de lint et de tests (spec 006) : propres au projet, jamais copiées ni
+# écrasées, même avec --force
+if [ ! -e "$target/.claude/quality.json" ]; then
+  mkdir -p "$target/.claude"
+  printf '{\n  "lint": "",\n  "test": ""\n}\n' >"$target/.claude/quality.json"
+  echo "Créé : .claude/quality.json"
+  steps+=("Déclarer les commandes de lint et de tests dans .claude/quality.json (spec 006).")
+fi
 
 # --- .gitignore (complété, jamais remplacé) ----------------------------------
 # La dernière règle qui correspond l'emporte : !.env.example doit rester après .env.*

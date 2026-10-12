@@ -80,3 +80,24 @@ Branche `docs/spec-006-securite-et-hooks-qualite`.
 ### Prochaine étape
 
 - Attendre l'accord de Yanis sur les tests rouges, puis implémenter : `lint.sh`, `run-tests.sh`, `scripts/lint-shell.sh`, `.claude/quality.json`, `security-reviewer`, `settings.json`, `init.sh`, `/implement`, `CLAUDE.md`, README.
+
+## 2026-10-12 13:20
+
+### Fait
+
+- Accord de Yanis sur les tests rouges (« continue »).
+- Implémentation : `lint.sh` (formatage, marque, lint), `run-tests.sh`, `quality-common.sh` (marque par session sous le répertoire Git du worktree), `scripts/lint-shell.sh`, `.claude/quality.json` du template, subagent `security-reviewer`, `settings.json` (lint sur `PostToolUse`, tests sur `Stop`, `format.sh` appelé par `lint.sh`), `init.sh` (`quality.json` créé vide et jamais écrasé, `tests/quality-hooks.sh` copié), étape 7 de `/implement`, `CLAUDE.md`, README, spec 001 complétée.
+- Tous les tests au vert : `quality-hooks` 102, `lint-shell` 15, `init-script` 253, `hooks` 52, `session-start` 50, `verifier-journal` 31, `verifier-revue-ia` 12, `pre-commit` 7. shellcheck et étapes jq de la CI rejoués en local.
+- Contrôle par mutation (CA19) : 17 protections désactivées une à une, toutes détectées par au moins un test.
+
+### Décisions
+
+- Revue de sécurité intégrée à l'étape 7 de `/implement` plutôt qu'en nouvelle étape, pour ne pas renuméroter les étapes que cite la PR #36 (agent).
+
+### Corrections et limites
+
+- Rien.
+
+### Prochaine étape
+
+- Revue de sécurité du diff par `security-reviewer`, puis test humain par Yanis dans une session Claude Code (étape 8 de `/implement`).

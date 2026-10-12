@@ -1,0 +1,4 @@
+{
+  "lint": "scripts/lint-shell.sh",
+  "test": "bash tests/hooks.sh"
+}
