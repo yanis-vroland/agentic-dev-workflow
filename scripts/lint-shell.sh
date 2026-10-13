@@ -18,4 +18,5 @@ case "$file" in
 esac
 
 [ "$is_shell" -eq 1 ] || exit 0
-exec shellcheck -- "$file"
+# -x : suit les fichiers sourcés déclarés par « shellcheck source= », comme en CI
+exec shellcheck -x -- "$file"
