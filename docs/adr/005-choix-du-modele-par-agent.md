@@ -1,6 +1,6 @@
 # ADR-005 : Choix du modèle par agent
 
-Statut : accepté
+Statut : accepté (Yanis, 2026-10-13)
 Date : 2026-10-13
 
 Contexte : les subagents du template n'ont pas de modèle déclaré et prennent celui de la session ([spec 007](../specs/007-modele-par-agent.md)). Leurs tâches n'ont pourtant ni la même difficulté ni le même coût d'erreur : écrire des tests à partir de critères numérotés n'exige pas le même modèle que trouver une faille que personne n'a signalée. Il faut un critère, pour que chaque choix se justifie au lieu de relever du goût, et pour que les subagents ajoutés plus tard suivent la même règle.
@@ -30,7 +30,7 @@ Options envisagées :
 
 Décision (Yanis, 2026-10-13) : **alias**. Le template déclare un niveau de modèle, pas une version. Ce qui doit être reproductible (les garde-fous) l'est par les tests et la CI, pas par la version du modèle.
 
-## Décision (acceptée par Yanis, 2026-10-13)
+## Décision
 
 - Chaque subagent déclare `model: sonnet`, `opus` ou `haiku`, choisi selon le critère ci-dessus. `inherit` et les identifiants complets sont refusés par la CI (`verifier-modeles.sh`, spec 007).
 - La PR qui ajoute un subagent ou change son modèle cite la ligne du critère appliquée.

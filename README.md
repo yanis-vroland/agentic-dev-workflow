@@ -183,7 +183,7 @@ Déclarer dans `.claude/quality.json` les commandes que les hooks lancent ([spec
 
 ## Comment ce projet a été construit
 
-Le template a été construit avec sa propre chaîne, du 7 au 11 octobre 2026 : 25 PR ouvertes par l'agent, relues et mergées par l'humain (#1 à #35, numérotation partagée avec les issues). Les sources sont les PR, leurs commentaires et le journal de chaque branche (`docs/journal/`).
+Le template a été construit avec sa propre chaîne, du 7 au 13 octobre 2026 : 30 PR ouvertes par l'agent, relues et mergées par l'humain (#1 à #40, numérotation partagée avec les issues). Les sources sont les PR, leurs commentaires et le journal de chaque branche (`docs/journal/`).
 
 **Specs et décisions**
 
