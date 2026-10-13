@@ -7,6 +7,8 @@ argument-hint: <chemin de la spec>
 
 Implémente la spec : $ARGUMENTS
 
+Lance chaque subagent sans paramètre `model` ; si son modèle est indisponible, applique la règle n°7 de `CLAUDE.md` : demande-moi le substitut, ne le choisis jamais seul ([spec 007](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/007-modele-par-agent.md)).
+
 1. Vérifie que la spec a le statut « validée ». Sinon, arrête-toi et dis-le.
 2. Crée une branche `feat/<nom-court>` depuis `main` à jour, et son fichier de journal (section « Reprise de session » de `CLAUDE.md`). À chaque commit, ajoute ou complète l'entrée du jour, puis pousse la branche.
 3. Lis les pièges `actif` de `docs/learnings/` dont le domaine ou la rubrique « Où » recoupe la spec. Chaque règle qui s'applique devient un test ou une consigne transmise au subagent `test-writer`.

@@ -22,7 +22,12 @@ for hook in "$lint_hook" "$tests_hook"; do
 done
 
 # Chemin canonique : sous macOS, /var est un lien vers /private/var
-work="$(cd "$(mktemp -d)" && pwd -P)"
+# Un échec de mktemp arrête le test : sinon « cd "" » laisserait $work sur le
+# dossier courant, que le trap effacerait.
+if ! work=$(mktemp -d) || ! work=$(cd "$work" && pwd -P); then
+  echo "Erreur : mktemp -d a échoué" >&2
+  exit 1
+fi
 trap 'rm -rf "$work"' EXIT
 
 # Isole les tests de la configuration Git de l'utilisateur et de l'appelant

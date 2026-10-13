@@ -2,7 +2,8 @@
 # Vérifie scripts/init.sh selon la spec docs/specs/001-script-init.md, modifiée
 # par la section « Application par init.sh » de docs/specs/004-reprise-de-session.md,
 # par les critères CA1 à CA3 de docs/specs/005-capitalisation-des-pieges.md,
-# et par les critères CA17, CA18 et CA23 de docs/specs/006-revue-securite-et-hooks-qualite.md.
+# par les critères CA17, CA18 et CA23 de docs/specs/006-revue-securite-et-hooks-qualite.md,
+# et par le critère CA13 de docs/specs/007-modele-par-agent.md.
 # Chaque vérification cite le critère d'acceptation (CAn) ou le cas limite testé.
 # CA20 n'est pas couvert ici : il est vérifié par la CI elle-même.
 # Les fonctions de vérification sont appelées via check, que shellcheck ne suit pas.
@@ -20,7 +21,12 @@ if [ ! -f "$script" ]; then
 fi
 
 # Chemin canonique : sous macOS, /var est un lien vers /private/var
-work="$(cd "$(mktemp -d)" && pwd -P)"
+# Un échec de mktemp arrête le test : sinon « cd "" » laisserait $work sur le
+# dossier courant, que le trap effacerait.
+if ! work=$(mktemp -d) || ! work=$(cd "$work" && pwd -P); then
+  echo "Erreur : mktemp -d a échoué" >&2
+  exit 1
+fi
 trap 'rm -rf "$work"' EXIT
 
 # Isole les tests de la configuration Git de l'utilisateur et de l'appelant
@@ -745,6 +751,16 @@ for option in "" "--force"; do
   check_code 0 "Spec 006 CA18 : code de sortie 0 ($label)"
   check "Spec 006 CA18 : .claude/quality.json existant non modifié ($label)" \
     same_file "$work/quality-before.json" "$t/.claude/quality.json"
+done
+
+# --- Spec 007 : un modèle choisi pour chaque subagent ------------------------
+
+t=$(new_repo)
+run_init "$t"
+check_code 0 "Spec 007 CA13 : code de sortie 0"
+for file in .github/scripts/verifier-modeles.sh tests/verifier-modeles.sh; do
+  check "Spec 007 CA13 : $file copié" same_file "$template/$file" "$t/$file"
+  check "Spec 007 CA13 : $file exécutable" is_executable "$t/$file"
 done
 
 exit $fail

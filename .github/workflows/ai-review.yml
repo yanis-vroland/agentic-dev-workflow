@@ -1,5 +1,8 @@
 name: Revue IA
 
+# Jamais pull_request_target : le job exécute des fichiers de la PR (verifier-modeles.sh,
+# verifier-revue-ia.sh) avec le jeton Claude ; avec pull_request, une PR venue d'un fork
+# ne reçoit pas les secrets.
 on:
   pull_request:
     types: [opened, reopened, ready_for_review]
@@ -18,6 +21,20 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
+      # Modèle lu dans reviewer.md, jamais recopié ici (spec 007, ADR-005). Un modèle
+      # absent ou hors liste fait échouer le job avant la revue.
+      - id: modele
+        name: Modèle du reviewer
+        run: |
+          model=$(.github/scripts/verifier-modeles.sh --afficher .claude/agents/reviewer.md)
+          # Second contrôle, indépendant du script de la PR : un seul mot en minuscules,
+          # rien qui puisse ajouter une option à claude_args
+          if ! [[ $model =~ ^[a-z]+$ ]]; then
+            echo "::error::Modèle du reviewer invalide : « $model »."
+            exit 1
+          fi
+          echo "model=$model" >>"$GITHUB_OUTPUT"
 
       # Épinglée par SHA : ce code manipule le jeton Claude, une étiquette (@v1) peut
       # être déplacée par son auteur. Sur le template, Renovate propose la mise à jour ;
@@ -40,7 +57,17 @@ jobs:
             cite un nom de fichier d'environnement, et le rapport ne serait pas publié.
             N'exécute aucune autre commande que gh pr diff, gh pr view et gh pr comment (pas de tests,
             pas de scripts) : toute action refusée fait échouer ce job.
-          claude_args: '--allowed-tools "Read,Grep,Glob,Write,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"'
+          claude_args: '--model ${{ steps.modele.outputs.model }} --allowed-tools "Read,Grep,Glob,Write,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"'
+
+      # Aucun autre modèle n'est essayé : l'humain choisit la suite (spec 007, CA11 bis)
+      - name: Modèle indisponible ?
+        if: failure() && steps.modele.outputs.model != ''
+        env:
+          MODEL: ${{ steps.modele.outputs.model }}
+        run: >-
+          echo "::error::Revue IA en échec avec le modèle « $MODEL »
+          déclaré dans .claude/agents/reviewer.md. S'il est indisponible : relancer le job plus tard
+          (quota), ou changer le modèle de reviewer.md par une PR qui justifie l'écart à l'ADR-005."
 
       # Échoue si la revue n'a pas tourné (action sautée) ou si des actions ont été refusées
       - name: Vérification de la revue
