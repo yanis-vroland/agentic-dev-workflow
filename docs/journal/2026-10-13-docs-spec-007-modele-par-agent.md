@@ -180,3 +180,24 @@ Branche `docs/spec-007-modele-par-agent`.
 ### Prochaine étape
 
 - Décision de Yanis sur le test humain et sur l'ADR-005, puis relecture et merge.
+
+## 2026-10-13 15:00
+
+### Fait
+
+- ADR-005 passé au statut « accepté » ; mentions « proposé » retirées de la spec 007 et de l'ADR.
+- README : spec 007 et ADR-005 ajoutés à « Specs et décisions » (#39).
+- Description de la PR mise à jour.
+
+### Décisions
+
+- Yanis (« tout est good ») : scénarios joués par l'agent acceptés comme test humain, ADR-005 validé.
+
+### Corrections et limites
+
+- Test humain positif sans boucle négative : pas de capitalisation par `learning-curator`.
+- CA11 bis à vérifier à la première PR après le merge.
+
+### Prochaine étape
+
+- Merge par Yanis ; puis rebase de la PR restante entre #38 et #39 (`tests/quality-hooks.sh`), et vérification que le dernier commit est sur `main`.

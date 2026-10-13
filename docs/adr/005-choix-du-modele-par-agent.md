@@ -1,6 +1,6 @@
 # ADR-005 : Choix du modèle par agent
 
-Statut : proposé
+Statut : accepté
 Date : 2026-10-13
 
 Contexte : les subagents du template n'ont pas de modèle déclaré et prennent celui de la session ([spec 007](../specs/007-modele-par-agent.md)). Leurs tâches n'ont pourtant ni la même difficulté ni le même coût d'erreur : écrire des tests à partir de critères numérotés n'exige pas le même modèle que trouver une faille que personne n'a signalée. Il faut un critère, pour que chaque choix se justifie au lieu de relever du goût, et pour que les subagents ajoutés plus tard suivent la même règle.
@@ -28,9 +28,9 @@ Options envisagées :
 - **Identifiant complet** (`claude-opus-5-5`) : comportement reproductible, mais chaque nouvelle version demande une PR dans le template et dans chaque projet, et un identifiant retiré casse la chaîne.
 - **Alias** (`opus`) : suit la dernière version sans intervention. Un même fichier peut donner un comportement différent après une mise à jour du modèle. Les variables `ANTHROPIC_DEFAULT_*_MODEL` permettent à un poste ou à une organisation de rediriger un alias vers un identifiant précis (fournisseur tiers, version figée), sans toucher au dépôt.
 
-Décision proposée (validée sur le principe par Yanis le 2026-10-13) : **alias**. Le template déclare un niveau de modèle, pas une version. Ce qui doit être reproductible (les garde-fous) l'est par les tests et la CI, pas par la version du modèle.
+Décision (Yanis, 2026-10-13) : **alias**. Le template déclare un niveau de modèle, pas une version. Ce qui doit être reproductible (les garde-fous) l'est par les tests et la CI, pas par la version du modèle.
 
-## Décision proposée
+## Décision (acceptée par Yanis, 2026-10-13)
 
 - Chaque subagent déclare `model: sonnet`, `opus` ou `haiku`, choisi selon le critère ci-dessus. `inherit` et les identifiants complets sont refusés par la CI (`verifier-modeles.sh`, spec 007).
 - La PR qui ajoute un subagent ou change son modèle cite la ligne du critère appliquée.

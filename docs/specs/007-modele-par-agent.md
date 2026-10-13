@@ -17,7 +17,7 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 
 ## Principes
 
-1. **Le modèle suit la tâche, selon un critère écrit** ([ADR-005](../adr/005-choix-du-modele-par-agent.md), proposé) : exécuter une tâche bien cadrée → `sonnet` ; juger, ou trouver ce qui manque → `opus` ; tâche mécanique, sans jugement → `haiku`.
+1. **Le modèle suit la tâche, selon un critère écrit** ([ADR-005](../adr/005-choix-du-modele-par-agent.md)) : exécuter une tâche bien cadrée → `sonnet` ; juger, ou trouver ce qui manque → `opus` ; tâche mécanique, sans jugement → `haiku`.
 2. **Un choix explicite, vérifié par la CI.** Un subagent sans modèle, ou avec `inherit`, n'a pas été choisi : la CI le refuse, dans le template comme dans les projets.
 3. **Une information à un seul endroit.** Le modèle du `reviewer` est écrit dans `reviewer.md` ; la revue IA en CI le lit là, au lieu de le recopier.
 4. **La session principale reste à l'humain.** Les skills que l'humain lance (`/spec`, `/implement`) ne fixent pas de modèle : c'est lui qui choisit celui de sa session.
