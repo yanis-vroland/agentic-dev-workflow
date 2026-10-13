@@ -25,3 +25,23 @@ Branche `docs/spec-007-modele-par-agent`.
 ### Prochaine étape
 
 - Relecture de la spec 007 et de l'ADR-005 par Yanis, réponse à la question ouverte (repli sans `opus`), puis `/implement docs/specs/007-modele-par-agent.md`.
+
+## 2026-10-13 11:25
+
+### Fait
+
+- Spec 007 : nouvelle section « Modèle indisponible : l'humain choisit le substitut », CA11 bis (échec de la revue IA en CI sans autre modèle essayé) et CA15 bis (consigne dans `CLAUDE.md` et `/implement`), cas limites mis à jour, section « Décisions ». Plus de question ouverte.
+- ADR-005 : décision et conséquence « Disponibilité » alignées.
+
+### Décisions
+
+- Modèle indisponible : l'agent demande à l'humain quel substitut utiliser, il ne choisit jamais seul (Yanis).
+- Le substitut vaut pour la session, passé par le paramètre `model` à l'invocation (seule exception à son interdiction), sans modifier l'en-tête ; consigné dans le journal et la PR. En CI, échec sans autre modèle essayé (agent, à valider par Yanis).
+
+### Corrections et limites
+
+- L'indisponibilité d'un modèle ne se simule pas en test automatique : CA11 bis est vérifié par l'humain.
+
+### Prochaine étape
+
+- Validation de la spec 007 par Yanis, puis `/implement docs/specs/007-modele-par-agent.md`.

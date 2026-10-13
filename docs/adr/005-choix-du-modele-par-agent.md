@@ -35,6 +35,7 @@ Décision proposée (validée sur le principe par Yanis le 2026-10-13) : **alias
 - Chaque subagent déclare `model: sonnet`, `opus` ou `haiku`, choisi selon le critère ci-dessus. `inherit` et les identifiants complets sont refusés par la CI (`verifier-modeles.sh`, spec 007).
 - La PR qui ajoute un subagent ou change son modèle cite la ligne du critère appliquée.
 - Les subagents sont invoqués sans paramètre `model`, pour que l'en-tête reste la seule source du choix.
+- Modèle déclaré indisponible : l'agent s'arrête et demande à l'humain quel substitut utiliser (décision de Yanis, 2026-10-13). Le substitut vaut pour la session, est passé par le paramètre `model` (seule exception) et est consigné dans le journal et la PR. En CI, la revue échoue sans essayer d'autre modèle.
 - La revue IA en CI lit le modèle dans `reviewer.md`, au lieu de le recopier.
 - Les skills lancés par l'humain (`/spec`, `/implement`) ne fixent pas de modèle : la session principale reste son choix.
 - `fable` n'est pas dans la liste : pas évalué sur cette chaîne. L'ajouter demande d'amender cet ADR.
@@ -42,6 +43,6 @@ Décision proposée (validée sur le principe par Yanis le 2026-10-13) : **alias
 Conséquences :
 - **Coût** : deux subagents sur quatre passent en `opus`, dont la revue IA de chaque PR en CI, sur le jeton d'abonnement (ADR-001). Le quota est consommé plus vite. Aucun chiffre n'est avancé : rien n'a été mesuré.
 - **Dérive** : avec les alias, une nouvelle version de modèle peut changer le comportement d'un subagent sans changement dans le dépôt. Une revue qui trouve soudain plus ou moins de points est un signal à consigner dans le journal.
-- **Disponibilité** : un projet sans accès à `opus` doit changer ses déclarations par une PR et justifier l'écart. Aucun repli silencieux (question ouverte de la spec 007).
+- **Disponibilité** : aucun repli automatique. En session, l'humain choisit le substitut, ce qui interrompt le travail mais rend visible une revue faite par un modèle plus faible que prévu. Un projet durablement sans accès à `opus` change ses déclarations par une PR et justifie l'écart.
 - **Vérification limitée** : la CI vérifie qu'un modèle est déclaré et autorisé, pas qu'il est le bon. La justification relève de la revue humaine (ADR-002).
 - **Dépendance à Claude Code** (ADR-004) : les alias et l'ordre de priorité sont propres à Claude Code ; un changement de leur contrat se voit au test humain de la spec 007 (CA18), pas en CI.

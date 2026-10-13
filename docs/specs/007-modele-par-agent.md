@@ -36,7 +36,17 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 - **Déclaration** : une ligne `model:` dans l'en-tête de chaque fichier de `.claude/agents/`, avec un alias : `sonnet`, `opus` ou `haiku`. Pas d'identifiant complet (`claude-…`) : l'alias suit la dernière version du modèle (ADR-005).
 - **Vérification** : nouveau script `.github/scripts/verifier-modeles.sh`, lancé par `garde-fous.yml`, donc dans le template et dans les projets. Pour chaque `.claude/agents/*.md`, il lit la ligne `model:` de l'en-tête, et échoue si elle est absente, vide, en double, égale à `inherit`, ou hors de la liste autorisée. Le message nomme le fichier, la valeur trouvée et la liste autorisée.
 - **Justification** : la PR qui ajoute un subagent, ou change son modèle, donne le critère de l'ADR-005 appliqué, en une ligne. Le script ne peut pas le vérifier : c'est une règle de `CLAUDE.md`, relue en revue.
-- **Invocation** : l'outil qui lance un subagent accepte un paramètre `model` qui **prend le pas** sur l'en-tête (documentation de Claude Code, `sub-agents`, 2026-10-13). `/implement`, `/review` et `CLAUDE.md` ne passent jamais ce paramètre : sinon l'en-tête ne serait plus la source du choix.
+- **Invocation** : l'outil qui lance un subagent accepte un paramètre `model` qui **prend le pas** sur l'en-tête (documentation de Claude Code, `sub-agents`, 2026-10-13). `/implement`, `/review` et `CLAUDE.md` ne passent jamais ce paramètre, sauf pour une substitution décidée par l'humain (section suivante) : sinon l'en-tête ne serait plus la source du choix.
+
+## Modèle indisponible : l'humain choisit le substitut
+
+Le modèle déclaré peut être indisponible : abonnement sans accès, quota atteint, alias inconnu de la version installée de Claude Code.
+
+- **En session** : l'agent principal ne choisit jamais de substitut lui-même et ne relance pas le subagent avec un autre modèle en silence. Il s'arrête et demande à l'humain quel modèle utiliser, en rappelant le subagent concerné, le modèle déclaré, l'erreur reçue et le critère de l'ADR-005 qui justifiait ce modèle.
+- La réponse de l'humain vaut **pour la session en cours** : l'agent relance le subagent avec le paramètre `model` choisi. C'est la seule exception à l'interdiction de ce paramètre. L'en-tête du subagent n'est pas modifié.
+- La substitution est consignée dans la rubrique « Corrections et limites » du journal de la branche (subagent, modèle déclaré, substitut, décidé par l'humain), et dans la PR, section « Points d'attention » : une revue faite par un modèle plus faible que prévu doit se voir.
+- **Changement durable** (un projet qui n'aura jamais accès à `opus`) : modification de l'en-tête par une PR qui justifie l'écart à l'ADR-005, jamais par une substitution répétée à chaque session.
+- **En CI** : personne ne peut répondre. La revue IA échoue avec un message qui nomme le modèle demandé et indique les deux sorties possibles : relancer plus tard (quota) ou changer le modèle de `reviewer.md` par une PR. Elle ne bascule jamais sur un autre modèle.
 
 ## Revue IA en CI
 
@@ -69,6 +79,7 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 
 - CA10 : `ai-review.yml` passe à `claude-code-action` un `--model` lu dans `.claude/agents/reviewer.md`, et ne contient aucun nom de modèle en dur. La CI du template le vérifie.
 - CA11 : Étant donné un `reviewer.md` dont le modèle est absent ou hors liste, quand l'étape de lecture du modèle s'exécute, alors elle échoue avant la revue. La logique de lecture et de validation est celle de `verifier-modeles.sh` (une seule implémentation), testée par CA1 à CA8.
+- CA11 bis : Étant donné une revue IA en CI qui échoue parce que le modèle est indisponible, quand le job se termine, alors son message nomme le modèle demandé et les deux sorties (relancer, ou changer `reviewer.md` par une PR), et aucun autre modèle n'a été essayé. Vérifié par l'humain sur un échec réel ou provoqué (modèle inconnu dans une branche de test), faute de pouvoir simuler l'indisponibilité en test automatique.
 
 ### Branchement et `init.sh`
 
@@ -82,7 +93,8 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 ### Relecture humaine (consignes, non testables automatiquement)
 
 - CA15 : `CLAUDE.md` contient la règle : tout subagent ajouté déclare un `model` choisi selon l'ADR-005, justifié en une ligne dans la PR, et aucun subagent n'est invoqué avec un paramètre `model`.
-- CA16 : `/implement` et `/review` n'invoquent aucun subagent avec un paramètre `model` ; `/spec`, `/implement` et `/review` ne déclarent pas de `model`.
+- CA15 bis : `CLAUDE.md` et `/implement` décrivent la conduite face à un modèle indisponible : arrêt, question à l'humain avec le subagent, le modèle déclaré, l'erreur et le critère de l'ADR-005 ; substitut appliqué à la seule session ; consignation dans le journal et la PR.
+- CA16 : `/implement` et `/review` n'invoquent aucun subagent avec un paramètre `model`, hors substitution décidée par l'humain ; `/spec`, `/implement` et `/review` ne déclarent pas de `model`.
 - CA17 : Le README (garde-fous, limites, structure) renvoie à l'ADR-005 et indique le modèle de chaque subagent.
 - CA18 : Test humain : dans une session Claude Code lancée avec `sonnet`, `/review` est lancé ; l'humain constate, dans la sortie ou dans `/agents`, que le `reviewer` tourne avec `opus`. Ce contrôle couvre le point non documenté du skill `context: fork` avec `agent:`.
 
@@ -90,7 +102,8 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 
 - Variable `CLAUDE_CODE_SUBAGENT_MODEL` définie sur un poste : selon la documentation, elle passe **après** l'en-tête, donc ne change pas le modèle d'un subagent qui en déclare un. Rien à faire.
 - Variables `ANTHROPIC_DEFAULT_OPUS_MODEL` (et équivalentes) : elles redirigent un alias vers un autre identifiant, par exemple chez un fournisseur tiers (Bedrock, Vertex). C'est voulu : le template déclare un niveau, le poste ou l'organisation choisit l'identifiant.
-- Abonnement qui ne donne pas accès à `opus` : le `reviewer` et le `security-reviewer` ne peuvent pas tourner. La chaîne le signale, elle ne bascule pas en silence sur un autre modèle. Le projet change le modèle par une PR, en justifiant l'écart à l'ADR-005.
+- Modèle indisponible : voir « Modèle indisponible : l'humain choisit le substitut ». L'humain peut aussi répondre de ne pas lancer le subagent : l'agent le consigne comme une étape sautée (journal et PR), sans la présenter comme faite.
+- L'humain choisit un substitut hors de la liste autorisée (un identifiant complet, `fable`) : accepté pour la session, puisque c'est son choix et que l'en-tête ne change pas ; `verifier-modeles.sh` ne voit que les en-têtes.
 - Subagent ajouté par un plugin ou dans `~/.claude/agents/` : hors du dépôt, non vérifié.
 - Fichier de `.claude/agents/` qui n'est pas un subagent (README, par exemple) : `verifier-modeles.sh` le refuse aussi. Les fichiers de ce dossier sont tous des subagents ; un autre fichier n'a rien à y faire.
 
@@ -101,6 +114,11 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 - Niveau de raisonnement (`effort`) par subagent : à évaluer à part si le besoin apparaît.
 - Alias `fable` : documenté par Claude Code, mais pas évalué sur cette chaîne. Il n'entre dans la liste autorisée qu'après un amendement de l'ADR-005.
 
+## Décisions (Yanis, 2026-10-13)
+
+1. Un modèle par subagent, selon le critère de l'ADR-005, avec des alias.
+2. Modèle indisponible : l'agent demande à l'humain quel substitut utiliser, il ne choisit jamais seul.
+
 ## Questions ouvertes
 
-- Repli quand `opus` n'est pas disponible (abonnement, quota de la CI) : faut-il prévoir une valeur de repli dans le template, ou laisser chaque projet trancher par une PR comme proposé ci-dessus ?
+- Aucune.
