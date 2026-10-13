@@ -54,6 +54,9 @@ jobs:
           jq -e '[.hooks.PreToolUse[] | select(.matcher == "*") | .hooks[].command
             | select(endswith("/.claude/hooks/restrict-learnings.sh"))] | length == 1' .claude/settings.json
           test -x .claude/hooks/restrict-learnings.sh
+          # Le hook reconnaît le subagent à son nom : un renommage le désactiverait sans bruit
+          grep -qx 'name: learning-curator' .claude/agents/learning-curator.md
+          grep -qF 'learning-curator | *:learning-curator) ;;' .claude/hooks/restrict-learnings.sh
 
       - name: Description de la PR lue par la revue IA (spec 005, CA14)
         run: |

@@ -48,6 +48,10 @@ input() {
 check 0 "CA15 : Write d'un piège" "$(input Write "$project/docs/learnings/quantite-non-recalculee.md")"
 check 0 "CA15 : Edit d'un piège"  "$(input Edit "$project/docs/learnings/quantite-non-recalculee.md")"
 check 0 "CA15 : slug avec chiffres" "$(input Write "$project/docs/learnings/migration-002-avant-fixtures.md")"
+printf '# Piège existant\n' >"$project/docs/learnings/existant.md"
+check 0 "CA15 : Edit d'un piège existant (enrichissement)" "$(input Edit "$project/docs/learnings/existant.md")"
+check 0 "CA15 : CLAUDE_PROJECT_DIR avec une barre finale" \
+  "$(input Write "$project/docs/learnings/x.md")" "$PATH" "$project/"
 
 # --- Écriture hors de docs/learnings/ ---------------------------------------
 
@@ -56,6 +60,8 @@ for file in README.md CLAUDE.md .claude/agents/reviewer.md src/app.ts; do
 done
 check 2 "CA16 : Edit CLAUDE.md"      "$(input Edit "$project/CLAUDE.md")"
 check 2 "CA16 : MultiEdit README.md" "$(input MultiEdit "$project/README.md")"
+check 2 "CA18 : MultiEdit d'un piège (absent des outils du subagent)" \
+  "$(input MultiEdit "$project/docs/learnings/x.md")"
 check 2 "CA16 : message qui cite le chemin" "$(input Write "$project/README.md")"
 if grep -qF "$project/README.md" <<<"$output"; then
   echo "OK     CA16 : chemin cité dans le message"
@@ -79,6 +85,9 @@ check 2 "CA17 : chemin relatif"       "$(input Write "docs/learnings/x.md")"
 check 2 "CA17 : nom seul, relatif"    "$(input Write "piege.md")"
 check 2 "CA17 : sans extension"       "$(input Write "$project/docs/learnings/piege")"
 check 2 "CA17 : dossier lui-même"     "$(input Write "$project/docs/learnings/")"
+# Échappements JSON : la substitution $(...) retirerait le saut de ligne final, bash le NUL
+check 2 "CA17 : saut de ligne final"  "$(input Write "$project/docs/learnings/x.md\\n")"
+check 2 "CA17 : NUL dans le nom"      "$(input Write "$project/docs/learnings/x\\u0000.md")"
 
 # --- Outils -------------------------------------------------------------------
 
@@ -97,6 +106,8 @@ check 0 "CA25 : agent_type nul, Write README.md" \
   "{\"agent_type\":null,\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$project/README.md\"}}"
 check 0 "CA25 : test-writer, Write tests/x.sh" "$(input Write "$project/tests/x.sh" test-writer)"
 check 0 "CA25 : autre agent, Bash" '{"agent_type":"reviewer","tool_name":"Bash","tool_input":{"command":"git diff"}}'
+check 0 "CA25 : nom voisin, learning-curator-bis" "$(input Write "$project/README.md" learning-curator-bis)"
+check 2 "CA25 : nom préfixé par un plugin" "$(input Write "$project/README.md" plugin:learning-curator)"
 check 0 "CA25 : autre agent, CLAUDE_PROJECT_DIR vide" "$(input Write "$project/README.md" reviewer)" "$PATH" ""
 check 2 "CA25 : agent_type non textuel" \
   "{\"agent_type\":5,\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$project/README.md\"}}"

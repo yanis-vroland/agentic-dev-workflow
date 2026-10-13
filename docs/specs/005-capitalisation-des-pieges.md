@@ -50,10 +50,10 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 
 - **Outils** : `Read`, `Grep`, `Glob`, `Write`, `Edit`. Pas de `Bash` : il n'exécute rien et n'écrit que dans `docs/learnings/`. L'agent principal lui fournit la date.
 - **Restriction technique** : un hook `PreToolUse` de `.claude/settings.json`, de matcher `*`, lance `.claude/hooks/restrict-learnings.sh` sur chaque appel d'outil. Claude Code renseigne `agent_type` dans l'entrée d'un hook lancé pendant un subagent. Le hook :
-  - laisse passer tout appel dont `agent_type` est absent, nul ou différent de `learning-curator` (session principale, autres subagents) ;
+  - laisse passer tout appel dont `agent_type` est absent, nul, ou différent de `learning-curator` et de `<plugin>:learning-curator` (session principale, autres subagents) ;
   - laisse passer `Read`, `Grep` et `Glob` ;
-  - laisse passer `Write`, `Edit` et `MultiEdit` seulement sur un fichier `$CLAUDE_PROJECT_DIR/docs/learnings/<slug>.md`, où `<slug>` est en kebab-case (minuscules, chiffres et tirets) : ni sous-dossier, ni autre extension, ni `..` ;
-  - refuse tout autre outil (`Bash` compris), un fichier de piège ou un dossier `docs/learnings/` qui est un lien symbolique, et toute entrée qu'il ne sait pas lire (JSON invalide, champ absent, `jq` ou `CLAUDE_PROJECT_DIR` absents) : fermeture en cas de panne, comme `protect-secrets.sh` (spec 002) ;
+  - laisse passer `Write` et `Edit` seulement sur un fichier `$CLAUDE_PROJECT_DIR/docs/learnings/<slug>.md`, où `<slug>` est en kebab-case (minuscules, chiffres et tirets) : ni sous-dossier, ni autre extension, ni `..` ;
+  - refuse tout autre outil (`Bash` et `MultiEdit` compris, absents des outils du subagent), un fichier de piège ou un dossier `docs/learnings/` qui est un lien symbolique, et toute entrée qu'il ne sait pas lire (JSON invalide, champ absent, `jq` ou `CLAUDE_PROJECT_DIR` absents) : fermeture en cas de panne, comme `protect-secrets.sh` (spec 002) ;
   - refuse par le code de sortie 2, avec un message sur stderr qui cite le chemin refusé.
 - **Invocation** : par `/implement`, après un retour positif, et seulement si le test humain a demandé au moins une boucle négative. Aussi quand l'humain demande explicitement de retenir quelque chose (« retiens ça »). Jamais quand la fonctionnalité passe du premier coup.
 - **Entrée** : la spec, le symptôme rapporté, la cause identifiée et le correctif (commit).
@@ -82,19 +82,19 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 ### CI du template (`template-ci.yml`)
 
 - CA4 : Étant donné `.claude/agents/learning-curator.md`, quand la CI s'exécute, alors elle vérifie que sa liste d'outils est exactement `Read, Grep, Glob, Write, Edit`, et elle échoue si `Bash` y apparaît.
-- CA13 : Étant donné `.claude/settings.json`, quand la CI s'exécute, alors elle vérifie qu'un hook `PreToolUse` de matcher `*` lance `.claude/hooks/restrict-learnings.sh`, et que ce script est exécutable.
+- CA13 : Étant donné `.claude/settings.json`, quand la CI s'exécute, alors elle vérifie qu'un hook `PreToolUse` de matcher `*` lance `.claude/hooks/restrict-learnings.sh`, que ce script est exécutable, et que le `name:` de `learning-curator.md` est celui que le hook reconnaît.
 - CA14 : Étant donné `.github/workflows/ai-review.yml`, quand la CI s'exécute, alors elle vérifie que la consigne de la revue IA lit la description de la PR par `gh pr view … --json title,body`.
 
 ### Hook `restrict-learnings.sh` (`tests/restrict-learnings.sh`, lancé par le job « Garde-fous »)
 
-- CA15 : `Write` ou `Edit` sur `<projet>/docs/learnings/quantite-non-recalculee.md` : accepté (code 0).
+- CA15 : `Write` ou `Edit` sur `<projet>/docs/learnings/quantite-non-recalculee.md`, existant ou non : accepté (code 0), y compris si `CLAUDE_PROJECT_DIR` finit par `/`.
 - CA16 : `Write`, `Edit` ou `MultiEdit` sur un fichier hors de `docs/learnings/` (`README.md`, `CLAUDE.md`, `.claude/agents/reviewer.md`, `src/app.ts`) : refusé (code 2), message qui cite le chemin.
-- CA17 : chemin qui sort du dossier ou n'a pas la forme attendue : `docs/learnings/../CLAUDE.md`, sous-dossier `docs/learnings/a/b.md`, extension `.txt`, `.gitkeep`, slug avec majuscules ou espaces, `docs/learnings/` d'un autre projet (`/tmp/autre/docs/learnings/x.md`), chemin relatif : refusé.
-- CA18 : `Read`, `Grep` et `Glob` : acceptés ; `Bash` ou tout autre outil : refusé.
+- CA17 : chemin qui sort du dossier ou n'a pas la forme attendue : `docs/learnings/../CLAUDE.md`, sous-dossier `docs/learnings/a/b.md`, extension `.txt`, `.gitkeep`, slug avec majuscules ou espaces, `docs/learnings/` d'un autre projet (`/tmp/autre/docs/learnings/x.md`), chemin relatif, saut de ligne final ou caractère NUL dans le nom : refusé.
+- CA18 : `Read`, `Grep` et `Glob` : acceptés ; `Bash`, `MultiEdit` ou tout autre outil : refusé.
 - CA19 : fichier de piège existant qui est un lien symbolique, ou dossier `docs/learnings/` qui est un lien symbolique : refusé.
-- CA20 : entrée illisible (JSON invalide, entrée vide, `tool_name` ou `file_path` absent), `jq` absent, `CLAUDE_PROJECT_DIR` absent ou vide : refusé.
-- CA25 : appel de la session principale (`agent_type` absent ou nul) ou d'un autre subagent : accepté, quel que soit l'outil ou le chemin. `agent_type` non textuel, JSON invalide ou `jq` absent : refusé quel que soit l'agent, faute de savoir qui appelle.
+- CA20 : pour `learning-curator`, entrée illisible (JSON invalide, entrée vide, `tool_name` ou `file_path` absent), `jq` absent, `CLAUDE_PROJECT_DIR` absent ou vide : refusé.
 - CA21 : `init.sh` copie `.claude/hooks/restrict-learnings.sh` et `tests/restrict-learnings.sh` dans la cible (ajout à `tests/init-script.sh`).
+- CA25 : appel de la session principale (`agent_type` absent ou nul) ou d'un autre subagent (y compris un nom voisin comme `learning-curator-bis`) : accepté, quel que soit l'outil ou le chemin ; `<plugin>:learning-curator` est traité comme `learning-curator`. `agent_type` non textuel, JSON invalide ou `jq` absent : refusé quel que soit l'agent, faute de savoir qui appelle.
 
 ### Relecture humaine (consignes, non testables automatiquement)
 
@@ -141,7 +141,9 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 
 - La revue IA de la PR #18 de FieldOps a relevé que la limite de `learning-curator` à `docs/learnings/` ne tenait qu'à son prompt (moindre privilège). Yanis demande de traiter tous les points de cette revue : la restriction technique sort du hors périmètre.
 - Hook branché dans `.claude/settings.json` et filtré sur `agent_type`. La première version déclarait le hook dans l'en-tête du subagent (champ `hooks:` documenté par Claude Code) : le test réel (CA24) a montré que Claude Code 2.1.291 ne l'exécute pas, ni en subagent ni avec `--agent`, et l'écriture dans `README.md` est passée. Une trace a confirmé que le hook de `settings.json` reçoit `agent_type: "learning-curator"` pendant le subagent.
-- Contrepartie assumée : le hook tourne sur chaque appel d'outil de toute session (un lancement de `jq`), et il refuse tout si `jq` manque, comme `protect-secrets.sh` le fait déjà pour ses outils.
+- Contrepartie assumée : le hook tourne sur chaque appel d'outil de toute session, revue IA en CI comprise (un lancement de `jq`), et il refuse tout si `jq` manque, au-delà des outils que `protect-secrets.sh` bloque déjà.
+- La protection dépend du champ `agent_type` et du nom du subagent : vérifiée en vrai une fois (CA24, Claude Code 2.1.291), elle disparaîtrait sans alerte si Claude Code cessait de transmettre ce champ. La CI vérifie le nom (CA13), pas le champ.
+- `MultiEdit` est refusé : il n'est pas dans les outils du subagent (moindre privilège).
 - Le test humain ne vise que les changements de comportement observable, ce que la décision du 2026-10-11 sous-entendait (« toute correction change un comportement observable ») sans l'écrire.
 
 ## Questions ouvertes

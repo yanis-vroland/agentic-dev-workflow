@@ -44,3 +44,28 @@
 ### Prochaine étape
 
 - Ouvrir la PR, puis la reprise dans FieldOps (specs 006 et 007, et ces corrections).
+
+## 2026-10-13 16:45
+
+### Fait
+
+- Relecture par le subagent `reviewer` avant la PR : rien de bloquant, cinq points « À corriger », dix suggestions. Corrigés :
+  - chemin terminé par un saut de ligne ou contenant un NUL accepté (la substitution `$(...)` les retirait) : validation du chemin par jq sur la chaîne d'origine, ancres `\A` et `\z` (`$` accepte un saut de ligne final, vérifié) ;
+  - `MultiEdit` refusé (absent des outils du subagent) ;
+  - nom du subagent vérifié en CI (CA13), `<plugin>:learning-curator` traité comme `learning-curator` ;
+  - limites du README : dépendance au champ `agent_type`, coût du matcher `*` ;
+  - un seul appel à jq pour les autres agents, message « jq absent » aligné sur `protect-secrets.sh`, barre finale de `CLAUDE_PROJECT_DIR` tolérée, test d'un `Edit` sur un piège existant, CA25 rangé après CA21, CA20 précisé « pour learning-curator », historique retiré de la consigne de revue et de l'en-tête du hook.
+- Tests : 60 cas au vert. Mutation : 21 protections, 20 tuées ; survivant : `file_path` absent, équivalent (déjà noté).
+- Test réel (CA24) refait sur la version finale : même résultat (README refusé, piège accepté, session principale libre).
+
+### Décisions
+
+- Agent : suggestion « casse insensible du système de fichiers » non suivie, impact nul tant que `docs/learnings/` ne contient que des pièges.
+
+### Corrections et limites
+
+- Le job « Revue IA » de cette PR sera rouge : elle modifie `ai-review.yml`, que `claude-code-action` refuse de relire (README, « Garde-fous »). CA14 (lecture de la description en CI) ne se vérifiera qu'à la PR suivante ; relecture humaine obligatoire.
+
+### Prochaine étape
+
+- Ouvrir la PR. Après son merge : vérifier CA14 sur la PR suivante, et reprendre la branche dans FieldOps.

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Limite les écritures du subagent learning-curator aux fichiers de piège docs/learnings/<slug>.md.
 # Branché sur tous les outils dans .claude/settings.json : n'agit que si l'entrée du hook porte
-# agent_type = learning-curator, que Claude Code renseigne pendant un subagent. Un hook déclaré
-# dans l'en-tête du subagent n'est pas exécuté par Claude Code 2.1.291 (test réel, CA24).
+# agent_type = learning-curator (ou <plugin>:learning-curator), champ que Claude Code renseigne
+# pendant un subagent. Pourquoi pas un hook dans l'en-tête du subagent : décision du 2026-10-13 de la spec.
 # Spec : https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/005-capitalisation-des-pieges.md
 # Exit 2 = action refusée, le message sur stderr est renvoyé à l'agent.
 set -euo pipefail
@@ -24,27 +24,34 @@ deny() {
   exit 2
 }
 
-command -v jq >/dev/null || deny "jq est introuvable, action refusée par précaution."
+command -v jq >/dev/null 2>&1 ||
+  deny "jq n'est pas installé, action refusée. Installe jq pour rétablir les hooks de Claude Code."
 
 input=$(cat)
-# Entrée illisible : refus quel que soit l'agent, faute de savoir qui appelle
-jq -e 'type == "object" and ((.agent_type == null) or (.agent_type | type == "string"))' \
-  <<<"$input" >/dev/null 2>&1 || deny "entrée illisible (JSON invalide ou agent_type non textuel), action refusée."
 
-agent=$(jq -r '.agent_type // ""' <<<"$input")
-[ "$agent" = learning-curator ] || exit 0
+# Un seul appel à jq pour tous les agents. Entrée vide, JSON invalide ou agent_type non
+# textuel : refus quel que soit l'agent, faute de savoir qui appelle.
+agent=$(jq -er 'if type == "object" and (.agent_type == null or (.agent_type | type == "string"))
+  then (.agent_type // "") else error("entrée") end' <<<"$input" 2>/dev/null) ||
+  deny "entrée illisible (JSON invalide ou agent_type non textuel), action refusée."
+
+case $agent in
+  learning-curator | *:learning-curator) ;;
+  *) exit 0 ;;
+esac
 
 project=${CLAUDE_PROJECT_DIR:-}
+project=${project%/}
 [ -n "$project" ] || deny "CLAUDE_PROJECT_DIR absent, action refusée par précaution."
 
 tool=$(jq -er '.tool_name | strings' <<<"$input" 2>/dev/null) ||
-  deny "entrée illisible (tool_name absent ou JSON invalide), action refusée."
+  deny "entrée illisible (tool_name absent), action refusée."
 
 case $tool in
   Read | Grep | Glob)
     exit 0
     ;;
-  Write | Edit | MultiEdit) ;;
+  Write | Edit) ;;
   *)
     deny "outil « $tool » interdit à learning-curator (Read, Grep, Glob, Write et Edit seulement)."
     ;;
@@ -54,13 +61,13 @@ path=$(jq -er '.tool_input.file_path | strings' <<<"$input" 2>/dev/null) ||
   deny "$tool sans file_path, action refusée."
 
 dir="$project/docs/learnings"
-slug_re='^[a-z0-9]+(-[a-z0-9]+)*$'
 
-# Le slug ne contient ni « / » ni « . » : ni sous-dossier ni « .. » possibles
-name=${path#"$dir/"}
-if [ "$name" = "$path" ] || [[ ! ${name%.md} =~ $slug_re ]] || [ "${name%.md}.md" != "$name" ]; then
+# Validation par jq sur la chaîne d'origine : $(...) retire les sauts de ligne finaux, et bash
+# les caractères NUL. \A et \z ancrent sur toute la chaîne ($ accepterait un saut de ligne final).
+# Le slug ne contient ni « / » ni « . » : ni sous-dossier ni « .. » possibles.
+jq -e --arg dir "$dir/" '.tool_input.file_path | startswith($dir)
+  and (.[($dir | length):] | test("\\A[a-z0-9]+(-[a-z0-9]+)*\\.md\\z"))' <<<"$input" >/dev/null 2>&1 ||
   deny "écriture refusée sur $path : learning-curator n'écrit que dans $dir/<slug>.md (slug en kebab-case)."
-fi
 
 if [ -L "$project/docs" ] || [ -L "$dir" ] || [ -L "$path" ]; then
   deny "écriture refusée sur $path : lien symbolique dans le chemin."
