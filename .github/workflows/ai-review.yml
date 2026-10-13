@@ -1,5 +1,8 @@
 name: Revue IA
 
+# Jamais pull_request_target : le job exécute des fichiers de la PR (verifier-modeles.sh,
+# verifier-revue-ia.sh) avec le jeton Claude ; avec pull_request, une PR venue d'un fork
+# ne reçoit pas les secrets.
 on:
   pull_request:
     types: [opened, reopened, ready_for_review]
@@ -25,6 +28,12 @@ jobs:
         name: Modèle du reviewer
         run: |
           model=$(.github/scripts/verifier-modeles.sh --afficher .claude/agents/reviewer.md)
+          # Second contrôle, indépendant du script de la PR : un seul mot en minuscules,
+          # rien qui puisse ajouter une option à claude_args
+          if ! [[ $model =~ ^[a-z]+$ ]]; then
+            echo "::error::Modèle du reviewer invalide : « $model »."
+            exit 1
+          fi
           echo "model=$model" >>"$GITHUB_OUTPUT"
 
       # Épinglée par SHA : ce code manipule le jeton Claude, une étiquette (@v1) peut

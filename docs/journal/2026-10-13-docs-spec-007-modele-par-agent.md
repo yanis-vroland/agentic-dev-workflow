@@ -151,3 +151,32 @@ Branche `docs/spec-007-modele-par-agent`.
 ### Prochaine étape
 
 - Test humain par Yanis (scénarios dans la PR), puis relecture et merge.
+
+## 2026-10-13 14:40
+
+### Fait
+
+- Seconde revue de sécurité, sur le diff brut complet (`init.sh` et tests compris) : un point « À corriger », une suggestion.
+- Point « À corriger » (A10) : si `mktemp -d` échouait, `work="$(cd "$(mktemp -d)" && pwd -P)"` valait le dossier courant, que le `trap` effaçait (racine du dépôt en CI). Reproduit avec un faux `mktemp` qui échoue, dans un dossier jetable. Corrigé dans les six tests qui portaient ce motif (`init-script`, `lint-shell`, `verifier-modeles`, `quality-hooks`, `session-start`, `verifier-journal`) : le test s'arrête avant de poser le `trap`. Même simulation après correction : code 1, dossier intact, pour les six.
+- Suggestion (A08) suivie : dans `ai-review.yml`, second contrôle du modèle indépendant du script de la PR (un seul mot en minuscules), et commentaire qui interdit `pull_request_target`.
+- Scénarios du test humain joués par l'agent, à la demande de Yanis, dans des worktrees jetables, avec de vraies sessions `claude -p` (Claude Code 2.1.291) :
+  - CA18 : session `--model sonnet`, `/review` : le subagent `reviewer` a produit 19 messages, tous en `claude-opus-5-5` (transcription du subagent). Positif.
+  - Message d'erreur : `model: inherit` puis `model: opus haiku` dans `test-writer.md` : code 1, message avec fichier, valeur et liste. Positif.
+  - CA15 bis : `model: claude-inexistant` : erreur `model_not_found` (404), l'agent ne relance pas de substitut, rappelle subagent, modèle, erreur et critère de l'ADR-005, et demande à l'humain. Positif.
+
+### Décisions
+
+- Correction des six fichiers de test, dont cinq hors du diff de la spec : même motif, copié dans les projets (agent, à la demande de Yanis : « corrige »).
+- Le second contrôle de `ai-review.yml` vérifie la forme (un mot en minuscules) et non la liste, pour ne pas recopier les noms de modèles (CA10) (agent).
+
+### Corrections et limites
+
+- Tests modifiés (règle n°3) : seulement la création du dossier temporaire, aucune vérification changée.
+- Pas de test permanent de non-régression pour l'échec de `mktemp` : la preuve est la simulation ci-dessus, rejouable avec un faux `mktemp` en tête du `PATH`.
+- Les scénarios ont été joués par l'agent, pas par l'humain dans sa session : la spec 005 dit que le test humain ne se délègue pas. À Yanis de dire s'il les accepte comme test humain.
+- `tests/quality-hooks.sh` est aussi modifié par la PR #38 : rebase à prévoir après le premier merge.
+- CA11 bis reste invérifiable sur cette PR (elle modifie `ai-review.yml`).
+
+### Prochaine étape
+
+- Décision de Yanis sur le test humain et sur l'ADR-005, puis relecture et merge.
