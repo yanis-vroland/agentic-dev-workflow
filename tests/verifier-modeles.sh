@@ -153,6 +153,10 @@ agent "$p" sans-modele ""
 run "$p"
 check_refused "CA2 : subagent sans ligne model : refus"
 check_err "CA2 : stderr nomme le fichier" "sans-modele.md"
+# Message propre à la ligne absente : sans lui, le refus viendrait seulement de la
+# valeur vide, et l'humain lirait « modèle « » refusé » (mutation CA14)
+check_err "CA2 : stderr dit que la ligne model: manque" "aucune ligne « model: »"
+check_list "CA2"
 run "$p" .claude/agents/sans-modele.md
 check_refused "CA2 : fichier sans ligne model passé en argument : refus"
 check_err "CA2 : fichier en argument, stderr nomme le fichier" "sans-modele.md"

@@ -87,3 +87,29 @@ Branche `docs/spec-007-modele-par-agent`.
 ### Prochaine étape
 
 - Accord de Yanis sur les tests rouges, puis implémentation.
+
+## 2026-10-13 12:40
+
+### Fait
+
+- Accord de Yanis sur les tests rouges (« oui vasy »).
+- `.github/scripts/verifier-modeles.sh` : vérification de tous les subagents, de fichiers donnés, ou `--afficher` pour la revue IA.
+- `model:` dans les quatre subagents (`test-writer` et `learning-curator` en `sonnet`, `reviewer` et `security-reviewer` en `opus`).
+- `garde-fous.yml` : shellcheck, test et vérification des modèles. `ai-review.yml` : modèle lu dans `reviewer.md`, passé par `--model`, message d'échec qui nomme le modèle sans en essayer d'autre. `template-ci.yml` : vérification CA10 (aucun modèle en dur).
+- `init.sh` copie le script et son test. `CLAUDE.md` (règle n°7), `/implement` et README (garde-fous, limites, structure, fichiers à supprimer) mis à jour.
+- Tous les tests au vert : `verifier-modeles` 111, `init-script` 258, `quality-hooks` 102, `hooks` 52, `session-start` 50, `verifier-journal` 31, `lint-shell` 15, `verifier-revue-ia` 12, `pre-commit` 7. shellcheck sans avertissement, YAML des workflows valide.
+- Contrôle par mutation (CA14) : 8 protections désactivées une à une, toutes détectées.
+
+### Décisions
+
+- Test CA2 renforcé par l'agent : la première mutation (ligne absente acceptée) n'était pas détectée, car la valeur vide est refusée de toute façon. Le test exige désormais le message propre à la ligne absente et la liste autorisée (agent).
+- Motif de CA10 écrit `[$][{][{]` dans `template-ci.yml` : un `${{` littéral serait évalué par GitHub Actions avant le shell (agent).
+
+### Corrections et limites
+
+- Bug corrigé pendant l'implémentation : tableau vide et `set -u` sous bash 3.2 (macOS), détecté par CA7.
+- CA11 bis (échec réel de la revue IA faute de modèle) et CA18 (`/review` lancé en `opus`) restent à vérifier par l'humain.
+
+### Prochaine étape
+
+- Revue de sécurité du diff par `security-reviewer`, puis test humain par Yanis.

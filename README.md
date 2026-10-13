@@ -80,7 +80,8 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
    git rm docs/adr/001-authentification-ci.md docs/specs/001-script-init.md \
      docs/specs/002-hook-protect-secrets.md docs/specs/003-documents-de-reference.md \
      docs/specs/004-reprise-de-session.md docs/specs/005-capitalisation-des-pieges.md \
-     docs/specs/006-revue-securite-et-hooks-qualite.md scripts/init.sh scripts/lint-shell.sh \
+     docs/specs/006-revue-securite-et-hooks-qualite.md docs/specs/007-modele-par-agent.md \
+     scripts/init.sh scripts/lint-shell.sh \
      tests/init-script.sh tests/lint-shell.sh .github/workflows/template-ci.yml
    ```
 
@@ -177,6 +178,7 @@ Déclarer dans `.claude/quality.json` les commandes que les hooks lancent ([spec
 - **Test humain et pièges** : `/implement` ne termine qu'après un test humain positif dans l'application démarrée. Chaque retour négatif ajoute un test qui échoue, puis un correctif, puis un nouveau test humain. Après au moins une boucle négative, le subagent `learning-curator` capitalise le piège dans `docs/learnings/` (un fichier par piège, seulement s'il se généralise). `/spec`, `/implement` et le reviewer relisent les pièges actifs au cadrage suivant. Comportement détaillé : [`docs/specs/005-capitalisation-des-pieges.md`](docs/specs/005-capitalisation-des-pieges.md).
 - **Lint et tests** : après chaque modification de l'agent, le hook `lint.sh` formate le fichier (`format.sh`), puis lance le lint déclaré dans `.claude/quality.json` ; un échec est renvoyé à l'agent, qui corrige. À la fin de chaque tour où un fichier a été modifié, `run-tests.sh` lance les tests ; un échec est renvoyé une fois à l'agent, puis signalé à l'humain sans bloquer, pour ne pas pousser l'agent à modifier des tests rouges attendus en phase test-first. Comportement détaillé : [`docs/specs/006-revue-securite-et-hooks-qualite.md`](docs/specs/006-revue-securite-et-hooks-qualite.md).
 - **Revue de sécurité** : avant le test humain, `/implement` transmet le diff au subagent `security-reviewer`, qui le relit selon l'OWASP Top 10 2025. Il n'a que `Read`, `Grep` et `Glob` : il ne peut rien exécuter ni modifier, ce que la CI du template vérifie.
+- **Modèle par subagent** : chaque subagent déclare son modèle selon la nature de sa tâche ([ADR-005](docs/adr/005-choix-du-modele-par-agent.md)) : `opus` pour juger (`reviewer`, `security-reviewer`), `sonnet` pour exécuter une tâche cadrée (`test-writer`, `learning-curator`). Le job « Garde-fous » refuse un subagent sans modèle, avec `inherit` ou hors de la liste ; la revue IA en CI lit le modèle dans `reviewer.md`. Si un modèle est indisponible, l'agent demande à l'humain quel substitut utiliser. Comportement détaillé : [`docs/specs/007-modele-par-agent.md`](docs/specs/007-modele-par-agent.md).
 - **Début de session** : le hook `session-start.sh` récupère `origin` et avance la branche seulement si l'arbre est propre et qu'aucune divergence n'existe. Il ne rebase et ne fusionne jamais.
 
 ## Comment ce projet a été construit
@@ -247,6 +249,7 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 - **Commandes de `.claude/quality.json` :** ce sont des commandes shell exécutées automatiquement sur le poste de quiconque utilise Claude Code dans le projet, comme celles de `.claude/settings.json`. Une PR qui modifie ce fichier se relit en entier ([ADR-002](docs/adr/002-place-revue-humaine.md)).
 - **Lint et tests :** les tests ne tournent qu'à la fin d'un tour, pas après chaque modification ; leur durée s'ajoute à chaque tour qui modifie un fichier, documentation comprise. Un hook qui dépasse sa durée maximale (60 s pour le lint, 300 s pour les tests) est interrompu par Claude Code.
 - **Revue de sécurité :** elle n'est appelée que par `/implement`, pas par la revue IA en CI. Une PR faite sans `/implement` n'a que la rubrique « Sécurité » du reviewer.
+- **Modèle des subagents :** la CI vérifie qu'un modèle autorisé est déclaré, pas qu'il est le bon : la justification se relit dans la PR. Un paramètre `model` passé à l'invocation l'emporte sur l'en-tête ; ne le passer que pour un substitut choisi par l'humain est une règle de travail, pas une protection. Les alias suivent la dernière version des modèles : le comportement d'un subagent peut changer sans changement dans le dépôt. Aucun coût par modèle n'a été mesuré.
 - **Merge :** « seul l'humain merge » ([ADR-002](docs/adr/002-place-revue-humaine.md)) est une règle de travail, pas une protection technique. Le ruleset impose une PR et des vérifications vertes, mais un agent qui dispose des droits de l'humain via `gh` pourrait merger.
 
 ## Structure
@@ -265,15 +268,16 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `.claude/skills/spec/` | `/spec` : rédiger une spec à partir d'un besoin |
 | `.claude/skills/implement/` | `/implement` : implémenter une spec validée en test-first |
 | `.claude/skills/review/` | `/review` : relire la branche avant la PR |
-| `.claude/agents/reviewer.md` | subagent de revue, utilisé aussi par la revue IA en CI |
-| `.claude/agents/test-writer.md` | subagent qui écrit les tests à partir des critères d'acceptation |
-| `.claude/agents/learning-curator.md` | subagent qui capitalise un piège découvert au test humain, sans `Bash` |
-| `.claude/agents/security-reviewer.md` | subagent de revue de sécurité du diff (OWASP Top 10 2025), en lecture seule |
+| `.claude/agents/reviewer.md` | subagent de revue, utilisé aussi par la revue IA en CI ; modèle `opus` |
+| `.claude/agents/test-writer.md` | subagent qui écrit les tests à partir des critères d'acceptation ; modèle `sonnet` |
+| `.claude/agents/learning-curator.md` | subagent qui capitalise un piège découvert au test humain, sans `Bash` ; modèle `sonnet` |
+| `.claude/agents/security-reviewer.md` | subagent de revue de sécurité du diff (OWASP Top 10 2025), en lecture seule ; modèle `opus` |
 | `.githooks/pre-commit` | détection de secrets avant chaque commit |
 | `.github/workflows/garde-fous.yml` | CI générique : tests des hooks, test du pre-commit, détection de secrets, contrôle du journal |
 | `.github/workflows/ai-review.yml` | revue IA de chaque PR |
 | `.github/workflows/template-ci.yml` | CI propre au template, non copiée par `init.sh` |
 | `.github/scripts/verifier-revue-ia.sh` | fait échouer la revue IA si elle n'a pas tourné ou a subi des refus |
+| `.github/scripts/verifier-modeles.sh` | refuse un subagent sans modèle autorisé, et donne à la revue IA le modèle de `reviewer.md` |
 | `.github/scripts/verifier-journal.sh` | refuse une PR qui modifie un journal déjà mergé, ou dont les noms et dates du journal sont invalides |
 | `.github/pull_request_template.md` | modèle de PR : spec liée, critères couverts, vérifications humaines, corrections |
 | `docs/templates/spec.md` | modèle de spec |

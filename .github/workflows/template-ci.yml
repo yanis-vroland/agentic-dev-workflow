@@ -49,6 +49,17 @@ jobs:
             exit 1
           fi
 
+      - name: Modèle de la revue IA lu dans reviewer.md, jamais en dur (spec 007, CA10)
+        run: |
+          f=.github/workflows/ai-review.yml
+          grep -qF -- '.github/scripts/verifier-modeles.sh --afficher .claude/agents/reviewer.md' "$f"
+          # Classes [$][{][{] : un dollar suivi de deux accolades serait évalué par GitHub Actions avant le shell
+          grep -qE -- "claude_args: '--model [$][{][{] steps[.]modele[.]outputs[.]model [}][}] " "$f"
+          if grep -nEi -- '(sonnet|opus|haiku|fable|claude-[a-z]+-[0-9])' "$f"; then
+            echo "Nom de modèle en dur dans $f"
+            exit 1
+          fi
+
       # format.sh n'est plus branché à part : les hooks d'un même événement tournent
       # en parallèle, et lint.sh l'appelle avant le lint (CA6).
       - name: Hooks de lint et de tests branchés, formatage porté par lint.sh (spec 006, CA14)
