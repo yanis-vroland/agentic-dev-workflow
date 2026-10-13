@@ -65,3 +65,25 @@ Branche `docs/spec-007-modele-par-agent`.
 ### Prochaine étape
 
 - Tests écrits par `test-writer`, puis vérification qu'ils échouent pour la bonne raison.
+
+## 2026-10-13 11:55
+
+### Fait
+
+- Tests de la spec 007 écrits par `test-writer` : nouveau `tests/verifier-modeles.sh` (CA1 à CA9, CA11 et cas limites), section « Spec 007 CA13 » dans `tests/init-script.sh`.
+- Tests renforcés par l'agent principal avant implémentation : en-tête sans fermeture, fichier inexistant en argument, `--afficher` sur un fichier inexistant. Cas limites ajoutés à la spec en conséquence, avec les valeurs refusées par la règle « alias nu » (`"opus"`, `Opus`, `fable`).
+- Résultat : `verifier-modeles.sh` 101 échecs, tous dus à l'absence du script (code 127) ; `init-script.sh` 4 échecs, tous dans CA13 ; shellcheck sans avertissement.
+
+### Décisions
+
+- Un refus attendu est un code entre 1 et 125 : un script absent (127) ne passe pas pour un refus (`test-writer`, retenu par l'agent).
+- Interface du script : sans argument (tous les subagents), avec des fichiers, ou `--afficher <fichier>` pour `ai-review.yml` (agent).
+
+### Corrections et limites
+
+- Les tests n'ont jamais tourné contre une implémentation : un faux négatif se verra à l'implémentation.
+- CA10, CA12 et CA14 relèvent des workflows et du contrôle par mutation, écrits à l'implémentation.
+
+### Prochaine étape
+
+- Accord de Yanis sur les tests rouges, puis implémentation.

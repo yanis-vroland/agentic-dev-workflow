@@ -105,6 +105,8 @@ Le modèle déclaré peut être indisponible : abonnement sans accès, quota att
 - Modèle indisponible : voir « Modèle indisponible : l'humain choisit le substitut ». L'humain peut aussi répondre de ne pas lancer le subagent : l'agent le consigne comme une étape sautée (journal et PR), sans la présenter comme faite.
 - L'humain choisit un substitut hors de la liste autorisée (un identifiant complet, `fable`) : accepté pour la session, puisque c'est son choix et que l'en-tête ne change pas ; `verifier-modeles.sh` ne voit que les en-têtes.
 - Subagent ajouté par un plugin ou dans `~/.claude/agents/` : hors du dépôt, non vérifié.
+- En-tête sans ligne `---` de fermeture, ou fichier passé en argument mais inexistant : refus, avec le nom du fichier.
+- Valeurs refusées par la règle « alias nu, en minuscules » : `"opus"` entre guillemets, `Opus`, `fable`. Une ligne `model:` suivie seulement d'espaces vaut une valeur vide.
 - Fichier de `.claude/agents/` qui n'est pas un subagent (README, par exemple) : `verifier-modeles.sh` le refuse aussi. Les fichiers de ce dossier sont tous des subagents ; un autre fichier n'a rien à y faire.
 
 ## Hors périmètre
