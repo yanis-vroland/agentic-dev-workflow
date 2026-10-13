@@ -86,6 +86,7 @@ files=(
   tests/quality-hooks.sh
   .github/scripts/verifier-modeles.sh
   tests/verifier-modeles.sh
+  tests/restrict-learnings.sh
 )
 while IFS= read -r file; do
   files+=("$file")

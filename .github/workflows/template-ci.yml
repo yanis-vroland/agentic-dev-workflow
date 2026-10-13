@@ -49,6 +49,21 @@ jobs:
             exit 1
           fi
 
+      - name: Hook restrict-learnings branché sur tous les outils (spec 005, CA13)
+        run: |
+          jq -e '[.hooks.PreToolUse[] | select(.matcher == "*") | .hooks[].command
+            | select(endswith("/.claude/hooks/restrict-learnings.sh"))] | length == 1' .claude/settings.json
+          test -x .claude/hooks/restrict-learnings.sh
+          # Le hook reconnaît le subagent à son nom : un renommage le désactiverait sans bruit
+          grep -qx 'name: learning-curator' .claude/agents/learning-curator.md
+          grep -qF 'learning-curator | *:learning-curator) ;;' .claude/hooks/restrict-learnings.sh
+
+      - name: Description de la PR lue par la revue IA (spec 005, CA14)
+        run: |
+          # Classes [$][{][{] : un dollar suivi de deux accolades serait évalué par GitHub Actions avant le shell
+          grep -qE -- 'gh pr view [$][{][{] github[.]event[.]pull_request[.]number [}][}] --json title,body' \
+            .github/workflows/ai-review.yml
+
       - name: Modèle de la revue IA lu dans reviewer.md, jamais en dur (spec 007, CA10)
         run: |
           f=.github/workflows/ai-review.yml

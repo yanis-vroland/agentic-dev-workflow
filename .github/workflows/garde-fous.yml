@@ -28,10 +28,13 @@ jobs:
           shellcheck .claude/hooks/*.sh .githooks/pre-commit .github/scripts/*.sh
           tests/hooks.sh tests/pre-commit.sh tests/verifier-revue-ia.sh
           tests/session-start.sh tests/verifier-journal.sh tests/quality-hooks.sh
-          tests/verifier-modeles.sh
+          tests/verifier-modeles.sh tests/restrict-learnings.sh
 
       - name: Tests des hooks de Claude Code
         run: bash tests/hooks.sh
+
+      - name: Test du hook restrict-learnings de learning-curator
+        run: bash tests/restrict-learnings.sh
 
       - name: Test des hooks de lint et de tests
         run: bash tests/quality-hooks.sh

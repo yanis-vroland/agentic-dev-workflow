@@ -27,7 +27,7 @@ flowchart TD
     h3 -- "positif après au moins<br/>une boucle négative" --> lc["subagent learning-curator<br/>piège dans docs/learnings/"]
   end
 
-  hooks[["Hooks<br/>protect-secrets avant chaque action<br/>format après chaque modification<br/>gitleaks à chaque commit"]] -.-> code
+  hooks[["Hooks<br/>protect-secrets et restrict-learnings avant chaque action<br/>format après chaque modification<br/>gitleaks à chaque commit"]] -.-> code
   lc -.->|relu par /spec, /implement et le reviewer| spec
 
   h3 -- "positif sans boucle" --> pr
@@ -47,7 +47,7 @@ Chaque étape et le fichier qui la porte :
 | Validation humaine de la spec | statut « validée » exigé par l'étape 1 de `/implement` ; [ADR-002](docs/adr/002-place-revue-humaine.md) |
 | `test-writer` | [`.claude/agents/test-writer.md`](.claude/agents/test-writer.md), appelé par l'étape 4 de `/implement` ; [ADR-003](docs/adr/003-strategie-test-first.md) |
 | `/implement` | [`.claude/skills/implement/SKILL.md`](.claude/skills/implement/SKILL.md) |
-| Hooks | [`.claude/hooks/protect-secrets.sh`](.claude/hooks/protect-secrets.sh), [`.claude/hooks/format.sh`](.claude/hooks/format.sh), branchés dans [`.claude/settings.json`](.claude/settings.json) ; [`.githooks/pre-commit`](.githooks/pre-commit) |
+| Hooks | [`.claude/hooks/protect-secrets.sh`](.claude/hooks/protect-secrets.sh), [`.claude/hooks/restrict-learnings.sh`](.claude/hooks/restrict-learnings.sh), [`.claude/hooks/format.sh`](.claude/hooks/format.sh), branchés dans [`.claude/settings.json`](.claude/settings.json) ; [`.githooks/pre-commit`](.githooks/pre-commit) |
 | Test humain | étape 8 de `/implement` ; [spec 005](docs/specs/005-capitalisation-des-pieges.md) |
 | `learning-curator` | [`.claude/agents/learning-curator.md`](.claude/agents/learning-curator.md), appelé par l'étape 9 de `/implement` |
 | CI | [`.github/workflows/garde-fous.yml`](.github/workflows/garde-fous.yml) |
@@ -175,7 +175,7 @@ Déclarer dans `.claude/quality.json` les commandes que les hooks lancent ([spec
 - **Hook `pre-commit`** (Git) : gitleaks analyse les fichiers indexés et refuse le commit si un secret est détecté. Il se contourne avec `git commit --no-verify` : le vrai filet de sécurité est le job CI « Détection de secrets », qui analyse tout l'historique.
 - **Revue IA** : chaque PR ouverte est relue selon `.claude/agents/reviewer.md`, et le rapport est publié en commentaire. Le job échoue si la revue n'a pas tourné ou si des actions ont été refusées pendant la revue. Une PR qui modifie `ai-review.yml` ne peut pas être relue par l'IA (protection de `claude-code-action`) : son job « Revue IA » est rouge, et elle se relit à la main.
 - **Journal sans conflit** : un fichier de journal par branche (`docs/journal/`), jamais modifié après son merge. Le job CI « Journal » refuse une PR qui touche un journal déjà mergé, ou dont les noms et les dates sont invalides. Deux PR ne peuvent donc pas entrer en conflit sur le journal. Comportement détaillé : [`docs/specs/004-reprise-de-session.md`](docs/specs/004-reprise-de-session.md).
-- **Test humain et pièges** : `/implement` ne termine qu'après un test humain positif dans l'application démarrée. Chaque retour négatif ajoute un test qui échoue, puis un correctif, puis un nouveau test humain. Après au moins une boucle négative, le subagent `learning-curator` capitalise le piège dans `docs/learnings/` (un fichier par piège, seulement s'il se généralise). `/spec`, `/implement` et le reviewer relisent les pièges actifs au cadrage suivant. Comportement détaillé : [`docs/specs/005-capitalisation-des-pieges.md`](docs/specs/005-capitalisation-des-pieges.md).
+- **Test humain et pièges** : `/implement` ne termine qu'après un test humain positif dans l'application démarrée. Chaque retour négatif ajoute un test qui échoue, puis un correctif, puis un nouveau test humain. Après au moins une boucle négative, le subagent `learning-curator` capitalise le piège dans `docs/learnings/` (un fichier par piège, seulement s'il se généralise) ; le hook `restrict-learnings.sh` lui refuse toute écriture ailleurs. Une PR sans changement de comportement observable indique le test humain « sans objet ». `/spec`, `/implement` et le reviewer relisent les pièges actifs au cadrage suivant. Comportement détaillé : [`docs/specs/005-capitalisation-des-pieges.md`](docs/specs/005-capitalisation-des-pieges.md).
 - **Lint et tests** : après chaque modification de l'agent, le hook `lint.sh` formate le fichier (`format.sh`), puis lance le lint déclaré dans `.claude/quality.json` ; un échec est renvoyé à l'agent, qui corrige. À la fin de chaque tour où un fichier a été modifié, `run-tests.sh` lance les tests ; un échec est renvoyé une fois à l'agent, puis signalé à l'humain sans bloquer, pour ne pas pousser l'agent à modifier des tests rouges attendus en phase test-first. Comportement détaillé : [`docs/specs/006-revue-securite-et-hooks-qualite.md`](docs/specs/006-revue-securite-et-hooks-qualite.md).
 - **Revue de sécurité** : avant le test humain, `/implement` transmet le diff au subagent `security-reviewer`, qui le relit selon l'OWASP Top 10 2025. Il n'a que `Read`, `Grep` et `Glob` : il ne peut rien exécuter ni modifier, ce que la CI du template vérifie.
 - **Modèle par subagent** : chaque subagent déclare son modèle selon la nature de sa tâche ([ADR-005](docs/adr/005-choix-du-modele-par-agent.md)) : `opus` pour juger (`reviewer`, `security-reviewer`), `sonnet` pour exécuter une tâche cadrée (`test-writer`, `learning-curator`). Le job « Garde-fous » refuse un subagent sans modèle, avec `inherit` ou hors de la liste ; la revue IA en CI lit le modèle dans `reviewer.md`. Si un modèle est indisponible, l'agent demande à l'humain quel substitut utiliser. Comportement détaillé : [`docs/specs/007-modele-par-agent.md`](docs/specs/007-modele-par-agent.md).
@@ -193,7 +193,7 @@ Le template a été construit avec sa propre chaîne, du 7 au 13 octobre 2026 : 
 | [Spec 002](docs/specs/002-hook-protect-secrets.md), hook `protect-secrets` | #11 (issue #7 : fermeture en cas de panne), #12 (issue #9 : faux positifs) |
 | [Spec 003](docs/specs/003-documents-de-reference.md), documents de référence | #31, puis #33 (lignes perdues à la résolution d'un conflit) |
 | [Spec 004](docs/specs/004-reprise-de-session.md), reprise de session | #32, complétée par #33 |
-| [Spec 005](docs/specs/005-capitalisation-des-pieges.md), test humain et pièges | #35 |
+| [Spec 005](docs/specs/005-capitalisation-des-pieges.md), test humain et pièges | #35, complétée par #42 (revue IA de la PR #18 de FieldOps : hook `restrict-learnings`) |
 | [Spec 006](docs/specs/006-revue-securite-et-hooks-qualite.md), revue de sécurité et hooks de lint et de tests | #37, puis #38 (rattrapage de la revue de sécurité) |
 | [Spec 007](docs/specs/007-modele-par-agent.md) et [ADR-005](docs/adr/005-choix-du-modele-par-agent.md), modèle par subagent | #39 |
 | [ADR-001](docs/adr/001-authentification-ci.md) à [ADR-003](docs/adr/003-strategie-test-first.md) | ADR-001 dans #1 ; ADR-002 et ADR-003 dans #21, tirés des constats des PR #4 à #13 |
@@ -250,7 +250,7 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 
 **Processus**
 - **Reprise de session :** une session fermée sans prévenir perd le travail non committé, car l'agent ne peut pas agir à la fermeture (spec 004). La mémoire locale est désactivée par `.claude/settings.json`, mais un réglage personnel (`.claude/settings.local.json`) peut la réactiver.
-- **Test humain et pièges :** le test humain et la capitalisation sont des règles de travail (`/implement`, `CLAUDE.md`), pas des vérifications de CI : rien n'empêche techniquement de les sauter, seul le reviewer le signale. `learning-curator` n'a pas `Bash`, mais rien ne l'empêche techniquement d'écrire hors de `docs/learnings/` : la relecture de la PR le vérifie.
+- **Test humain et pièges :** le test humain et la capitalisation sont des règles de travail (`/implement`, `CLAUDE.md`), pas des vérifications de CI : rien n'empêche techniquement de les sauter, seul le reviewer le signale. `learning-curator` n'écrit que dans `docs/learnings/<slug>.md` : le hook `restrict-learnings.sh` le vérifie grâce au champ `agent_type` que Claude Code transmet aux hooks. Un hook déclaré dans l'en-tête d'un subagent (champ `hooks:`) n'est pas exécuté par Claude Code 2.1.291 : le premier essai, testé en vrai, laissait passer une écriture dans `README.md` (journal de la branche `fix/spec-005-revue-fieldops-18`). Cette protection dépend du champ `agent_type` et du nom du subagent : la CI vérifie le nom, pas le champ, et elle disparaîtrait sans alerte si Claude Code cessait de le transmettre. Le hook tourne sur chaque appel d'outil de toute session, revue IA en CI comprise, et sans `jq` il refuse tout, au-delà de ce que bloque déjà `protect-secrets.sh`.
 - **Commandes de `.claude/quality.json` :** ce sont des commandes shell exécutées automatiquement sur le poste de quiconque utilise Claude Code dans le projet, comme celles de `.claude/settings.json`. Une PR qui modifie ce fichier se relit en entier ([ADR-002](docs/adr/002-place-revue-humaine.md)). Pendant une session, autoriser l'agent à modifier un fichier revient désormais à l'autoriser à exécuter du code sans demande : `lint.sh` et `run-tests.sh` lancent aussitôt `quality.json`, la configuration du lint, les tests ou les hooks que l'agent vient d'écrire. Un test qui affiche un secret le renvoie à l'agent sans passer par `protect-secrets`. Les sorties du lint et des tests sont transmises comme des données, mais un agent manipulé par un contenu qu'il a lu reste le risque principal.
 - **Lint et tests :** les tests ne tournent qu'à la fin d'un tour, pas après chaque modification ; leur durée s'ajoute à chaque tour qui modifie un fichier, documentation comprise. Un hook qui dépasse sa durée maximale (60 s pour le lint, 300 s pour les tests) est interrompu par Claude Code.
 - **Revue de sécurité :** elle n'est appelée que par `/implement`, pas par la revue IA en CI. Une PR faite sans `/implement` n'a que la rubrique « Sécurité » du reviewer.
@@ -264,6 +264,7 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `CLAUDE.md` | règles de travail de l'agent : langue, spec avant code, test-first, définition du « done », interdits |
 | `.claude/settings.json` | permissions refusées à l'agent et branchement des hooks |
 | `.claude/hooks/protect-secrets.sh` | refus des accès aux fichiers `.env` |
+| `.claude/hooks/restrict-learnings.sh` | avant chaque action de `learning-curator` : écriture limitée à `docs/learnings/<slug>.md`, pas d'autre outil que `Read`, `Grep`, `Glob`, `Write` et `Edit` |
 | `.claude/hooks/format.sh` | formatage par Prettier, s'il est installé dans le projet ; appelé par `lint.sh` |
 | `.claude/hooks/lint.sh` | après chaque modification : formatage, puis lint déclaré dans `.claude/quality.json` |
 | `.claude/hooks/run-tests.sh` | à la fin de chaque tour où un fichier a été modifié : tests déclarés dans `.claude/quality.json` |
@@ -275,7 +276,7 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `.claude/skills/review/` | `/review` : relire la branche avant la PR |
 | `.claude/agents/reviewer.md` | subagent de revue, utilisé aussi par la revue IA en CI ; modèle `opus` |
 | `.claude/agents/test-writer.md` | subagent qui écrit les tests à partir des critères d'acceptation ; modèle `sonnet` |
-| `.claude/agents/learning-curator.md` | subagent qui capitalise un piège découvert au test humain, sans `Bash` ; modèle `sonnet` |
+| `.claude/agents/learning-curator.md` | subagent qui capitalise un piège découvert au test humain, sans `Bash`, écritures limitées par `restrict-learnings.sh` ; modèle `sonnet` |
 | `.claude/agents/security-reviewer.md` | subagent de revue de sécurité du diff (OWASP Top 10 2025), en lecture seule ; modèle `opus` |
 | `.githooks/pre-commit` | détection de secrets avant chaque commit |
 | `.github/workflows/garde-fous.yml` | CI générique : tests des hooks, test du pre-commit, détection de secrets, contrôle du journal |

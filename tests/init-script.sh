@@ -688,6 +688,10 @@ check "Spec 005 CA1 : .claude/agents/learning-curator.md copié" \
 # Les pièges du template ne concernent pas la cible : seul .gitkeep est créé
 check "Spec 005 CA2 : aucun piège du template copié" \
   equal ".gitkeep" "$(ls -A "$t/docs/learnings" 2>/dev/null)"
+for file in .claude/hooks/restrict-learnings.sh tests/restrict-learnings.sh; do
+  check "Spec 005 CA21 : $file copié" same_file "$template/$file" "$t/$file"
+  check "Spec 005 CA21 : $file exécutable" is_executable "$t/$file"
+done
 
 for option in "" "--force"; do
   label=${option:-sans --force}
