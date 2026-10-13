@@ -51,14 +51,15 @@ model_of() {
     echo "$file : $count lignes « model: » dans l'en-tête, une seule attendue." >&2
     return 1
   fi
-  case " $allowed " in
-    *" $value "*)
-      [ -n "$value" ] && {
-        echo "$value"
-        return 0
-      }
-      ;;
-  esac
+  # Égalité exacte avec un alias : une valeur de plusieurs mots (« opus haiku »)
+  # ajouterait un argument après --model dans ai-review.yml
+  local alias
+  for alias in $allowed; do
+    if [ "$value" = "$alias" ]; then
+      echo "$value"
+      return 0
+    fi
+  done
   echo "$file : modèle « $value » refusé. Modèles autorisés : $allowed (ADR-005)." >&2
   return 1
 }

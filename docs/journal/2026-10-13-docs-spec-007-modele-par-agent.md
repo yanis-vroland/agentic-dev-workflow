@@ -126,8 +126,8 @@ Branche `docs/spec-007-modele-par-agent`.
 
 ### Corrections et limites
 
-- Correction à suivre dans le commit suivant.
+- Corrigé : comparaison exacte avec chaque alias autorisé. Tests au vert, mutations rejouées, toutes détectées.
 
 ### Prochaine étape
 
-- Comparaison exacte avec chaque alias autorisé, puis revue de sécurité.
+- Revue de sécurité du diff par `security-reviewer`, puis test humain par Yanis.
