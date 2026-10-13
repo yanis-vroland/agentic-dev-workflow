@@ -30,7 +30,7 @@ Options envisagées :
 
 Décision (Yanis, 2026-10-13) : **alias**. Le template déclare un niveau de modèle, pas une version. Ce qui doit être reproductible (les garde-fous) l'est par les tests et la CI, pas par la version du modèle.
 
-## Décision (acceptée par Yanis, 2026-10-13)
+## Décision
 
 - Chaque subagent déclare `model: sonnet`, `opus` ou `haiku`, choisi selon le critère ci-dessus. `inherit` et les identifiants complets sont refusés par la CI (`verifier-modeles.sh`, spec 007).
 - La PR qui ajoute un subagent ou change son modèle cite la ligne du critère appliquée.
