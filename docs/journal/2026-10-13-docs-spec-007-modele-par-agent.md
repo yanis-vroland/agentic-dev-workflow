@@ -131,3 +131,23 @@ Branche `docs/spec-007-modele-par-agent`.
 ### Prochaine étape
 
 - Revue de sécurité du diff par `security-reviewer`, puis test humain par Yanis.
+
+## 2026-10-13 13:15
+
+### Fait
+
+- Revue de sécurité par `security-reviewer` (en `opus`) : rien à signaler. Elle a porté sur l'état final du script et des trois workflows, à partir d'un résumé du diff : `init.sh` et les tests n'ont pas été relus sous cet angle.
+- PR ouverte.
+
+### Décisions
+
+- Clôture demandée par Yanis avant le test humain (« cloture le dossier »). Le test humain n'est ni fait ni déclaré impossible : il reste à faire avant le merge (Yanis).
+
+### Corrections et limites
+
+- Test humain non fait : CA18 (`/review` en `opus` depuis une session `sonnet`), message d'erreur lisible, conduite face à un modèle indisponible (CA15 bis).
+- CA11 bis et le `--model` de la revue IA ne peuvent pas être vérifiés sur cette PR : elle modifie `ai-review.yml`, que `claude-code-action` refuse d'exécuter (Limites du README). À vérifier à la première PR après le merge.
+
+### Prochaine étape
+
+- Test humain par Yanis (scénarios dans la PR), puis relecture et merge.
