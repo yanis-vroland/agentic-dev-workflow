@@ -1,6 +1,6 @@
 # Spec 007 : un modèle choisi pour chaque subagent
 
-Statut : brouillon
+Statut : validée
 Date : 2026-10-13
 
 ## Besoin

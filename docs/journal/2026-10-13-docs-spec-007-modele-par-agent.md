@@ -45,3 +45,23 @@ Branche `docs/spec-007-modele-par-agent`.
 ### Prochaine étape
 
 - Validation de la spec 007 par Yanis, puis `/implement docs/specs/007-modele-par-agent.md`.
+
+## 2026-10-13 11:35
+
+### Fait
+
+- Spec 007 passée au statut « validée ». Début de `/implement`.
+
+### Décisions
+
+- Spec validée par Yanis (« ok ok »), avec les deux points tranchés par l'agent : substitut passé par le paramètre `model` à l'invocation, subagent non lancé consigné comme étape sautée.
+- Implémentation sur cette branche plutôt qu'une branche `feat/` séparée : la spec n'est pas mergée, et la règle n°6 interdit une PR basée sur une autre (agent).
+- Aucun piège dans `docs/learnings/` : rien à relire.
+
+### Corrections et limites
+
+- Rien.
+
+### Prochaine étape
+
+- Tests écrits par `test-writer`, puis vérification qu'ils échouent pour la bonne raison.
