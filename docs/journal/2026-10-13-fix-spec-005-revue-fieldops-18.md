@@ -68,4 +68,4 @@
 
 ### Prochaine étape
 
-- Ouvrir la PR. Après son merge : vérifier CA14 sur la PR suivante, et reprendre la branche dans FieldOps.
+- PR #42 ouverte. Après son merge : vérifier CA14 sur la PR suivante, et reprendre la branche dans FieldOps.
