@@ -49,6 +49,23 @@ jobs:
             exit 1
           fi
 
+      - name: Hook restrict-learnings déclaré par learning-curator (spec 005, CA13)
+        run: |
+          # En-tête YAML seul : entre les deux premières lignes ---
+          header=$(awk 'NR == 1 && $0 == "---" { inside = 1; next } inside && $0 == "---" { exit } inside' \
+            .claude/agents/learning-curator.md)
+          grep -qx 'hooks:' <<<"$header"
+          grep -qx '  PreToolUse:' <<<"$header"
+          grep -qx '    - matcher: "\*"' <<<"$header"
+          grep -qx '          command: "\\"\$CLAUDE_PROJECT_DIR\\"/.claude/hooks/restrict-learnings.sh"' <<<"$header"
+          test -x .claude/hooks/restrict-learnings.sh
+
+      - name: Description de la PR lue par la revue IA (spec 005, CA14)
+        run: |
+          # Classes [$][{][{] : un dollar suivi de deux accolades serait évalué par GitHub Actions avant le shell
+          grep -qE -- 'gh pr view [$][{][{] github[.]event[.]pull_request[.]number [}][}] --json title,body' \
+            .github/workflows/ai-review.yml
+
       - name: Modèle de la revue IA lu dans reviewer.md, jamais en dur (spec 007, CA10)
         run: |
           f=.github/workflows/ai-review.yml

@@ -1,7 +1,7 @@
 # Spec 005 : test humain et capitalisation des pièges
 
 Statut : validée
-Date : 2026-10-11
+Date : 2026-10-11, complétée le 2026-10-13 (revue IA de la PR #18 de FieldOps)
 
 ## Besoin
 
@@ -29,6 +29,7 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 3. **Retour positif** : l'agent passe à la capitalisation, puis aux documents de référence et au récapitulatif.
 4. Chaque boucle négative est consignée dans la rubrique « Corrections et limites » du journal de la branche : symptôme, cause, correctif et commit.
 5. Si l'humain déclare le test impossible (pas d'environnement, fonctionnalité sans effet visible), l'agent le consigne dans le journal et dans la section « Ce que l'humain a vérifié » de la PR, puis continue.
+6. Une PR sans changement de comportement observable (règle n°1 de `CLAUDE.md` : refactor, chore, docs, ci…) n'a pas de test humain : la PR l'indique « sans objet ». « Sans objet » n'est jamais admis pour une fonctionnalité ou une correction.
 
 ## Les pièges : `docs/learnings/`
 
@@ -48,6 +49,11 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 ### Subagent `learning-curator`
 
 - **Outils** : `Read`, `Grep`, `Glob`, `Write`, `Edit`. Pas de `Bash` : il n'exécute rien et n'écrit que dans `docs/learnings/`. L'agent principal lui fournit la date.
+- **Restriction technique** : un hook `PreToolUse` déclaré dans l'en-tête du subagent, donc actif seulement pendant son exécution, lance `.claude/hooks/restrict-learnings.sh` sur chaque appel d'outil. Le hook :
+  - laisse passer `Read`, `Grep` et `Glob` ;
+  - laisse passer `Write`, `Edit` et `MultiEdit` seulement sur un fichier `$CLAUDE_PROJECT_DIR/docs/learnings/<slug>.md`, où `<slug>` est en kebab-case (minuscules, chiffres et tirets) : ni sous-dossier, ni autre extension, ni `..` ;
+  - refuse tout autre outil (`Bash` compris), un fichier de piège ou un dossier `docs/learnings/` qui est un lien symbolique, et toute entrée qu'il ne sait pas lire (JSON invalide, champ absent, `jq` ou `CLAUDE_PROJECT_DIR` absents) : fermeture en cas de panne, comme `protect-secrets.sh` (spec 002) ;
+  - refuse par le code de sortie 2, avec un message sur stderr qui cite le chemin refusé.
 - **Invocation** : par `/implement`, après un retour positif, et seulement si le test humain a demandé au moins une boucle négative. Aussi quand l'humain demande explicitement de retenir quelque chose (« retiens ça »). Jamais quand la fonctionnalité passe du premier coup.
 - **Entrée** : la spec, le symptôme rapporté, la cause identifiée et le correctif (commit).
 - **Méthode** :
@@ -62,6 +68,7 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 - `/spec` et `/implement` lisent les pièges `actif` dont le domaine ou la rubrique « Où » recoupe la fonctionnalité, avant d'écrire la spec ou les tests. Une règle de piège qui s'applique devient un critère d'acceptation ou un test.
 - Le récapitulatif de `/implement` cite les pièges appliqués.
 - Le `reviewer` signale en « À corriger » un changement qui enfreint la règle d'un piège `actif`.
+- Le `reviewer` vérifie aussi la ligne « Test humain » de la PR (ou, avant son ouverture, le journal) : résultat et nombre de boucles pour un changement de comportement, piège créé ou « rien écrit » motivé après une boucle négative, « sans objet » seulement sans changement de comportement. La revue IA en CI lit la description par `gh pr view <numéro> --json title,body`.
 
 ## Critères d'acceptation
 
@@ -74,6 +81,18 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 ### CI du template (`template-ci.yml`)
 
 - CA4 : Étant donné `.claude/agents/learning-curator.md`, quand la CI s'exécute, alors elle vérifie que sa liste d'outils est exactement `Read, Grep, Glob, Write, Edit`, et elle échoue si `Bash` y apparaît.
+- CA13 : Étant donné `.claude/agents/learning-curator.md`, quand la CI s'exécute, alors elle vérifie que son en-tête déclare un hook `PreToolUse` de matcher `*` qui lance `.claude/hooks/restrict-learnings.sh`.
+- CA14 : Étant donné `.github/workflows/ai-review.yml`, quand la CI s'exécute, alors elle vérifie que la consigne de la revue IA lit la description de la PR par `gh pr view … --json title,body`.
+
+### Hook `restrict-learnings.sh` (`tests/restrict-learnings.sh`, lancé par le job « Garde-fous »)
+
+- CA15 : `Write` ou `Edit` sur `<projet>/docs/learnings/quantite-non-recalculee.md` : accepté (code 0).
+- CA16 : `Write`, `Edit` ou `MultiEdit` sur un fichier hors de `docs/learnings/` (`README.md`, `CLAUDE.md`, `.claude/agents/reviewer.md`, `src/app.ts`) : refusé (code 2), message qui cite le chemin.
+- CA17 : chemin qui sort du dossier ou n'a pas la forme attendue : `docs/learnings/../CLAUDE.md`, sous-dossier `docs/learnings/a/b.md`, extension `.txt`, `.gitkeep`, slug avec majuscules ou espaces, `docs/learnings/` d'un autre projet (`/tmp/autre/docs/learnings/x.md`), chemin relatif : refusé.
+- CA18 : `Read`, `Grep` et `Glob` : acceptés ; `Bash` ou tout autre outil : refusé.
+- CA19 : fichier de piège existant qui est un lien symbolique, ou dossier `docs/learnings/` qui est un lien symbolique : refusé.
+- CA20 : entrée illisible (JSON invalide, entrée vide, `tool_name` ou `file_path` absent), `jq` absent, `CLAUDE_PROJECT_DIR` absent ou vide : refusé.
+- CA21 : `init.sh` copie `.claude/hooks/restrict-learnings.sh` et `tests/restrict-learnings.sh` dans la cible (ajout à `tests/init-script.sh`).
 
 ### Relecture humaine (consignes, non testables automatiquement)
 
@@ -84,6 +103,12 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 - CA9 : la définition du « done » de `CLAUDE.md` exige un test humain positif (ou son impossibilité consignée) et un piège capitalisé ou un « rien écrit » motivé après une boucle négative.
 - CA10 : le modèle de PR demande le résultat du test humain, le nombre de boucles et les pièges créés ou enrichis.
 - CA11 : le README décrit la capitalisation des pièges et l'ajoute aux fichiers à retirer après l'initialisation du template, si besoin.
+- CA22 : la définition du « done » de `CLAUDE.md` et le modèle de PR admettent « sans objet » pour le test humain, seulement sans changement de comportement observable.
+- CA23 : le `reviewer` vérifie la ligne « Test humain » de la PR selon la section « Relecture des pièges ».
+
+### Test réel du hook
+
+- CA24 : Dans une vraie session Claude Code, `learning-curator` lancé sur une demande d'écrire hors de `docs/learnings/` voit son écriture refusée par le hook, et une écriture dans `docs/learnings/<slug>.md` passe. Résultat consigné dans le journal de la branche.
 
 ### Démonstration
 
@@ -100,7 +125,6 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 ## Hors périmètre
 
 - Vérification du format des fichiers de piège par la CI : le `reviewer` suffit tant que le volume reste faible. À reconsidérer après une dizaine de pièges.
-- Restriction technique de l'écriture à `docs/learnings/` (hook dédié) : l'absence de `Bash` et la relecture en PR suffisent pour l'instant.
 - Capitalisation à partir des corrections de l'humain en revue (label `agent-corrigé`) ou des points de la revue IA : seule la boucle de test humain déclenche la capitalisation, pour garder un signal fiable.
 - Recherche sémantique dans les pièges : un `grep` par domaine et par chemin suffit à ce volume.
 
@@ -110,6 +134,12 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 - CA12 conditionne le statut « livrée » de la spec, pas le merge, pour ne pas bloquer le template sur FieldOps.
 - Pas de piège d'exemple fictif dans le template : le premier vrai piège de FieldOps sert d'exemple, cité dans le README.
 - Un fichier par piège, pour éviter les conflits entre PR (même principe que la spec 004).
+
+## Décisions (complément du 2026-10-13)
+
+- La revue IA de la PR #18 de FieldOps a relevé que la limite de `learning-curator` à `docs/learnings/` ne tenait qu'à son prompt (moindre privilège). Yanis demande de traiter tous les points de cette revue : la restriction technique sort du hors périmètre.
+- Hook déclaré dans l'en-tête du subagent plutôt que dans `.claude/settings.json` : il ne s'applique qu'à `learning-curator`, sans dépendre du champ `agent_type` de l'entrée du hook.
+- Le test humain ne vise que les changements de comportement observable, ce que la décision du 2026-10-11 sous-entendait (« toute correction change un comportement observable ») sans l'écrire.
 
 ## Questions ouvertes
 
