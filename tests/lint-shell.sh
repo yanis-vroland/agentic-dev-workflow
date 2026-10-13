@@ -17,7 +17,12 @@ if [ ! -f "$script" ]; then
   fail=1
 fi
 
-work="$(cd "$(mktemp -d)" && pwd -P)"
+# Un échec de mktemp arrête le test : sinon « cd "" » laisserait $work sur le
+# dossier courant, que le trap effacerait.
+if ! work=$(mktemp -d) || ! work=$(cd "$work" && pwd -P); then
+  echo "Erreur : mktemp -d a échoué" >&2
+  exit 1
+fi
 trap 'rm -rf "$work"' EXIT
 
 code=0
