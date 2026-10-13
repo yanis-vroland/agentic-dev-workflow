@@ -1,6 +1,6 @@
 # ADR-005 : Choix du modèle par agent
 
-Statut : accepté (Yanis, 2026-10-13)
+Statut : accepté
 Date : 2026-10-13
 
 Contexte : les subagents du template n'ont pas de modèle déclaré et prennent celui de la session ([spec 007](../specs/007-modele-par-agent.md)). Leurs tâches n'ont pourtant ni la même difficulté ni le même coût d'erreur : écrire des tests à partir de critères numérotés n'exige pas le même modèle que trouver une faille que personne n'a signalée. Il faut un critère, pour que chaque choix se justifie au lieu de relever du goût, et pour que les subagents ajoutés plus tard suivent la même règle.

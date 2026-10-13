@@ -2,12 +2,12 @@
 
 Branche `docs/reponse-revue-pr-40`. Suite de la revue IA de la PR #40, mergée avant que la revue soit traitée.
 
-## 2026-10-13 15:30
+## 2026-10-13 15:14
 
 ### Fait
 
 - README, « Comment ce projet a été construit » : période et plage mises à jour (7 au 13 octobre, 30 PR, #1 à #40), cohérentes avec la ligne #39 ajoutée par #40.
-- ADR-005 : décision attribuée une seule fois, dans le statut, comme les ADR-001 à 003 ; titre de section ramené à « Décision ».
+- ADR-005 : titre de section ramené à « Décision » ; attribution placée dans le statut (revue en 15:20).
 - Décisions de la spec 007 recopiées ci-dessous, pour qu'elles vivent sur `main` et pas seulement dans le commit `e5dcdc1`, hors de `main`.
 
 ### Décisions
@@ -28,3 +28,24 @@ Branche `docs/reponse-revue-pr-40`. Suite de la revue IA de la PR #40, mergée a
 ### Prochaine étape
 
 - Réponse à la revue IA de cette PR, puis merge par Yanis, puis vérification que le dernier commit est sur `main`.
+
+## 2026-10-13 15:20
+
+### Fait
+
+- Réponse à la revue IA de #41 :
+  - heure de l'entrée précédente corrigée (15:14, heure du commit `4dec470`, et non 15:30) ;
+  - ADR-005 : statut ramené à « accepté », sans nom ni date, comme les ADR-001 à 003. L'attribution reste dans la section « Décision » (option alias) et la conduite face à un modèle indisponible ;
+  - README : lignes spec 006 (#37, #38) et ADR-004 proposé (#36) ajoutées à « Specs et décisions » ; « Écarts au processus » datés du 2026-10-13, avec le test humain délégué de la spec 007 et les deux merges avant clôture (#39, #40).
+
+### Décisions
+
+- Agent : aligner l'ADR-005 sur le format des ADR-001 à 003 plutôt que d'ajouter le nom et la date aux quatre ADR, pour ne pas toucher à des ADR acceptés hors du sujet de cette PR.
+
+### Corrections et limites
+
+- Le job « Revue IA de la PR » de `4dec470` a échoué sur `verifier-revue-ia.sh` (« 1 action refusée pendant la revue »), alors que le rapport a bien été publié. Le rapport a été traité tel quel ; l'action refusée n'est pas identifiée.
+
+### Prochaine étape
+
+- Revue IA de ce commit, réponse à la revue, annonce de la PR prête, puis merge par Yanis.

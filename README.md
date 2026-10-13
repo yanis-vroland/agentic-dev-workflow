@@ -194,8 +194,10 @@ Le template a été construit avec sa propre chaîne, du 7 au 13 octobre 2026 : 
 | [Spec 003](docs/specs/003-documents-de-reference.md), documents de référence | #31, puis #33 (lignes perdues à la résolution d'un conflit) |
 | [Spec 004](docs/specs/004-reprise-de-session.md), reprise de session | #32, complétée par #33 |
 | [Spec 005](docs/specs/005-capitalisation-des-pieges.md), test humain et pièges | #35 |
+| [Spec 006](docs/specs/006-revue-securite-et-hooks-qualite.md), revue de sécurité et hooks de lint et de tests | #37, puis #38 (rattrapage de la revue de sécurité) |
 | [Spec 007](docs/specs/007-modele-par-agent.md) et [ADR-005](docs/adr/005-choix-du-modele-par-agent.md), modèle par subagent | #39 |
 | [ADR-001](docs/adr/001-authentification-ci.md) à [ADR-003](docs/adr/003-strategie-test-first.md) | ADR-001 dans #1 ; ADR-002 et ADR-003 dans #21, tirés des constats des PR #4 à #13 |
+| [ADR-004](docs/adr/004-choix-outil-agent.md), outil d'agent (proposé) | #36 |
 
 **Ce que la revue IA a trouvé**
 
@@ -217,11 +219,13 @@ Les décisions qui ont le plus changé le résultat sont venues de l'humain ([AD
 
 Le contrôle par mutation a trouvé des trous que ni les tests ni la relecture n'avaient vus : une insertion désactivée dans le `.gitignore` (#8), un `grep` manquant qui laissait passer l'action (#11), un compteur non numérique accepté (#12) ([ADR-003](docs/adr/003-strategie-test-first.md)).
 
-**Écarts au processus** (constatés au 2026-10-12)
+**Écarts au processus** (constatés au 2026-10-13)
 
 - Le label `agent-corrigé` n'a été posé sur aucune PR, alors que l'humain a corrigé le travail de l'agent sur plusieurs d'entre elles : il ne mesure encore rien.
 - Les PR #31 à #35 n'ont pas de commentaire « Réponse à la revue IA ».
 - Les tests de la spec 005 ont été écrits par l'agent principal, pas par `test-writer` : la session, lancée depuis un dossier parent, ne chargeait pas les subagents du dépôt (journal de la branche).
+- Le test humain de la spec 007 a été joué par l'agent, dans de vraies sessions Claude Code, et accepté par l'humain : une exception à la spec 005, consignée dans le journal de #41.
+- Deux PR ont été mergées avant leur étape de clôture : #39 avant le push de son dernier commit, rattrapé par #40 ; #40 avant la réponse à sa revue IA, rattrapée par #41.
 
 **Exemple FieldOps à venir (#15)**
 
