@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Vérifie le hook restrict-learnings du subagent learning-curator selon la spec
 # https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/005-capitalisation-des-pieges.md
-# (section « Subagent learning-curator », CA15 à CA20).
+# (section « Subagent learning-curator », CA15 à CA20 et CA25). Claude Code renseigne
+# agent_type dans l'entrée d'un hook lancé pendant un subagent.
 set -u
 
 hook="$(cd "$(dirname "$0")/.." && pwd)/.claude/hooks/restrict-learnings.sh"
@@ -12,6 +13,13 @@ trap 'rm -rf "$work"' EXIT
 
 project="$work/projet"
 mkdir -p "$project/docs/learnings"
+
+# PATH réduit aux binaires dont le hook a besoin, sans jq
+no_jq="$work/bin"
+mkdir "$no_jq"
+for cmd in bash cat; do
+  ln -s "$(command -v "$cmd")" "$no_jq/$cmd"
+done
 
 # Sortie (stderr) du dernier lancement, pour vérifier un fragment du message
 output=""
@@ -29,9 +37,10 @@ check() {
   fi
 }
 
-# input <outil> <chemin> : entrée JSON d'un appel d'outil sur un fichier
+# input <outil> <chemin> [agent] : entrée JSON d'un appel d'outil sur un fichier,
+# par learning-curator par défaut
 input() {
-  printf '{"tool_name":"%s","tool_input":{"file_path":"%s"}}' "$1" "$2"
+  printf '{"agent_type":"%s","tool_name":"%s","tool_input":{"file_path":"%s"}}' "${3:-learning-curator}" "$1" "$2"
 }
 
 # --- Écriture autorisée -----------------------------------------------------
@@ -67,16 +76,32 @@ check 2 "CA17 : slug avec espace"     "$(input Write "$project/docs/learnings/mo
 check 2 "CA17 : slug vide"            "$(input Write "$project/docs/learnings/.md")"
 check 2 "CA17 : autre projet"         "$(input Write "/tmp/autre/docs/learnings/x.md")"
 check 2 "CA17 : chemin relatif"       "$(input Write "docs/learnings/x.md")"
+check 2 "CA17 : nom seul, relatif"    "$(input Write "piege.md")"
+check 2 "CA17 : sans extension"       "$(input Write "$project/docs/learnings/piege")"
 check 2 "CA17 : dossier lui-même"     "$(input Write "$project/docs/learnings/")"
 
 # --- Outils -------------------------------------------------------------------
 
 check 0 "CA18 : Read hors de docs/learnings/" "$(input Read "$project/README.md")"
-check 0 "CA18 : Grep" '{"tool_name":"Grep","tool_input":{"pattern":"x"}}'
-check 0 "CA18 : Glob" '{"tool_name":"Glob","tool_input":{"pattern":"**/*.md"}}'
-check 2 "CA18 : Bash" '{"tool_name":"Bash","tool_input":{"command":"echo x > docs/learnings/x.md"}}'
+check 0 "CA18 : Grep" '{"agent_type":"learning-curator","tool_name":"Grep","tool_input":{"pattern":"x"}}'
+check 0 "CA18 : Glob" '{"agent_type":"learning-curator","tool_name":"Glob","tool_input":{"pattern":"**/*.md"}}'
+check 2 "CA18 : Bash" '{"agent_type":"learning-curator","tool_name":"Bash","tool_input":{"command":"echo x > docs/learnings/x.md"}}'
 check 2 "CA18 : NotebookEdit" "$(input NotebookEdit "$project/docs/learnings/x.md")"
-check 2 "CA18 : WebFetch" '{"tool_name":"WebFetch","tool_input":{"url":"https://example.com"}}'
+check 2 "CA18 : WebFetch" '{"agent_type":"learning-curator","tool_name":"WebFetch","tool_input":{"url":"https://example.com"}}'
+
+# --- Autres agents : non concernés (CA25) -----------------------------------
+
+check 0 "CA25 : session principale, Write README.md" \
+  "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$project/README.md\"}}"
+check 0 "CA25 : agent_type nul, Write README.md" \
+  "{\"agent_type\":null,\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$project/README.md\"}}"
+check 0 "CA25 : test-writer, Write tests/x.sh" "$(input Write "$project/tests/x.sh" test-writer)"
+check 0 "CA25 : autre agent, Bash" '{"agent_type":"reviewer","tool_name":"Bash","tool_input":{"command":"git diff"}}'
+check 0 "CA25 : autre agent, CLAUDE_PROJECT_DIR vide" "$(input Write "$project/README.md" reviewer)" "$PATH" ""
+check 2 "CA25 : agent_type non textuel" \
+  "{\"agent_type\":5,\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$project/README.md\"}}"
+check 2 "CA25 : JSON invalide, quel que soit l'agent" '{"agent_type":"reviewer",'
+check 2 "CA25 : jq absent, quel que soit l'agent" "$(input Read "$project/README.md" reviewer)" "$no_jq"
 
 # --- Liens symboliques --------------------------------------------------------
 
@@ -89,21 +114,21 @@ ln -s "$work/ailleurs" "$linked/docs/learnings"
 check 2 "CA19 : docs/learnings/ qui est un lien symbolique" \
   "$(input Write "$linked/docs/learnings/x.md")" "$PATH" "$linked"
 
+docs_linked="$work/projet-docs-lie"
+mkdir -p "$docs_linked" "$work/ailleurs-docs/learnings"
+ln -s "$work/ailleurs-docs" "$docs_linked/docs"
+check 2 "CA19 : docs/ qui est un lien symbolique" \
+  "$(input Write "$docs_linked/docs/learnings/x.md")" "$PATH" "$docs_linked"
+
 # --- Fermeture en cas de panne ------------------------------------------------
 
 check 2 "CA20 : JSON invalide"        'pas du json {'
 check 2 "CA20 : entrée vide"          ''
-check 2 "CA20 : tool_name absent"     "{\"tool_input\":{\"file_path\":\"$project/docs/learnings/x.md\"}}"
-check 2 "CA20 : tool_name non textuel" "{\"tool_name\":5,\"tool_input\":{\"file_path\":\"$project/docs/learnings/x.md\"}}"
-check 2 "CA20 : Write sans file_path" '{"tool_name":"Write","tool_input":{}}'
-check 2 "CA20 : Edit sans tool_input" '{"tool_name":"Edit"}'
+check 2 "CA20 : tool_name absent"     "{\"agent_type\":\"learning-curator\",\"tool_input\":{\"file_path\":\"$project/docs/learnings/x.md\"}}"
+check 2 "CA20 : tool_name non textuel" "{\"agent_type\":\"learning-curator\",\"tool_name\":5,\"tool_input\":{\"file_path\":\"$project/docs/learnings/x.md\"}}"
+check 2 "CA20 : Write sans file_path" '{"agent_type":"learning-curator","tool_name":"Write","tool_input":{}}'
+check 2 "CA20 : Edit sans tool_input" '{"agent_type":"learning-curator","tool_name":"Edit"}'
 
-# PATH réduit aux binaires dont le hook a besoin, sans jq
-no_jq="$work/bin"
-mkdir "$no_jq"
-for cmd in bash cat; do
-  ln -s "$(command -v "$cmd")" "$no_jq/$cmd"
-done
 check 2 "CA20 : jq absent" "$(input Write "$project/docs/learnings/x.md")" "$no_jq"
 if grep -q "jq" <<<"$output"; then
   echo "OK     CA20 : jq absent : message cite jq"
@@ -113,6 +138,17 @@ else
 fi
 
 check 2 "CA20 : CLAUDE_PROJECT_DIR vide" "$(input Write "$project/docs/learnings/x.md")" "$PATH" ""
+# Projet vide : le dossier attendu deviendrait /docs/learnings
+check 2 "CA20 : CLAUDE_PROJECT_DIR vide, /docs/learnings/x.md" "$(input Write "/docs/learnings/x.md")" "$PATH" ""
+
+# Une erreur interne ne doit jamais laisser passer : cat absent, le trap EXIT
+# transforme la sortie 127 en refus (vérifié par mutation)
+no_cat="$work/bin-sans-cat"
+mkdir "$no_cat"
+for cmd in bash jq; do
+  ln -s "$(command -v "$cmd")" "$no_cat/$cmd"
+done
+check 2 "CA20 : cat absent" "$(input Write "$project/docs/learnings/x.md")" "$no_cat"
 output=$(input Write "$project/docs/learnings/x.md" | env -u CLAUDE_PROJECT_DIR "$hook" 2>&1 >/dev/null)
 code=$?
 if [ "$code" -eq 2 ]; then

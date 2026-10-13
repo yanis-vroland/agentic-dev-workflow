@@ -60,7 +60,7 @@ Le dépôt est la seule mémoire : une session doit pouvoir être fermée à tou
 
 - Chaque critère d'acceptation de la spec est couvert par au moins un test.
 - Lint, format et tests au vert.
-- Test humain positif dans l'application démarrée, pour une fonctionnalité comme pour une correction, ou son impossibilité consignée dans le journal et la PR ([spec 005](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/005-capitalisation-des-pieges.md)).
+- Test humain positif dans l'application démarrée pour tout changement de comportement observable (fonctionnalité ou correction), ou son impossibilité consignée dans le journal et la PR ; sans changement de comportement, la PR l'indique « sans objet » ([spec 005](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/005-capitalisation-des-pieges.md)).
 - Après une boucle négative au test humain : piège capitalisé dans `docs/learnings/` par le subagent `learning-curator`, ou « rien écrit » motivé dans le journal.
 - Aucun TODO sans ticket associé.
 - Entrée de journal de la branche à jour et poussée.

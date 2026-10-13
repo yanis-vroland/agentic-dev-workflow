@@ -19,3 +19,28 @@
 ### Prochaine étape
 
 - Implémenter `restrict-learnings.sh`, le déclarer dans `learning-curator.md`, l'ajouter à `init.sh`, puis test réel du hook (CA24) et ouverture de la PR.
+
+## 2026-10-13 16:37
+
+### Fait
+
+- `restrict-learnings.sh` implémenté, branché dans `.claude/settings.json` (matcher `*`), filtré sur `agent_type`, copié par `init.sh`. CA13 en CI vérifie le branchement dans `settings.json`.
+- Test humain « sans objet » admis sans changement de comportement (`CLAUDE.md`, modèle de PR), ligne « Test humain » vérifiée par le `reviewer`, description de la PR lue par la revue IA avec `gh pr view --json title,body`. README mis à jour (hooks, limites).
+- Contrôle par mutation : 16 protections désactivées une à une, 15 font échouer au moins un test. Survivant : `file_path` absent, mutant équivalent (le chemin devient `null`, refusé par le contrôle de préfixe).
+- Test réel (CA24), dans une copie jetable du template et une vraie session Claude Code 2.1.291 : `learning-curator` refusé sur `README.md` (message du hook reçu), accepté sur `docs/learnings/test-hook-ca24.md` ; la session principale écrit librement. Vérifié par `git status` de la copie.
+- Toute la suite au vert : tests des hooks, du pre-commit, de la revue IA, du début de session, du journal, des hooks de qualité, des modèles, de `restrict-learnings`, du lint, d'`init.sh`, shellcheck.
+
+### Décisions
+
+- Agent, après le test réel : hook dans `settings.json` filtré sur `agent_type`, au lieu de l'en-tête du subagent. Contrepartie : le hook tourne à chaque appel d'outil, et refuse tout sans `jq`.
+
+### Corrections et limites
+
+- **Boucle négative au test réel** : le hook déclaré dans l'en-tête de `learning-curator` (champ `hooks:`, documenté) n'est jamais exécuté par Claude Code 2.1.291, ni en subagent ni avec `--agent` : l'écriture dans `README.md` est passée, et une trace a montré que la commande du hook n'était pas lancée. Les tests unitaires du script étaient verts : ils ne testaient pas le branchement. Une trace d'un hook de `settings.json` a montré le champ `agent_type: "learning-curator"`.
+- **Tests modifiés après leur commit** (signalé) : `tests/restrict-learnings.sh` ajoute `agent_type` aux entrées et les cas CA25, et CA13 vérifie `settings.json` au lieu de l'en-tête. Raison : changement de mécanisme imposé par le test réel, pas un test à faire passer ; quatre cas ajoutés aussi après mutation (chemin relatif sans `/`, sans extension, `docs/` en lien symbolique, `cat` absent).
+- La consigne `gh pr view --json` ne se vérifie qu'en CI : la revue IA de cette PR doit citer sa description.
+- Ce piège (hook d'en-tête de subagent non exécuté) se généralise, mais le template n'a pas de `docs/learnings/` propre (CA2) : il est consigné dans la spec et le README.
+
+### Prochaine étape
+
+- Ouvrir la PR, puis la reprise dans FieldOps (specs 006 et 007, et ces corrections).

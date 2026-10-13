@@ -49,15 +49,10 @@ jobs:
             exit 1
           fi
 
-      - name: Hook restrict-learnings déclaré par learning-curator (spec 005, CA13)
+      - name: Hook restrict-learnings branché sur tous les outils (spec 005, CA13)
         run: |
-          # En-tête YAML seul : entre les deux premières lignes ---
-          header=$(awk 'NR == 1 && $0 == "---" { inside = 1; next } inside && $0 == "---" { exit } inside' \
-            .claude/agents/learning-curator.md)
-          grep -qx 'hooks:' <<<"$header"
-          grep -qx '  PreToolUse:' <<<"$header"
-          grep -qx '    - matcher: "\*"' <<<"$header"
-          grep -qx '          command: "\\"\$CLAUDE_PROJECT_DIR\\"/.claude/hooks/restrict-learnings.sh"' <<<"$header"
+          jq -e '[.hooks.PreToolUse[] | select(.matcher == "*") | .hooks[].command
+            | select(endswith("/.claude/hooks/restrict-learnings.sh"))] | length == 1' .claude/settings.json
           test -x .claude/hooks/restrict-learnings.sh
 
       - name: Description de la PR lue par la revue IA (spec 005, CA14)

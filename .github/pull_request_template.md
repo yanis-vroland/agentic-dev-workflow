@@ -29,7 +29,7 @@ Spec : docs/specs/<nom>.md, ou « aucune (pas de changement de comportement) »
 
 - [ ] 
 
-Test humain dans l'application démarrée : positif après N boucle(s) négative(s), ou impossible (raison).
+Test humain dans l'application démarrée : positif après N boucle(s) négative(s), impossible (raison), ou sans objet (aucun comportement observable modifié).
 
 ## Corrections apportées au travail de l'agent
 

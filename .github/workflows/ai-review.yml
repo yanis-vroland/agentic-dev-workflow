@@ -49,7 +49,9 @@ jobs:
             PR : ${{ github.event.pull_request.number }}
 
             Fais la revue de cette PR en appliquant les consignes du fichier .claude/agents/reviewer.md.
-            Utilise `gh pr diff` pour voir les changements.
+            Utilise `gh pr diff` pour voir les changements, et `gh pr view ${{ github.event.pull_request.number }} --json title,body`
+            pour lire la description (sans `--json`, la commande a échoué dans la revue de la PR #18
+            de FieldOps, qui n'a pas pu lire la description).
             Rédige ton rapport en français dans le fichier ${{ runner.temp }}/revue-ia.md avec l'outil Write,
             puis publie-le en un seul commentaire :
             gh pr comment ${{ github.event.pull_request.number }} --body-file ${{ runner.temp }}/revue-ia.md

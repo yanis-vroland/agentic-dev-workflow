@@ -49,7 +49,8 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 ### Subagent `learning-curator`
 
 - **Outils** : `Read`, `Grep`, `Glob`, `Write`, `Edit`. Pas de `Bash` : il n'exécute rien et n'écrit que dans `docs/learnings/`. L'agent principal lui fournit la date.
-- **Restriction technique** : un hook `PreToolUse` déclaré dans l'en-tête du subagent, donc actif seulement pendant son exécution, lance `.claude/hooks/restrict-learnings.sh` sur chaque appel d'outil. Le hook :
+- **Restriction technique** : un hook `PreToolUse` de `.claude/settings.json`, de matcher `*`, lance `.claude/hooks/restrict-learnings.sh` sur chaque appel d'outil. Claude Code renseigne `agent_type` dans l'entrée d'un hook lancé pendant un subagent. Le hook :
+  - laisse passer tout appel dont `agent_type` est absent, nul ou différent de `learning-curator` (session principale, autres subagents) ;
   - laisse passer `Read`, `Grep` et `Glob` ;
   - laisse passer `Write`, `Edit` et `MultiEdit` seulement sur un fichier `$CLAUDE_PROJECT_DIR/docs/learnings/<slug>.md`, où `<slug>` est en kebab-case (minuscules, chiffres et tirets) : ni sous-dossier, ni autre extension, ni `..` ;
   - refuse tout autre outil (`Bash` compris), un fichier de piège ou un dossier `docs/learnings/` qui est un lien symbolique, et toute entrée qu'il ne sait pas lire (JSON invalide, champ absent, `jq` ou `CLAUDE_PROJECT_DIR` absents) : fermeture en cas de panne, comme `protect-secrets.sh` (spec 002) ;
@@ -81,7 +82,7 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 ### CI du template (`template-ci.yml`)
 
 - CA4 : Étant donné `.claude/agents/learning-curator.md`, quand la CI s'exécute, alors elle vérifie que sa liste d'outils est exactement `Read, Grep, Glob, Write, Edit`, et elle échoue si `Bash` y apparaît.
-- CA13 : Étant donné `.claude/agents/learning-curator.md`, quand la CI s'exécute, alors elle vérifie que son en-tête déclare un hook `PreToolUse` de matcher `*` qui lance `.claude/hooks/restrict-learnings.sh`.
+- CA13 : Étant donné `.claude/settings.json`, quand la CI s'exécute, alors elle vérifie qu'un hook `PreToolUse` de matcher `*` lance `.claude/hooks/restrict-learnings.sh`, et que ce script est exécutable.
 - CA14 : Étant donné `.github/workflows/ai-review.yml`, quand la CI s'exécute, alors elle vérifie que la consigne de la revue IA lit la description de la PR par `gh pr view … --json title,body`.
 
 ### Hook `restrict-learnings.sh` (`tests/restrict-learnings.sh`, lancé par le job « Garde-fous »)
@@ -92,6 +93,7 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 - CA18 : `Read`, `Grep` et `Glob` : acceptés ; `Bash` ou tout autre outil : refusé.
 - CA19 : fichier de piège existant qui est un lien symbolique, ou dossier `docs/learnings/` qui est un lien symbolique : refusé.
 - CA20 : entrée illisible (JSON invalide, entrée vide, `tool_name` ou `file_path` absent), `jq` absent, `CLAUDE_PROJECT_DIR` absent ou vide : refusé.
+- CA25 : appel de la session principale (`agent_type` absent ou nul) ou d'un autre subagent : accepté, quel que soit l'outil ou le chemin. `agent_type` non textuel, JSON invalide ou `jq` absent : refusé quel que soit l'agent, faute de savoir qui appelle.
 - CA21 : `init.sh` copie `.claude/hooks/restrict-learnings.sh` et `tests/restrict-learnings.sh` dans la cible (ajout à `tests/init-script.sh`).
 
 ### Relecture humaine (consignes, non testables automatiquement)
@@ -138,7 +140,8 @@ Nouvelle étape, pour une nouvelle fonctionnalité comme pour une correction, ap
 ## Décisions (complément du 2026-10-13)
 
 - La revue IA de la PR #18 de FieldOps a relevé que la limite de `learning-curator` à `docs/learnings/` ne tenait qu'à son prompt (moindre privilège). Yanis demande de traiter tous les points de cette revue : la restriction technique sort du hors périmètre.
-- Hook déclaré dans l'en-tête du subagent plutôt que dans `.claude/settings.json` : il ne s'applique qu'à `learning-curator`, sans dépendre du champ `agent_type` de l'entrée du hook.
+- Hook branché dans `.claude/settings.json` et filtré sur `agent_type`. La première version déclarait le hook dans l'en-tête du subagent (champ `hooks:` documenté par Claude Code) : le test réel (CA24) a montré que Claude Code 2.1.291 ne l'exécute pas, ni en subagent ni avec `--agent`, et l'écriture dans `README.md` est passée. Une trace a confirmé que le hook de `settings.json` reçoit `agent_type: "learning-curator"` pendant le subagent.
+- Contrepartie assumée : le hook tourne sur chaque appel d'outil de toute session (un lancement de `jq`), et il refuse tout si `jq` manque, comme `protect-secrets.sh` le fait déjà pour ses outils.
 - Le test humain ne vise que les changements de comportement observable, ce que la décision du 2026-10-11 sous-entendait (« toute correction change un comportement observable ») sans l'écrire.
 
 ## Questions ouvertes
