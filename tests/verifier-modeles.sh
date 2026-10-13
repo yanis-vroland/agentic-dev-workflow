@@ -188,6 +188,10 @@ check_value_refused "alias fable hors liste" "model: fable" "fable"
 check_value_refused "Opus avec majuscule" "model: Opus" "Opus"
 # Alias nu : la valeur entre guillemets est refusée
 check_value_refused "valeur entre guillemets \"opus\"" 'model: "opus"' '"opus"'
+# Deux alias autorisés consécutifs : un seul mot attendu, sinon le second
+# deviendrait un argument de plus après --model dans ai-review.yml
+check_value_refused "deux alias « opus haiku »" "model: opus haiku" "opus haiku"
+check_value_refused "alias suivi d'une option « opus --x »" "model: opus --x" "opus --x"
 
 # --- CA4 : ligne model en double --------------------------------------------
 
@@ -373,6 +377,7 @@ check_show_refused "model: vide" "model:"
 check_show_refused "identifiant complet" "model: claude-opus-5-5"
 check_show_refused "alias fable" "model: fable"
 check_show_refused "model en double" $'model: opus\nmodel: opus'
+check_show_refused "deux alias « sonnet opus »" "model: sonnet opus"
 
 p=$(new_project)
 cat >"$p/.claude/agents/reviewer.md" <<'EOF'

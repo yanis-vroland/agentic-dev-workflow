@@ -113,3 +113,21 @@ Branche `docs/spec-007-modele-par-agent`.
 ### Prochaine étape
 
 - Revue de sécurité du diff par `security-reviewer`, puis test humain par Yanis.
+
+## 2026-10-13 12:55
+
+### Fait
+
+- Tests de non-régression ajoutés : `model: opus haiku`, `model: opus --x` et `--afficher` sur `model: sonnet opus` doivent être refusés. Ils échouent sur `d4fb65e`.
+
+### Décisions
+
+- Bug trouvé par l'agent en relisant le diff avant la revue de sécurité : la comparaison `case " $allowed "` accepte une valeur de plusieurs mots qui recouvre la liste, et le second mot deviendrait un argument de `claude_args` en CI (agent).
+
+### Corrections et limites
+
+- Correction à suivre dans le commit suivant.
+
+### Prochaine étape
+
+- Comparaison exacte avec chaque alias autorisé, puis revue de sécurité.
