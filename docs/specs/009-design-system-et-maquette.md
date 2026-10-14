@@ -37,7 +37,7 @@ Design : à décider | sans objet (<raison>) | charte et maquette | maquette
 - **charte et maquette** : le projet n'a pas encore de design system (`docs/maquettes/000-charte/` absent) ; il est fait d'abord, puis la maquette de la spec.
 - **maquette** : la charte existe ; seule la maquette de la spec est faite.
 
-`/spec`, après son étape 8 (enregistrement de la spec ; numérotation après la spec 008), pose la question en une fois : « design system », « maquette », ou « sans objet », avec la proposition de l'agent et sa raison. Il écrit la réponse dans la ligne « Design ». S'il en résulte une charte à faire et que `docs/plan.md` existe (spec 008), il propose de l'ajouter au plan comme un écart.
+`/spec`, après son étape 8 (enregistrement de la spec ; numérotation après la spec 008), pose la question en une fois : « charte et maquette », « maquette », ou « sans objet », avec la proposition de l'agent et sa raison. Il écrit la réponse dans la ligne « Design ». S'il en résulte une charte à faire et que `docs/plan.md` existe (spec 008), il propose de l'ajouter au plan comme un écart.
 
 ## La skill `/maquette`
 

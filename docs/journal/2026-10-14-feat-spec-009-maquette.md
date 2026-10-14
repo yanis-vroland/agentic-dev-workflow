@@ -51,3 +51,30 @@ Accord de Yanis sur les tests rouges, puis implémentation : modèle de spec, sk
 ### Prochaine étape
 
 PR #52 ouverte (numéro reporté dans le README) ; revue IA et réponse, puis merge par Yanis. Ensuite : vérifier les CA de `/maquette` à la maquette du lot E de Tidemark.
+
+## 2026-10-14 20:50
+
+### Fait
+
+- Suites de la revue IA de la PR #52 :
+  - `/maquette` : PR ouverte avant la boucle de validation ; seule l'accord donné dans la conversation vaut validation, et le statut « validée » est écrit avant le merge ; repli en HTML direct décrit ; avertissement si le dépôt est public avant le premier push.
+  - `/implement` : la réponse à la question « Design » est écrite dans le premier commit de la branche, pas avant sa création.
+  - `reviewer` : valeur codée en dur relevée quelle que soit la ligne « Design ».
+  - `/spec` et `CLAUDE.md` : rien n'est écrit dans le plan sans accord explicite, et aucune décision n'est attribuée à l'humain sans son accord.
+  - Spec 009 : vocabulaire « charte et maquette » aligné sur la ligne « Design ».
+  - Étape CI CA1 : la ligne « Design » doit suivre immédiatement « Date » ; mutation contrôlée (ligne décalée détectée).
+- Scénario CA9 joué (`claude -p`, spec « sans objet ») : aucune étape de design ni de maquette ajoutée ; l'agent s'arrête sur l'absence de stack, comme avant la spec 009.
+
+### Décisions
+
+- Test humain remplacé par des scénarios joués par l'agent, sur décision de Yanis du 2026-10-14 (« test toi-même ») : il n'est pas présenté comme un test humain (Yanis).
+- Noms du client et du produit admis dans les maquettes versionnées : extension de la décision de Yanis sur les projets clients (spec 008), en attente de son accord explicite (agent, à valider par Yanis).
+
+### Corrections et limites
+
+- `test-writer` et `security-reviewer` lancés comme subagents génériques, avec leurs consignes et leur modèle déclaré passé en paramètre (`sonnet`, `opus`) : la session est ouverte à la racine de l'espace de travail, où les subagents du dépôt ne sont pas chargés. Écart à la règle n°7 de `CLAUDE.md` (lancer sans paramètre `model`), sans changement de modèle.
+- CA10 à CA12 restent non vérifiés : ils demandent l'outil d'artefact, absent des sessions non interactives.
+
+### Prochaine étape
+
+Accord de Yanis sur les noms du client dans les maquettes, puis merge de la PR #52. Ensuite : vérifier les CA de `/maquette` à la maquette du lot E de Tidemark.

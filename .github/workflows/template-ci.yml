@@ -178,8 +178,8 @@ jobs:
             echo "Aucun titre « ## » dans $f"
             exit 1
           fi
-          if [ "$design_line" -le "$date_line" ] || [ "$design_line" -ge "$first_title" ]; then
-            echo "La ligne Design doit suivre « Date : » et précéder le premier titre « ## » dans $f"
+          if [ "$design_line" -ne "$((date_line + 1))" ] || [ "$design_line" -ge "$first_title" ]; then
+            echo "La ligne Design doit suivre immédiatement « Date : », avant le premier titre « ## », dans $f"
             exit 1
           fi
           # Section Maquette : de son titre au titre suivant (ou à la fin du fichier)
