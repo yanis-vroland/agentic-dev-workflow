@@ -811,4 +811,14 @@ check "Spec 008 CA8 : .claude/skills/cadrage/SKILL.md copié" \
 check "Spec 008 CA8 : .claude/skills/cadrage/SKILL.md identique au template" \
   same_file "$template/.claude/skills/cadrage/SKILL.md" "$t/.claude/skills/cadrage/SKILL.md"
 
+check "Spec 009 CA2 : précondition, la skill maquette existe dans le template" \
+  test -f "$template/.claude/skills/maquette/SKILL.md"
+t=$(new_repo)
+run_init "$t"
+check_code 0 "Spec 009 CA2 : code de sortie 0"
+check "Spec 009 CA2 : .claude/skills/maquette/SKILL.md copié" \
+  test -f "$t/.claude/skills/maquette/SKILL.md"
+check "Spec 009 CA2 : .claude/skills/maquette/SKILL.md identique au template" \
+  same_file "$template/.claude/skills/maquette/SKILL.md" "$t/.claude/skills/maquette/SKILL.md"
+
 exit $fail

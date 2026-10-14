@@ -155,5 +155,58 @@ jobs:
           done
           exit $fail
 
+      - name: Modèle de spec, ligne Design et section Maquette facultative (spec 009, CA1)
+        run: |
+          f=docs/templates/spec.md
+          if [ ! -f "$f" ]; then
+            echo "Modèle absent : $f"
+            exit 1
+          fi
+          design='Design : à décider | sans objet (<raison>) | charte et maquette | maquette'
+          date_line=$(grep -n -- '^Date :' "$f" | head -n 1 | cut -d: -f1)
+          design_line=$(grep -nxF -- "$design" "$f" | head -n 1 | cut -d: -f1)
+          first_title=$(grep -n -- '^## ' "$f" | head -n 1 | cut -d: -f1)
+          if [ -z "$date_line" ]; then
+            echo "Ligne « Date : » absente de $f"
+            exit 1
+          fi
+          if [ -z "$design_line" ]; then
+            echo "Ligne Design exacte absente de $f : $design"
+            exit 1
+          fi
+          if [ -z "$first_title" ]; then
+            echo "Aucun titre « ## » dans $f"
+            exit 1
+          fi
+          if [ "$design_line" -le "$date_line" ] || [ "$design_line" -ge "$first_title" ]; then
+            echo "La ligne Design doit suivre « Date : » et précéder le premier titre « ## » dans $f"
+            exit 1
+          fi
+          # Section Maquette : de son titre au titre suivant (ou à la fin du fichier)
+          if ! grep -qxF -- '## Maquette' "$f"; then
+            echo "Section « ## Maquette » absente de $f"
+            exit 1
+          fi
+          if ! awk '/^## /{in_s = ($0 == "## Maquette")} in_s' "$f" | grep -qi -- 'facultative'; then
+            echo "La section Maquette de $f ne contient pas le mot « facultative »"
+            exit 1
+          fi
+
+      - name: Skill maquette invocable par l'agent (spec 009, CA2)
+        run: |
+          f=.claude/skills/maquette/SKILL.md
+          if [ ! -f "$f" ]; then
+            echo "Skill absente : $f"
+            exit 1
+          fi
+          if grep -qE -- '^disable-model-invocation:[[:space:]]*true' "$f"; then
+            echo "Invocation par l'agent désactivée dans $f"
+            exit 1
+          fi
+          if [ -z "$(sed -n 's/^description:[[:space:]]*//p' "$f" | head -n 1)" ]; then
+            echo "description vide ou absente dans $f"
+            exit 1
+          fi
+
       - name: Test du script d'initialisation
         run: bash tests/init-script.sh
