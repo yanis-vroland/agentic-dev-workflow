@@ -61,3 +61,21 @@ Yanis relit la spec 009 et tranche les deux questions ouvertes restantes (place 
 ### Prochaine étape
 
 Spike des captures PNG depuis un artefact, puis validation de la spec 009 par Yanis. Implémentation après la spec 008.
+
+## 2026-10-14 16:23
+
+### Fait
+
+- Spec 009 : captures PNG rendues facultatives ; plus de question ouverte, donc plus de spike prévu.
+
+### Décisions
+
+- Pas de capture automatique depuis l'artefact : PNG faits à la main par Yanis si besoin, ou pris dans l'application lancée en développement au test humain (Yanis).
+
+### Corrections et limites
+
+- Sans capture, un lecteur du dépôt ne voit la maquette qu'en ouvrant le HTML versionné : les liens d'artefacts restent privés.
+
+### Prochaine étape
+
+Validation de la spec 009 par Yanis. Implémentation après celle de la spec 008.
