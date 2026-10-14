@@ -50,4 +50,4 @@ Accord de Yanis sur les tests rouges, puis implémentation : modèle de spec, sk
 
 ### Prochaine étape
 
-PR ouverte ; revue IA et réponse, puis merge par Yanis. Ensuite : vérifier les CA de `/maquette` à la maquette du lot E de Tidemark.
+PR #52 ouverte (numéro reporté dans le README) ; revue IA et réponse, puis merge par Yanis. Ensuite : vérifier les CA de `/maquette` à la maquette du lot E de Tidemark.
