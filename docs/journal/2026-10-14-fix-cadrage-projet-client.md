@@ -13,7 +13,7 @@ Branche `fix/cadrage-projet-client`.
 ### Décisions
 
 - Plus d'anonymisation : un projet client est un fork du template, gardé en local ou dans un dépôt privé, et ses specs nomment le client et le produit (Yanis).
-- Avertissement conservé si le dépôt est public, une seule fois, sans rien bloquer d'autre : c'est la condition même de la décision (agent, à valider par Yanis).
+- Avertissement conservé si le dépôt est public, une seule fois, sans rien bloquer d'autre : c'est la condition même de la décision (agent, validé par Yanis).
 
 ### Corrections et limites
 
@@ -24,3 +24,22 @@ Branche `fix/cadrage-projet-client`.
 ### Prochaine étape
 
 Yanis relit et merge. Ensuite : implémentation de la spec 009.
+
+## 2026-10-14 20:31
+
+### Fait
+
+- Décisions de Yanis reportées : avertissement si le dépôt est public conservé ; spec rédigée par lot, sans génération de toutes les specs au cadrage.
+
+### Décisions
+
+- Avertissement unique avant le premier push d'un dépôt public : conservé (Yanis).
+- Le cadrage produit le plan et la liste des fonctionnalités ; chaque spec reste rédigée juste avant son lot (Yanis).
+
+### Corrections et limites
+
+- Aucune.
+
+### Prochaine étape
+
+Yanis merge les PR #50 et #51. Ensuite : implémentation de la spec 009.
