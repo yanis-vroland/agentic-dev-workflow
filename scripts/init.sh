@@ -247,7 +247,7 @@ steps+=(
   "Créer un ruleset sur main : PR obligatoire, vérifications requises « Tests des garde-fous », « Détection de secrets » et « Journal »."
   "Créer le label agent-corrigé : gh label create agent-corrigé --color D93F0B --description \"Code de l'agent refusé ou corrigé par l'humain\""
   "Compléter les sections « À ADAPTER » du CLAUDE.md."
-  "Compléter docs/cahier-des-charges-fonctionnel.md (acteurs, glossaire, règles métier) et docs/architecture-technique.md (données, contrats, sécurité, infrastructure) : à la première session Claude Code dans le projet, l'agent propose de le faire par le cadrage, à partir des documents de besoin que vous lui donnerez, et crée docs/plan.md (spec 008)."
+  "Compléter docs/cahier-des-charges-fonctionnel.md (acteurs, glossaire, règles métier) et docs/architecture-technique.md (données, contrats, sécurité, infrastructure) : à la première session Claude Code dans le projet, l'agent propose de le faire par le cadrage, à partir des documents de besoin que vous lui donnerez, et remplit docs/plan.md (spec 008)."
 )
 
 echo

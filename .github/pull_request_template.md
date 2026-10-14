@@ -21,7 +21,7 @@ Spec : docs/specs/<nom>.md, ou « aucune (pas de changement de comportement) »
 ## Documents de référence
 
 <!-- Mis à jour dans cette PR : cahier des charges, architecture technique, avec la section
-     touchée. Sinon : « sans objet » et pourquoi (voir « Documents de référence » dans CLAUDE.md). -->
+     touchée ; plan (docs/plan.md) : cases cochées, écarts au plan proposés. Sinon : « sans objet » et pourquoi (voir « Documents de référence » dans CLAUDE.md). -->
 
 ## Ce que l'humain a vérifié
 
