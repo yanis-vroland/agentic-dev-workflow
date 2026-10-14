@@ -70,6 +70,7 @@ Revue IA de la PR #44 et réponse point par point, puis relecture et merge par Y
 
 ### Corrections et limites
 
+- PR #46 ouverte ; README : ligne de la spec 008 complétée avec #46.
 - Cause : la PR #44 portait encore le titre et la description d'une PR de spec seule ; le merge a eu lieu pendant l'implémentation. Je n'ai pas annoncé dans la PR que des commits restaient à venir.
 
 ### Prochaine étape
