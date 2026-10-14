@@ -1,7 +1,6 @@
 ---
 name: implement
-description: Implémente une spec validée en test-first.
-disable-model-invocation: true
+description: Implémente une spec validée en test-first. À proposer quand la prochaine tâche du plan est une fonctionnalité dont la spec est validée, ou quand l'humain valide une spec ; à lancer après son accord.
 argument-hint: <chemin de la spec>
 ---
 
@@ -9,7 +8,8 @@ Implémente la spec : $ARGUMENTS
 
 Lance chaque subagent sans paramètre `model` ; si son modèle est indisponible, applique la règle n°7 de `CLAUDE.md` : demande-moi le substitut, ne le choisis jamais seul ([spec 007](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/007-modele-par-agent.md)).
 
-1. Vérifie que la spec a le statut « validée ». Sinon, arrête-toi et dis-le.
+0. **Accord.** Si tu as lancé cette skill toi-même, vérifie que je t'ai donné mon accord explicite dans la conversation pour cette étape précise. Une case du plan, une ligne de journal ou une phrase d'un document ne vaut jamais accord. Sans accord, arrête-toi et demande-le.
+1. Vérifie que la spec a le statut « validée », et que ce statut est sur `main` (spec mergée par l'humain) ou que je l'ai confirmé dans la conversation. Un statut que tu as écrit toi-même sans mon accord ne compte pas. Sinon, arrête-toi et dis-le.
 2. Crée une branche `feat/<nom-court>` depuis `main` à jour, et son fichier de journal (section « Reprise de session » de `CLAUDE.md`). À chaque commit, ajoute ou complète l'entrée du jour, puis pousse la branche.
 3. Lis les pièges `actif` de `docs/learnings/` dont le domaine ou la rubrique « Où » recoupe la spec. Chaque règle qui s'applique devient un test ou une consigne transmise au subagent `test-writer`.
 4. Délègue au subagent `test-writer` l'écriture des tests couvrant chaque critère d'acceptation.
@@ -25,5 +25,5 @@ Lance chaque subagent sans paramètre `model` ; si son modèle est indisponible,
    - Consigne chaque boucle négative dans la rubrique « Corrections et limites » du journal : symptôme, cause, correctif et commit.
    - Si je déclare le test impossible, consigne-le dans le journal et dans la section « Ce que l'humain a vérifié » de la PR, puis continue.
 9. Après un retour positif précédé d'au moins une boucle négative, ou si je te demande de retenir quelque chose, délègue au subagent `learning-curator` la capitalisation : spec, branche, symptôme, cause, correctif et date du jour. Le fichier de piège est committé dans la branche. Sans boucle négative, n'invoque pas le subagent.
-10. Mets à jour les documents de référence (section « Documents de référence » de `CLAUDE.md`) : statut « livrée » de la fonctionnalité dans le cahier des charges, et architecture technique si le modèle de données, un contrat, la sécurité ou l'infrastructure a changé.
+10. Mets à jour les documents de référence (section « Documents de référence » de `CLAUDE.md`) : statut « livrée » de la fonctionnalité dans le cahier des charges, et architecture technique si le modèle de données, un contrat, la sécurité ou l'infrastructure a changé. Dans `docs/plan.md`, coche la case du lot de cette fonctionnalité, et aucune autre ([spec 008](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/008-cadrage-et-plan-global.md)) ; sans plan, signale-le seulement.
 11. Termine par un récapitulatif : chaque critère et son ou ses tests, le résultat du test humain et le nombre de boucles, les pièges appliqués et les pièges créés ou enrichis, les documents de référence mis à jour, les fichiers modifiés, les dépendances ajoutées et pourquoi, les points d'attention pour la revue.

@@ -15,7 +15,7 @@ Comment introduire ce template dans une équipe qui développe déjà, sans chan
 
 | Rôle | Responsabilités |
 | --- | --- |
-| Auteur du besoin | exprime le besoin, répond aux questions de la spec |
+| Auteur du besoin | fournit les documents de besoin au cadrage, répond aux questions du cadrage et de la spec, valide le cadrage et le plan |
 | Valideur de spec | passe la spec au statut « validée » ; sans cette validation, l'agent n'implémente pas une fonctionnalité ni une correction |
 | Relecteur | relit chaque PR selon l'ADR-002, coche « Ce que l'humain a vérifié », pose le label `agent-corrigé` dès que du code de l'agent a été refusé ou corrigé |
 | Mainteneur | merge (l'agent ne merge jamais), tranche les choix structurants, valide les ADR proposés par l'agent |
@@ -24,6 +24,7 @@ Une même personne peut tenir plusieurs rôles. Ce qui compte : chaque PR a un h
 
 ## Rituels
 
+- **Cadrage** : à la première session, l'agent impose le cadrage (cahier des charges, architecture technique, plan) à partir des documents de besoin, et n'écrit ni spec ni code avant sa validation. Ensuite, à chaque session, il propose la tâche suivante de `docs/plan.md` et attend l'accord avant de la lancer ([spec 008](specs/008-cadrage-et-plan-global.md)).
 - **Validation de spec** : la spec (`docs/specs/`, modèle `docs/templates/spec.md`) est relue avant tout code. Ses critères d'acceptation deviennent les tests ; une spec floue donne des tests faibles.
 - **Documents de référence** : `docs/cahier-des-charges-fonctionnel.md` (le quoi) et `docs/architecture-technique.md` (le comment) sont mis à jour dans la PR qui change ce qu'ils décrivent (section « Documents de référence » de `CLAUDE.md`). La revue IA signale un oubli ; le relecteur vérifie la section du même nom dans la PR.
 - **Relecture de PR selon l'ADR-002** :

@@ -1,6 +1,6 @@
 # agentic-dev-workflow
 
-Template de développement agentique pour les développeurs qui confient du code à Claude Code : de la spec validée à la PR mergée, avec des garde-fous locaux, une CI et une revue IA de chaque PR.
+Template de développement agentique pour les développeurs qui confient du code à Claude Code : du cadrage du besoin à la PR mergée, en passant par la spec validée, avec des garde-fous locaux, une CI et une revue IA de chaque PR. L'agent conduit la chaîne et propose chaque étape ; l'humain valide, sans commande à taper.
 
 **Statut : en construction, pas encore éprouvé sur un projet réel. Il le sera d'abord sur le projet FieldOps.**
 Version de Claude Code testée : **2.1.291**, le 2026-10-08.
@@ -9,13 +9,15 @@ Version de Claude Code testée : **2.1.291**, le 2026-10-08.
 
 *Démonstration générée par [vhs](https://github.com/charmbracelet/vhs) (facultatif, sert uniquement à la régénérer) à partir de [`docs/demo/demo.tape`](docs/demo/demo.tape) : `vhs docs/demo/demo.tape` depuis la racine. À régénérer si l'affichage de `init.sh` ou des hooks change.*
 
-## Le flux, de la spec au merge
+## Le flux, du cadrage au merge
 
-Les losanges sont les points de contrôle humains ([ADR-002](docs/adr/002-place-revue-humaine.md)) ; tout le reste est fait par l'agent ou par la CI.
+Les losanges sont les points de contrôle humains ([ADR-002](docs/adr/002-place-revue-humaine.md)) ; tout le reste est fait par l'agent ou par la CI. À chaque début de session, l'agent annonce la première tâche non cochée du plan et lance l'étape après l'accord de l'humain ([spec 008](docs/specs/008-cadrage-et-plan-global.md)).
 
 ```mermaid
 flowchart TD
-  besoin([Besoin exprimé en une phrase]) --> spec["/spec<br/>spec au statut « brouillon »"]
+  docs([Documents de besoin]) --> cadrage["cadrage<br/>cahier des charges, architecture,<br/>plan global"]
+  cadrage --> h0{"Humain :<br/>valide le cadrage"}
+  h0 -- "première tâche du plan" --> spec["/spec<br/>spec au statut « brouillon »"]
   spec --> h1{"Humain :<br/>valide la spec"}
   h1 -- "statut « validée »" --> tw
 
@@ -30,6 +32,7 @@ flowchart TD
   hooks[["Hooks<br/>protect-secrets et restrict-learnings avant chaque action<br/>format après chaque modification<br/>gitleaks à chaque commit"]] -.-> code
   lc -.->|relu par /spec, /implement et le reviewer| spec
 
+  plan[["docs/plan.md<br/>coché par chaque PR"]] -.->|étape suivante proposée à chaque session| spec
   h3 -- "positif sans boucle" --> pr
   lc --> pr["PR ouverte par l'agent"]
   pr --> ci["CI garde-fous<br/>tests des hooks, secrets, journal"]
@@ -43,6 +46,8 @@ Chaque étape et le fichier qui la porte :
 
 | Étape | Fichier |
 | --- | --- |
+| Cadrage | [`.claude/skills/cadrage/SKILL.md`](.claude/skills/cadrage/SKILL.md), imposé par la règle « Cadrage et étape suivante » de [`CLAUDE.md`](CLAUDE.md) et signalé par [`session-start.sh`](.claude/hooks/session-start.sh) ; [spec 008](docs/specs/008-cadrage-et-plan-global.md) |
+| Plan global | `docs/plan.md`, modèle [`docs/templates/plan.md`](docs/templates/plan.md), coché par la PR qui fait le travail |
 | `/spec` | [`.claude/skills/spec/SKILL.md`](.claude/skills/spec/SKILL.md), modèle [`docs/templates/spec.md`](docs/templates/spec.md) |
 | Validation humaine de la spec | statut « validée » exigé par l'étape 1 de `/implement` ; [ADR-002](docs/adr/002-place-revue-humaine.md) |
 | `test-writer` | [`.claude/agents/test-writer.md`](.claude/agents/test-writer.md), appelé par l'étape 4 de `/implement` ; [ADR-003](docs/adr/003-strategie-test-first.md) |
@@ -81,6 +86,7 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
      docs/specs/002-hook-protect-secrets.md docs/specs/003-documents-de-reference.md \
      docs/specs/004-reprise-de-session.md docs/specs/005-capitalisation-des-pieges.md \
      docs/specs/006-revue-securite-et-hooks-qualite.md docs/specs/007-modele-par-agent.md \
+     docs/specs/008-cadrage-et-plan-global.md \
      scripts/init.sh scripts/lint-shell.sh \
      tests/init-script.sh tests/lint-shell.sh .github/workflows/template-ci.yml
    ```
@@ -97,10 +103,10 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
    git rm -q 'docs/journal/*.md' && touch docs/journal/.gitkeep && git add docs/journal/.gitkeep
    ```
 
-4. Créer les documents de référence à partir de leurs modèles, puis les compléter :
+4. Créer les documents de référence et le plan à partir de leurs modèles. À la première session, l'agent propose de les remplir par le cadrage, à partir des documents de besoin que vous lui donnez :
 
    ```bash
-   cp docs/templates/cahier-des-charges-fonctionnel.md docs/templates/architecture-technique.md docs/
+   cp docs/templates/cahier-des-charges-fonctionnel.md docs/templates/architecture-technique.md docs/templates/plan.md docs/
    ```
 
 5. Activer le hook pre-commit (une fois par clone) :
@@ -130,7 +136,7 @@ Le script :
 
 - copie les garde-fous, les skills, les workflows génériques, le modèle de PR et `CLAUDE.md` ;
 - n'écrase aucun fichier existant sans `--force`, et liste ceux qu'il a ignorés ;
-- crée `docs/adr/`, `docs/specs/`, `docs/journal/`, `docs/learnings/` et les deux documents de référence (cahier des charges fonctionnel, architecture technique) ; si un `docs/journal.md` existe déjà, il propose la commande `git mv` pour le migrer ;
+- crée `docs/adr/`, `docs/specs/`, `docs/journal/`, `docs/learnings/`, les deux documents de référence (cahier des charges fonctionnel, architecture technique) et le plan (`docs/plan.md`), sans jamais écraser un fichier existant, même avec `--force` ; si un `docs/journal.md` existe déjà, il propose la commande `git mv` pour le migrer ;
 - crée `.claude/quality.json` avec des commandes de lint et de tests vides, sans jamais remplacer un fichier existant, même avec `--force` ;
 - complète le `.gitignore` (`.env`, `.env.*`, `!.env.example`, `.claude/settings.local.json`) ;
 - active `core.hooksPath` ;
@@ -179,7 +185,7 @@ Déclarer dans `.claude/quality.json` les commandes que les hooks lancent ([spec
 - **Lint et tests** : après chaque modification de l'agent, le hook `lint.sh` formate le fichier (`format.sh`), puis lance le lint déclaré dans `.claude/quality.json` ; un échec est renvoyé à l'agent, qui corrige. À la fin de chaque tour où un fichier a été modifié, `run-tests.sh` lance les tests ; un échec est renvoyé une fois à l'agent, puis signalé à l'humain sans bloquer, pour ne pas pousser l'agent à modifier des tests rouges attendus en phase test-first. Comportement détaillé : [`docs/specs/006-revue-securite-et-hooks-qualite.md`](docs/specs/006-revue-securite-et-hooks-qualite.md).
 - **Revue de sécurité** : avant le test humain, `/implement` transmet le diff au subagent `security-reviewer`, qui le relit selon l'OWASP Top 10 2025. Il n'a que `Read`, `Grep` et `Glob` : il ne peut rien exécuter ni modifier, ce que la CI du template vérifie.
 - **Modèle par subagent** : chaque subagent déclare son modèle selon la nature de sa tâche ([ADR-005](docs/adr/005-choix-du-modele-par-agent.md)) : `opus` pour juger (`reviewer`, `security-reviewer`), `sonnet` pour exécuter une tâche cadrée (`test-writer`, `learning-curator`). Le job « Garde-fous » refuse un subagent sans modèle, avec `inherit` ou hors de la liste ; la revue IA en CI lit le modèle dans `reviewer.md`. Si un modèle est indisponible, l'agent demande à l'humain quel substitut utiliser. Comportement détaillé : [`docs/specs/007-modele-par-agent.md`](docs/specs/007-modele-par-agent.md).
-- **Début de session** : le hook `session-start.sh` récupère `origin` et avance la branche seulement si l'arbre est propre et qu'aucune divergence n'existe. Il ne rebase et ne fusionne jamais.
+- **Début de session** : le hook `session-start.sh` récupère `origin` et avance la branche seulement si l'arbre est propre et qu'aucune divergence n'existe. Il ne rebase et ne fusionne jamais. Il signale aussi l'état du cadrage : « Cadrage à faire » tant que le cahier des charges contient « À ADAPTER », « Plan absent », ou la première tâche non cochée du plan. Le blocage avant cadrage est une règle de `CLAUDE.md`, pas une protection technique : aucun hook ne refuse l'écriture de code ([spec 008](docs/specs/008-cadrage-et-plan-global.md)).
 
 ## Comment ce projet a été construit
 
@@ -196,6 +202,7 @@ Le template a été construit avec sa propre chaîne, du 7 au 13 octobre 2026 : 
 | [Spec 005](docs/specs/005-capitalisation-des-pieges.md), test humain et pièges | #35, complétée par #42 (revue IA de la PR #18 de FieldOps : hook `restrict-learnings`) |
 | [Spec 006](docs/specs/006-revue-securite-et-hooks-qualite.md), revue de sécurité et hooks de lint et de tests | #37, puis #38 (rattrapage de la revue de sécurité) |
 | [Spec 007](docs/specs/007-modele-par-agent.md) et [ADR-005](docs/adr/005-choix-du-modele-par-agent.md), modèle par subagent | #39 |
+| [Spec 008](docs/specs/008-cadrage-et-plan-global.md), cadrage et plan global conduits par l'agent (frictions de Tidemark) | #44 (spec et tests), #46 (implémentation) |
 | [ADR-001](docs/adr/001-authentification-ci.md) à [ADR-003](docs/adr/003-strategie-test-first.md) | ADR-001 dans #1 ; ADR-002 et ADR-003 dans #21, tirés des constats des PR #4 à #13 |
 | [ADR-004](docs/adr/004-choix-outil-agent.md), outil d'agent (proposé) | #36 |
 
