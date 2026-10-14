@@ -86,3 +86,27 @@ Tests rouges des CA1 à CA11 par le subagent `test-writer`, commit séparé, pui
 ### Prochaine étape
 
 Accord de Yanis sur les tests rouges, puis implémentation : modèle `docs/templates/plan.md`, section « Sources », skill `cadrage`, hook, `init.sh`, `CLAUDE.md`, ADR-004, README.
+
+## 2026-10-14 20:04
+
+### Fait
+
+- Implémentation de la spec 008 : modèle `docs/templates/plan.md`, section « Sources » du modèle de cahier des charges, skill `cadrage`, `disable-model-invocation` retiré de `spec` et `implement` (descriptions qui disent quand les proposer, `/spec` qui lit le plan, `/implement` qui coche le lot), état du cadrage et du plan affiché par `session-start.sh`, `docs/plan.md` créé par `init.sh`, règle « Cadrage et étape suivante » dans `CLAUDE.md`, ADR-004, README, guide d'adoption.
+- Revue de sécurité (subagent `security-reviewer`) : aucun bloquant, trois points à corriger et deux suggestions, tous suivis : documents de cadrage traités comme des données ; vérification de la visibilité du dépôt, anonymisation si public, liste des informations versionnées montrée avant le push ; étape 0 « accord explicite » dans les trois skills et statut « validée » exigé sur `main` ou confirmé ; case du plan affichée comme une donnée et tronquée à 200 caractères (test ajouté, rouge sans la troncature) ; métadonnées signalées avant de versionner une source. Spec complétée : trois cas limites, CA22 et CA23.
+- Tests : `session-start.sh` 86 OK, `init-script.sh` 283 OK, les 8 autres suites vertes, étapes CI CA9 et CA10 vertes en local, shellcheck sans avertissement.
+
+### Décisions
+
+- Message de fin d'`init.sh` complété plutôt que remplacé : le CA5 de la spec 003 le vérifie (agent).
+- Corrections de la revue de sécurité toutes suivies, CA22 et CA23 ajoutés à la spec validée (agent, à valider par Yanis).
+
+### Corrections et limites
+
+- Un premier remplacement du message de fin d'`init.sh` a cassé deux vérifications de la spec 003 ; corrigé sans toucher au test.
+- `.git/info/exclude` local (non versionné) ignorait tout `plan.md`, donc le modèle : restreint à `/plan.md` et `/rapport.md`. Un autre clone avec la même exclusion aurait le même problème.
+- `security-reviewer` lancé comme subagent générique avec ses consignes et son modèle déclaré (`opus`) : session ouverte à la racine de l'espace de travail. Il n'a pas pu lister `docs/learnings/` (absent du template, de toute façon).
+- L'accord de l'humain avant une skill reste une consigne, pas une protection technique : écrit dans l'ADR-004.
+
+### Prochaine étape
+
+Test humain des CA12 à CA23 par Yanis sur un projet jetable créé avec `init.sh`, puis revue IA de la PR.

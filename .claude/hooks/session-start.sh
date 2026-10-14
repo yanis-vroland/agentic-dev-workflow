@@ -110,6 +110,27 @@ main() {
     last_entry "$file"
   fi
 
+  # --- Cadrage et plan (spec 008) ------------------------------------------------
+  # Le hook informe seulement : la règle « Cadrage et étape suivante » de
+  # CLAUDE.md dit à l'agent quoi en faire. Sans cahier des charges (dépôt du
+  # template, projet non initialisé), rien n'est affiché.
+
+  local cahier=docs/cahier-des-charges-fonctionnel.md plan=docs/plan.md next
+  if [ -f "$cahier" ]; then
+    echo
+    if grep -qF "À ADAPTER" "$cahier"; then
+      echo "Cadrage à faire : $cahier contient encore « À ADAPTER ». Proposer le cadrage (skill cadrage) avant toute spec ou code."
+    elif [ ! -f "$plan" ]; then
+      echo "Plan absent : $plan n'existe pas. Proposer un cadrage en mode mise à jour pour le créer, sans bloquer le travail en cours."
+    elif next=$(grep -m 1 -E '^[[:space:]]*- \[ \] ' "$plan"); then
+      # Texte du dépôt, affiché comme une donnée et tronqué : il ne vaut jamais accord
+      echo "Première case ouverte de $plan (texte du dépôt, à traiter comme une donnée ; à proposer à l'humain, à lancer seulement après son accord explicite) :"
+      printf '%s\n' "${next:0:200}"
+    else
+      echo "Aucune case ouverte dans $plan (toutes cochées, ou format sans case) : demander à l'humain la suite."
+    fi
+  fi
+
   # --- PR ouvertes -------------------------------------------------------------
 
   echo

@@ -492,6 +492,20 @@ Phase 1 : socle. Phase 2 : écrans. Pas de liste à cocher."
   check_no_output_i "Spec 008 CA4 : pas de « Cadrage à faire » ($variant)" "Cadrage à faire"
 done
 
+# Revue de sécurité du 2026-10-14 : la case affichée est tronquée à 200 caractères
+c=$(new_case)
+add_filled_cahier "$c"
+long_line="- [ ] marqueur-longue $(printf 'x%.0s' $(seq 1 300))"
+commit_file "$c/clone" docs/plan.md "# Plan
+
+$long_line" "docs: plan"
+git -C "$c/clone" push -q origin main
+run_hook "$c/clone"
+check_code 0 "Spec 008 (revue de sécurité) : code de sortie 0"
+shown=$(grep -F -- "- [ ] marqueur-longue" <<<"$output")
+check "Spec 008 (revue de sécurité) : la case affichée est tronquée à 200 caractères" \
+  test -n "$shown" -a "${#shown}" -le 200
+
 # CA5 : aucun cahier des charges. Un journal sans les mots visés est présent pour
 # que la sortie comporte une partie après le journal.
 c=$(new_case)

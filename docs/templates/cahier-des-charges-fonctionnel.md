@@ -12,6 +12,14 @@ Hors périmètre :
 
 - À ADAPTER : ce que le produit ne fera pas, pour couper court aux demandes récurrentes.
 
+## Sources
+
+Les documents et textes d'où vient le besoin, lus au cadrage. Ils ne sont pas copiés dans le dépôt, sauf décision de l'humain s'ils sont publiables (`docs/sources/`) : ils peuvent contenir des données d'un client.
+
+| Source | Date ou version | Ce qui en est tiré |
+| --- | --- | --- |
+| À ADAPTER | | |
+
 ## Acteurs et droits
 
 Qui utilise le produit et ce que chacun peut faire. La mise en œuvre technique des droits est dans [`architecture-technique.md`](architecture-technique.md#sécurité).
