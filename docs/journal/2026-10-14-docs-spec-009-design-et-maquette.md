@@ -24,3 +24,22 @@ Branche `docs/spec-009-design-et-maquette`.
 ### Prochaine étape
 
 Yanis relit la spec 009 et répond aux trois questions ouvertes. L'implémentation suit celle de la spec 008.
+
+## 2026-10-14 16:17
+
+### Fait
+
+- Spec 009 mise à jour selon les réponses de Yanis : captures PNG obligatoires, rendues depuis l'artefact Claude, une par écran et par état, refaites à chaque modification ; `/maquette` lancée par l'agent après accord, sans commande à taper (cohérent avec la spec 008). 15 critères d'acceptation.
+
+### Décisions
+
+- Captures PNG obligatoires, par les artefacts Claude (Yanis).
+- Sans artefact : arrêt et choix de l'humain, au lieu d'un repli silencieux en HTML ; une maquette sans capture n'est pas présentée comme complète (agent, à valider par Yanis).
+
+### Corrections et limites
+
+- Le moyen de produire une capture PNG depuis un artefact n'est pas vérifié (échec sur Tidemark) : spike à faire avant l'implémentation, consigné en question ouverte.
+
+### Prochaine étape
+
+Yanis relit la spec 009 et tranche les deux questions ouvertes restantes (place de la question « Design », contrôle des valeurs codées en dur par le `reviewer`). Spike des captures avant l'implémentation.
