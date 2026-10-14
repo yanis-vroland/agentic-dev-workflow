@@ -111,5 +111,49 @@ jobs:
       - name: Test du lint shell du template (spec 006, CA23 et CA24)
         run: bash tests/lint-shell.sh
 
+      - name: Sections du modèle de plan et section Sources du modèle de cahier des charges (spec 008, CA9)
+        run: |
+          f=docs/templates/plan.md
+          if [ ! -f "$f" ]; then
+            echo "Modèle absent : $f"
+            exit 1
+          fi
+          # Chaque section doit exister, et dans l'ordre de la spec
+          last=0
+          for section in "Objectif" "Règles de mise à jour" "Lots" "Tâches" "Tâches de l'humain" "Jalons" "Écarts au plan"; do
+            line=$(grep -nxF -- "## $section" "$f" | head -n 1 | cut -d: -f1)
+            if [ -z "$line" ]; then
+              echo "Section absente de $f : « $section »"
+              exit 1
+            fi
+            if [ "$line" -le "$last" ]; then
+              echo "Section « $section » hors ordre dans $f"
+              exit 1
+            fi
+            last=$line
+          done
+          grep -qxF -- '## Sources' docs/templates/cahier-des-charges-fonctionnel.md
+
+      - name: Skills cadrage, spec et implement invocables par l'agent (spec 008, CA10)
+        run: |
+          fail=0
+          for skill in cadrage spec implement; do
+            f=".claude/skills/$skill/SKILL.md"
+            if [ ! -f "$f" ]; then
+              echo "Skill absente : $f"
+              fail=1
+              continue
+            fi
+            if grep -qE -- '^disable-model-invocation:[[:space:]]*true' "$f"; then
+              echo "Invocation par l'agent désactivée dans $f"
+              fail=1
+            fi
+            if [ -z "$(sed -n 's/^description:[[:space:]]*//p' "$f" | head -n 1)" ]; then
+              echo "description vide ou absente dans $f"
+              fail=1
+            fi
+          done
+          exit $fail
+
       - name: Test du script d'initialisation
         run: bash tests/init-script.sh
