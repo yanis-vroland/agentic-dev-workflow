@@ -14,7 +14,7 @@ Hors périmètre :
 
 ## Sources
 
-Les documents et textes d'où vient le besoin, lus au cadrage. Ils ne sont pas copiés dans le dépôt, sauf décision de l'humain s'ils sont publiables (`docs/sources/`) : ils peuvent contenir des données d'un client.
+Les documents et textes d'où vient le besoin, lus au cadrage et copiés dans `docs/sources/`. Le projet est gardé en local ou dans un dépôt privé.
 
 | Source | Date ou version | Ce qui en est tiré |
 | --- | --- | --- |
