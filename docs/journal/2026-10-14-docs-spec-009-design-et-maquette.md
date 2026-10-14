@@ -79,3 +79,21 @@ Spike des captures PNG depuis un artefact, puis validation de la spec 009 par Ya
 ### Prochaine étape
 
 Validation de la spec 009 par Yanis. Implémentation après celle de la spec 008.
+
+## 2026-10-14 16:24
+
+### Fait
+
+- Spec 009 passée au statut « validée ».
+
+### Décisions
+
+- Spec 009 validée (Yanis).
+
+### Corrections et limites
+
+- Aucune.
+
+### Prochaine étape
+
+Yanis merge cette PR (spec seule). L'implémentation de la spec 009 suit celle de la spec 008, sur une nouvelle branche basée sur `main` à jour.

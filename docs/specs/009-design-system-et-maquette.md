@@ -1,6 +1,6 @@
 # Spec 009 : design system et maquette, entre la spec et les tests
 
-Statut : brouillon
+Statut : validée
 Date : 2026-10-14
 
 ## Besoin
