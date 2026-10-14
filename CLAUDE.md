@@ -74,7 +74,7 @@ Le dépôt est la seule mémoire : une session doit pouvoir être fermée à tou
 - Aucun TODO sans ticket associé.
 - Entrée de journal de la branche à jour et poussée.
 - Documentation mise à jour si un comportement public change, dont le cahier des charges et l'architecture technique (section « Documents de référence »).
-- Cases du plan (`docs/plan.md`) cochées pour les tâches terminées par la PR, et aucune autre.
+- Si `docs/plan.md` existe : cases du plan cochées pour les tâches terminées par la PR, et aucune autre.
 
 ## Interdits
 
