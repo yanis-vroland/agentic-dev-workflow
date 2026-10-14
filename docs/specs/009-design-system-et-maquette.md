@@ -37,7 +37,7 @@ Design : à décider | sans objet (<raison>) | charte et maquette | maquette
 - **charte et maquette** : le projet n'a pas encore de design system (`docs/maquettes/000-charte/` absent) ; il est fait d'abord, puis la maquette de la spec.
 - **maquette** : la charte existe ; seule la maquette de la spec est faite.
 
-`/spec`, après l'étape 7 actuelle (enregistrement de la spec), pose la question en une fois : « design system », « maquette », ou « sans objet », avec la proposition de l'agent et sa raison. Il écrit la réponse dans la ligne « Design ». S'il en résulte une charte à faire et que `docs/plan.md` existe (spec 008), il propose de l'ajouter au plan comme un écart.
+`/spec`, après son étape 8 (enregistrement de la spec ; numérotation après la spec 008), pose la question en une fois : « design system », « maquette », ou « sans objet », avec la proposition de l'agent et sa raison. Il écrit la réponse dans la ligne « Design ». S'il en résulte une charte à faire et que `docs/plan.md` existe (spec 008), il propose de l'ajouter au plan comme un écart.
 
 ## La skill `/maquette`
 
@@ -94,7 +94,7 @@ Travail sur une branche `docs/maquette-NNN-titre-court` avec son journal, et une
 - Spec qui touche un écran existant sans le changer visuellement : « sans objet » proposé, avec cette raison.
 - Charte modifiée après coup : les maquettes déjà validées ne sont pas reprises ; une PR de charte liste les écrans touchés.
 - Projet qui a déjà une charte ailleurs (Figma, design system d'entreprise) : « maquette » seule, et le `README.md` de `000-charte/` renvoie vers la source externe au lieu de la recopier.
-- Données réelles dans une maquette : interdites, comme dans le code (règle « Tout est fictif »).
+- Données personnelles réelles dans une maquette (noms, coordonnées d'utilisateurs finaux) : interdites, la maquette utilise des données fictives. Les noms du client et du produit sont admis : un projet client est gardé en local ou dans un dépôt privé (décision de Yanis du 2026-10-14, spec 008).
 - Maquette refusée plusieurs fois : chaque boucle est consignée dans « Corrections et limites » du journal, comme au test humain.
 
 ## Hors périmètre
