@@ -47,3 +47,22 @@ Yanis relit la spec 008 et répond aux trois questions ouvertes. Ensuite : spec 
 ### Prochaine étape
 
 Yanis relit et valide la spec 008. Ensuite : implémentation de la spec 008.
+
+## 2026-10-14 16:21
+
+### Fait
+
+- Spec 008 passée au statut « validée ».
+
+### Décisions
+
+- Spec 008 validée, avec les propositions de l'agent : 10 questions par tour et deux tours, sources non copiées par défaut, pas de hook bloquant, mise à jour de l'ADR-004 (Yanis).
+- Implémentation dans cette même branche et PR (#44), comme pour la spec 007 : la règle n°6 interdit de baser une PR sur une autre non mergée (agent).
+
+### Corrections et limites
+
+- Aucune.
+
+### Prochaine étape
+
+Tests rouges des CA1 à CA11 par le subagent `test-writer`, commit séparé, puis accord de Yanis avant l'implémentation.

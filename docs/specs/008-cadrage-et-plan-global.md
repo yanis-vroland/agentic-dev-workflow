@@ -1,6 +1,6 @@
 # Spec 008 : cadrage du besoin et plan global, conduits par l'agent
 
-Statut : brouillon
+Statut : validée
 Date : 2026-10-14
 
 ## Besoin
@@ -145,4 +145,4 @@ Mises à jour, dans la PR qui fait le travail :
 
 ## Questions ouvertes
 
-- Aucune. Tranché par Yanis le 2026-10-14 : nom `/cadrage` ; skills lancées par l'agent ; besoin donné par des documents. Les plafonds de questions (10 par tour, deux tours) et la non-copie des sources par défaut sont des propositions de l'agent, à confirmer en validant la spec.
+- Aucune. Tranché par Yanis le 2026-10-14 : nom `/cadrage` ; skills lancées par l'agent ; besoin donné par des documents. Plafonds de questions (10 par tour, deux tours), sources non copiées par défaut, pas de hook bloquant et mise à jour de l'ADR-004 : propositions de l'agent acceptées par Yanis à la validation.
