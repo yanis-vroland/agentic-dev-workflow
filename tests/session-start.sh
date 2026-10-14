@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Vérifie le hook .claude/hooks/session-start.sh selon la spec
-# docs/specs/004-reprise-de-session.md (CA1 à CA7 et cas limites).
+# docs/specs/004-reprise-de-session.md (CA1 à CA7 et cas limites), complétée par
+# les critères CA1 à CA5 de docs/specs/008-cadrage-et-plan-global.md (état du cadrage).
 # Chaque cas monte un dépôt « distant » bare local, un dépôt amont qui y pousse
 # de nouveaux commits, et un clone : le dépôt de travail sur lequel le hook agit.
 # Les fragments de message sont comparés sans tenir compte de la casse.
@@ -131,6 +132,15 @@ not_inside_git() {
 
 same_file() {
   cmp -s "$1" "$2"
+}
+
+not_exists() {
+  [ ! -e "$1" ] && [ ! -L "$1" ]
+}
+
+# Le texte ne contient pas le fragment (insensible à la casse)
+not_grep_i() {
+  ! grep -qiF -- "$1" <<<"$2"
 }
 
 # Lance le hook sur un projet, depuis le répertoire courant neutre
@@ -382,5 +392,122 @@ check_output_i "Spec 004 (main) : dernière entrée du journal le plus récent a
   "marqueur-journal-b-recente"
 check_no_output_i "Spec 004 (main) : entrée précédente absente" "marqueur-journal-b-ancienne"
 check_no_output_i "Spec 004 (main) : journal plus ancien absent" "marqueur-journal-a"
+
+# --- Spec 008 : état du cadrage et du plan ------------------------------------
+# Les critères cités ici sont ceux de docs/specs/008-cadrage-et-plan-global.md.
+# Les dépôts de test ne contiennent aucun titre de PR ni de journal qui citerait
+# « cadrage » ou « plan » : la sortie existante n'en contient pas non plus.
+
+filled_cahier="# Cahier des charges fonctionnel
+
+## Objectif et périmètre
+
+Suivi de maintenance des machines d'un atelier."
+
+# Ajoute un cahier des charges rempli (sans « À ADAPTER ») sur main
+add_filled_cahier() {
+  commit_file "$1/clone" docs/cahier-des-charges-fonctionnel.md "$filled_cahier" "docs: cahier des charges"
+  git -C "$1/clone" push -q origin main
+}
+
+# Lignes de la sortie courante absentes de la sortie de référence (hors lignes vides)
+lines_not_in_baseline() {
+  grep -vxF -f "$work/baseline-output" <<<"$output" | grep -v '^[[:space:]]*$'
+}
+
+# CA1 : cahier des charges du modèle, avec ses « À ADAPTER »
+c=$(new_case)
+commit_file "$c/clone" docs/cahier-des-charges-fonctionnel.md \
+  "$(cat "$template/docs/templates/cahier-des-charges-fonctionnel.md")" "docs: cahier des charges"
+git -C "$c/clone" push -q origin main
+check "Spec 008 CA1 : précondition, le cahier des charges contient « À ADAPTER »" \
+  grep -qF "À ADAPTER" "$c/clone/docs/cahier-des-charges-fonctionnel.md"
+run_hook "$c/clone"
+check_code 0 "Spec 008 CA1 : code de sortie 0"
+check_output_i "Spec 008 CA1 : la sortie contient « Cadrage à faire »" "Cadrage à faire"
+
+# CA2 : cahier des charges rempli, aucun plan (sert aussi de référence pour CA4)
+c=$(new_case)
+add_filled_cahier "$c"
+check "Spec 008 CA2 : précondition, pas de docs/plan.md" not_exists "$c/clone/docs/plan.md"
+run_hook "$c/clone"
+printf '%s\n' "$output" >"$work/baseline-output"
+check_code 0 "Spec 008 CA2 : code de sortie 0"
+check_output_i "Spec 008 CA2 : la sortie contient « Plan absent »" "Plan absent"
+check_no_output_i "Spec 008 CA2 : la sortie ne contient pas « Cadrage à faire »" "Cadrage à faire"
+
+# CA3 : plan avec des cases cochées avant et après la première case ouverte
+c=$(new_case)
+add_filled_cahier "$c"
+commit_file "$c/clone" docs/plan.md "# Plan
+
+## Tâches
+
+- [x] marqueur-cochee-avant-1
+- [X] marqueur-cochee-avant-2
+- [ ] marqueur-premiere-ouverte
+- [x] marqueur-cochee-apres
+- [ ] marqueur-seconde-ouverte" "docs: plan"
+git -C "$c/clone" push -q origin main
+run_hook "$c/clone"
+check_code 0 "Spec 008 CA3 : code de sortie 0"
+check "Spec 008 CA3 : la sortie contient la première ligne « - [ ] » du plan" \
+  grep -qxF -- "- [ ] marqueur-premiere-ouverte" <<<"$output"
+check_no_output_i "Spec 008 CA3 : aucune ligne cochée (avant)" "marqueur-cochee-avant"
+check_no_output_i "Spec 008 CA3 : aucune ligne cochée (après)" "marqueur-cochee-apres"
+check_no_output_i "Spec 008 CA3 : aucune case cochée « [x] »" "[x]"
+check_no_output_i "Spec 008 CA3 : seule la première case ouverte est affichée" "marqueur-seconde-ouverte"
+check_no_output_i "Spec 008 CA3 : ni « Plan absent » ni « Cadrage à faire » (plan présent)" "Plan absent"
+check_no_output_i "Spec 008 CA3 : pas de « Cadrage à faire » (cahier rempli)" "Cadrage à faire"
+
+# CA4 : plan sans aucune case ouverte, puis plan au format libre sans case
+# Le libellé exact n'est pas imposé : au moins une ligne non vide en plus de la
+# sortie de référence (CA2), sans « - [ ] », sans erreur, code 0.
+for variant in "toutes cochées" "format libre"; do
+  c=$(new_case)
+  add_filled_cahier "$c"
+  if [ "$variant" = "toutes cochées" ]; then
+    plan_content="# Plan
+
+- [x] marqueur-cochee-1
+- [x] marqueur-cochee-2"
+  else
+    plan_content="# Plan de route
+
+Phase 1 : socle. Phase 2 : écrans. Pas de liste à cocher."
+  fi
+  commit_file "$c/clone" docs/plan.md "$plan_content" "docs: plan"
+  git -C "$c/clone" push -q origin main
+  run_hook "$c/clone"
+  check_code 0 "Spec 008 CA4 : code de sortie 0 ($variant)"
+  extra=$(lines_not_in_baseline)
+  check "Spec 008 CA4 : une ligne non vide dit l'état du plan ($variant)" \
+    test -n "$extra"
+  check "Spec 008 CA4 : aucune case ouverte « - [ ] » affichée ($variant)" \
+    not_grep_i "- [ ]" "$output"
+  check "Spec 008 CA4 : aucune erreur (stderr vide) ($variant)" equal "" "$errors"
+  check "Spec 008 CA4 : aucun message d'erreur dans la sortie ($variant)" \
+    not_grep_i "erreur" "$output"
+  check_no_output_i "Spec 008 CA4 : pas de « Plan absent » ($variant)" "Plan absent"
+  check_no_output_i "Spec 008 CA4 : pas de « Cadrage à faire » ($variant)" "Cadrage à faire"
+done
+
+# CA5 : aucun cahier des charges. Un journal sans les mots visés est présent pour
+# que la sortie comporte une partie après le journal.
+c=$(new_case)
+git -C "$c/clone" checkout -q -b feat/sans-cahier
+commit_file "$c/clone" docs/journal/2026-10-14-feat-sans-cahier.md "# Journal
+
+## 2026-10-14 10:00
+
+- Fait : marqueur-journal-sans-cahier" "docs: journal"
+git -C "$c/clone" push -q -u origin feat/sans-cahier 2>/dev/null
+check "Spec 008 CA5 : précondition, pas de cahier des charges" \
+  not_exists "$c/clone/docs/cahier-des-charges-fonctionnel.md"
+run_hook "$c/clone"
+check_code 0 "Spec 008 CA5 : code de sortie 0"
+check_output_i "Spec 008 CA5 : précondition, le journal est affiché" "marqueur-journal-sans-cahier"
+check_no_output_i "Spec 008 CA5 : la sortie ne parle pas de cadrage" "cadrage"
+check_no_output_i "Spec 008 CA5 : la sortie ne parle pas de plan" "plan"
 
 exit $fail

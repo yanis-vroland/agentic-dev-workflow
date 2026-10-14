@@ -3,7 +3,8 @@
 # par la section « Application par init.sh » de docs/specs/004-reprise-de-session.md,
 # par les critères CA1 à CA3 de docs/specs/005-capitalisation-des-pieges.md,
 # par les critères CA17, CA18 et CA23 de docs/specs/006-revue-securite-et-hooks-qualite.md,
-# et par le critère CA13 de docs/specs/007-modele-par-agent.md.
+# par le critère CA13 de docs/specs/007-modele-par-agent.md,
+# et par les critères CA6 à CA8 de docs/specs/008-cadrage-et-plan-global.md.
 # Chaque vérification cite le critère d'acceptation (CAn) ou le cas limite testé.
 # CA20 n'est pas couvert ici : il est vérifié par la CI elle-même.
 # Les fonctions de vérification sont appelées via check, que shellcheck ne suit pas.
@@ -766,5 +767,48 @@ for file in .github/scripts/verifier-modeles.sh tests/verifier-modeles.sh; do
   check "Spec 007 CA13 : $file copié" same_file "$template/$file" "$t/$file"
   check "Spec 007 CA13 : $file exécutable" is_executable "$t/$file"
 done
+
+# --- Spec 008 : plan global et skill de cadrage ------------------------------
+# Les critères cités ici sont ceux de docs/specs/008-cadrage-et-plan-global.md.
+
+check "Spec 008 CA6 : précondition, docs/templates/plan.md existe dans le template" \
+  test -f "$template/docs/templates/plan.md"
+t=$(new_repo)
+check "Spec 008 CA6 : précondition, pas de docs/plan.md dans le projet" not_exists "$t/docs/plan.md"
+run_init "$t"
+check_code 0 "Spec 008 CA6 : code de sortie 0"
+check "Spec 008 CA6 : docs/plan.md créé" test -f "$t/docs/plan.md"
+check "Spec 008 CA6 : docs/plan.md identique à docs/templates/plan.md" \
+  same_file "$template/docs/templates/plan.md" "$t/docs/plan.md"
+check "Spec 008 CA6 : création de docs/plan.md annoncée" \
+  output_line_has "créé" "docs/plan.md"
+
+for option in "" "--force"; do
+  label=${option:-sans --force}
+  t=$(new_repo)
+  mkdir -p "$t/docs"
+  # Plan à un autre format que le modèle (cas Tidemark), avec une fin sans retour à la ligne
+  printf '# Plan du projet\n\nPhase 1 : socle.\n- [x] fait\n- [ ] à faire\nDernière ligne sans retour' \
+    >"$t/docs/plan.md"
+  cp "$t/docs/plan.md" "$work/plan-before.md"
+  if [ -n "$option" ]; then
+    run_init "$t" "$option"
+  else
+    run_init "$t"
+  fi
+  check_code 0 "Spec 008 CA7 : code de sortie 0 ($label)"
+  check "Spec 008 CA7 : docs/plan.md existant inchangé, octet pour octet ($label)" \
+    same_file "$work/plan-before.md" "$t/docs/plan.md"
+done
+
+check "Spec 008 CA8 : précondition, la skill cadrage existe dans le template" \
+  test -f "$template/.claude/skills/cadrage/SKILL.md"
+t=$(new_repo)
+run_init "$t"
+check_code 0 "Spec 008 CA8 : code de sortie 0"
+check "Spec 008 CA8 : .claude/skills/cadrage/SKILL.md copié" \
+  test -f "$t/.claude/skills/cadrage/SKILL.md"
+check "Spec 008 CA8 : .claude/skills/cadrage/SKILL.md identique au template" \
+  same_file "$template/.claude/skills/cadrage/SKILL.md" "$t/.claude/skills/cadrage/SKILL.md"
 
 exit $fail

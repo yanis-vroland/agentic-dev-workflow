@@ -66,3 +66,23 @@ Yanis relit et valide la spec 008. Ensuite : implémentation de la spec 008.
 ### Prochaine étape
 
 Tests rouges des CA1 à CA11 par le subagent `test-writer`, commit séparé, puis accord de Yanis avant l'implémentation.
+
+## 2026-10-14 16:30
+
+### Fait
+
+- Tests rouges des CA1 à CA11 écrits par le subagent `test-writer` : `tests/session-start.sh` (CA1 à CA5), `tests/init-script.sh` (CA6 à CA8), deux étapes de `template-ci.yml` (CA9, CA10). Aucune vérification existante modifiée (CA11).
+- Résultat : 12 échecs attendus (CA1 à CA4, CA6, CA8, fonctionnalité absente) ; CA5 et CA7 passent déjà, normal pour des non-régressions. Les étapes CI CA9 et CA10 échouent sur le dépôt actuel (exécutées à la main). Les autres suites de tests restent vertes, shellcheck sans avertissement.
+
+### Décisions
+
+- CA5 vérifié sur toute la sortie du hook, plus strict que « après le journal » ; CA3 vérifie aussi que la seconde case ouverte n'est pas affichée (test-writer, accepté par l'agent).
+- `test-writer` lancé comme subagent générique avec ses consignes et son modèle déclaré (`sonnet`) : la session était ouverte à la racine de l'espace de travail, où les subagents du dépôt ne sont pas chargés (agent).
+
+### Corrections et limites
+
+- CA4 repère la ligne d'état par différence avec la sortie sans plan : le libellé reste libre, comme la spec le demande.
+
+### Prochaine étape
+
+Accord de Yanis sur les tests rouges, puis implémentation : modèle `docs/templates/plan.md`, section « Sources », skill `cadrage`, hook, `init.sh`, `CLAUDE.md`, ADR-004, README.
