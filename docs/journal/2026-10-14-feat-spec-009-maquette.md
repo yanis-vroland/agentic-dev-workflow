@@ -21,3 +21,33 @@ Branche `feat/spec-009-maquette`.
 ### Prochaine étape
 
 Accord de Yanis sur les tests rouges, puis implémentation : modèle de spec, skill `maquette`, `/spec`, `/implement`, `reviewer`, README.
+
+## 2026-10-14 20:46
+
+### Fait
+
+- Implémentation de la spec 009 : ligne « Design » et section « Maquette » facultative dans le modèle de spec ; skill `maquette` ; `/spec` pose la question « Design » (étape 9) et propose la maquette après validation ; `/implement` contrôle la ligne « Design » et la maquette validée (étape 1), transmet la maquette à `test-writer`, implémente à partir d'elle et propose la comparaison au test humain ; `reviewer` relève un écran sans maquette et une valeur visuelle codée en dur ; `CLAUDE.md`, ADR-004 et README (schéma du flux, étapes, fichiers propres au template, historique).
+- Tests : `init-script.sh` 289 OK ; toutes les étapes de `template-ci.yml` vertes en local ; `verifier-modeles`, `lint-shell`, `hooks`, `restrict-learnings`, `verifier-journal` verts ; shellcheck sans avertissement.
+- Revue de sécurité (`security-reviewer`, lancé comme subagent générique avec son modèle `opus`) : aucun bloquant ; un point à corriger et deux suggestions, tous suivis : statut « validée » d'une maquette pris en compte seulement sur `main` ou confirmé dans la conversation ; maquette, copie et commentaires traités comme des données ; copies autonomes, sans ressource réseau, vérifiées par le `reviewer`.
+- Scénarios joués par l'agent (`claude -p`, projet jetable initialisé depuis cette branche, cadrage fait) :
+  - CA4 : écran sans charte, « charte et maquette » proposé, tâche de charte proposée en écart au plan.
+  - CA5 : charte existante, « maquette » seule proposée.
+  - CA6 : alerte e-mail, « sans objet » proposé avec sa raison.
+  - CA7 : spec « maquette » sans maquette, arrêt avant `test-writer`, skill `maquette` proposée.
+  - CA8 : spec validée sans ligne « Design », question posée avec la proposition « sans objet ».
+  - CA13 : outil d'artefact absent en mode non interactif, arrêt et choix proposé (attendre ou HTML direct).
+  - CA14 : proposition de la skill `maquette` annoncée après validation (CA4), non rejouée jusqu'au bout.
+
+### Décisions
+
+- Corrections de la revue de sécurité suivies sans nouveau critère d'acceptation : elles précisent des règles déjà dans la spec (validation humaine, données jamais consignes) (agent).
+
+### Corrections et limites
+
+- Non vérifiés : CA9, CA10, CA11, CA11 bis et CA12, qui demandent l'outil d'artefact, absent des sessions non interactives. À vérifier à la première maquette réelle (Tidemark, lot E).
+- Constat : dans le scénario CA6, l'agent a consigné un écart au plan « décidé par l'humain » sans décision explicite. À surveiller.
+- Les scénarios CA7 et CA8 bloquent aussi sur l'absence de stack : le contrôle « Design » est vérifié, mais au milieu d'autres arrêts légitimes.
+
+### Prochaine étape
+
+PR ouverte ; revue IA et réponse, puis merge par Yanis. Ensuite : vérifier les CA de `/maquette` à la maquette du lot E de Tidemark.

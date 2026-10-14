@@ -19,7 +19,10 @@ flowchart TD
   cadrage --> h0{"Humain :<br/>valide le cadrage"}
   h0 -- "première tâche du plan" --> spec["/spec<br/>spec au statut « brouillon »"]
   spec --> h1{"Humain :<br/>valide la spec"}
-  h1 -- "statut « validée »" --> tw
+  h1 -- "statut « validée », Design « sans objet »" --> tw
+  h1 -- "Design « maquette » ou<br/>« charte et maquette »" --> maq["maquette<br/>charte et écrans en artefacts Claude,<br/>copie dans docs/maquettes/"]
+  maq --> h5{"Humain :<br/>valide la maquette"}
+  h5 --> tw
 
   subgraph implement ["/implement"]
     tw["subagent test-writer<br/>tests rouges, commit séparé"] --> h2{"Humain :<br/>accord sur les tests rouges"}
@@ -50,6 +53,7 @@ Chaque étape et le fichier qui la porte :
 | Plan global | `docs/plan.md`, modèle [`docs/templates/plan.md`](docs/templates/plan.md), coché par la PR qui fait le travail |
 | `/spec` | [`.claude/skills/spec/SKILL.md`](.claude/skills/spec/SKILL.md), modèle [`docs/templates/spec.md`](docs/templates/spec.md) |
 | Validation humaine de la spec | statut « validée » exigé par l'étape 1 de `/implement` ; [ADR-002](docs/adr/002-place-revue-humaine.md) |
+| Maquette | [`.claude/skills/maquette/SKILL.md`](.claude/skills/maquette/SKILL.md), demandée par la ligne « Design » de la spec et contrôlée par l'étape 1 de `/implement` ; [spec 009](docs/specs/009-design-system-et-maquette.md) |
 | `test-writer` | [`.claude/agents/test-writer.md`](.claude/agents/test-writer.md), appelé par l'étape 4 de `/implement` ; [ADR-003](docs/adr/003-strategie-test-first.md) |
 | `/implement` | [`.claude/skills/implement/SKILL.md`](.claude/skills/implement/SKILL.md) |
 | Hooks | [`.claude/hooks/protect-secrets.sh`](.claude/hooks/protect-secrets.sh), [`.claude/hooks/restrict-learnings.sh`](.claude/hooks/restrict-learnings.sh), [`.claude/hooks/format.sh`](.claude/hooks/format.sh), branchés dans [`.claude/settings.json`](.claude/settings.json) ; [`.githooks/pre-commit`](.githooks/pre-commit) |
@@ -86,7 +90,7 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
      docs/specs/002-hook-protect-secrets.md docs/specs/003-documents-de-reference.md \
      docs/specs/004-reprise-de-session.md docs/specs/005-capitalisation-des-pieges.md \
      docs/specs/006-revue-securite-et-hooks-qualite.md docs/specs/007-modele-par-agent.md \
-     docs/specs/008-cadrage-et-plan-global.md \
+     docs/specs/008-cadrage-et-plan-global.md docs/specs/009-design-system-et-maquette.md \
      scripts/init.sh scripts/lint-shell.sh \
      tests/init-script.sh tests/lint-shell.sh .github/workflows/template-ci.yml
    ```
@@ -202,7 +206,8 @@ Le template a été construit avec sa propre chaîne, du 7 au 13 octobre 2026 : 
 | [Spec 005](docs/specs/005-capitalisation-des-pieges.md), test humain et pièges | #35, complétée par #42 (revue IA de la PR #18 de FieldOps : hook `restrict-learnings`) |
 | [Spec 006](docs/specs/006-revue-securite-et-hooks-qualite.md), revue de sécurité et hooks de lint et de tests | #37, puis #38 (rattrapage de la revue de sécurité) |
 | [Spec 007](docs/specs/007-modele-par-agent.md) et [ADR-005](docs/adr/005-choix-du-modele-par-agent.md), modèle par subagent | #39 |
-| [Spec 008](docs/specs/008-cadrage-et-plan-global.md), cadrage et plan global conduits par l'agent (frictions de Tidemark) | #44 (spec et tests), #46 (implémentation) |
+| [Spec 008](docs/specs/008-cadrage-et-plan-global.md), cadrage et plan global conduits par l'agent (frictions de Tidemark) | #44 (spec et tests), #46 (implémentation), #50 et #51 (suites) |
+| [Spec 009](docs/specs/009-design-system-et-maquette.md), design system et maquette avant les tests (frictions de Tidemark) | #45 (spec), implémentation dans la PR suivante |
 | [ADR-001](docs/adr/001-authentification-ci.md) à [ADR-003](docs/adr/003-strategie-test-first.md) | ADR-001 dans #1 ; ADR-002 et ADR-003 dans #21, tirés des constats des PR #4 à #13 |
 | [ADR-004](docs/adr/004-choix-outil-agent.md), outil d'agent (proposé) | #36 |
 
