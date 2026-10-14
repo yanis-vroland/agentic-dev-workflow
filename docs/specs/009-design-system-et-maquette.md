@@ -106,5 +106,5 @@ Travail sur une branche `docs/maquette-NNN-titre-court` avec son journal, et une
 ## Questions ouvertes
 
 - Moyen de rendre une capture PNG depuis l'artefact : non vérifié. Tidemark n'a pas réussi depuis l'artefact privé. À prouver par un spike avant l'implémentation (pilotage du navigateur par l'extension Claude in Chrome, ou export de l'artefact s'il existe) ; s'il échoue, la décision revient à Yanis. (agent)
-- La question « Design » est-elle posée par `/spec` (proposé), ou par une étape séparée lancée après la validation de la spec ? Poser la question dans `/spec` permet de valider spec et réponse ensemble. (Yanis)
-- Le `reviewer` doit-il relever les valeurs visuelles codées en dur dès cette spec, ou seulement quand le projet a une vérification propre à sa stack ? (Yanis)
+
+Tranché par Yanis le 2026-10-14 : question « Design » posée par `/spec`, validée avec la spec ; le `reviewer` relève dès cette spec les valeurs visuelles codées en dur quand la charte définit un jeton.

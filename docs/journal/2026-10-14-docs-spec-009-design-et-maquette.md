@@ -43,3 +43,21 @@ Yanis relit la spec 009 et répond aux trois questions ouvertes. L'implémentati
 ### Prochaine étape
 
 Yanis relit la spec 009 et tranche les deux questions ouvertes restantes (place de la question « Design », contrôle des valeurs codées en dur par le `reviewer`). Spike des captures avant l'implémentation.
+
+## 2026-10-14 16:21
+
+### Fait
+
+- Questions ouvertes de la spec 009 tranchées, sauf le moyen de capture.
+
+### Décisions
+
+- Question « Design » posée par `/spec` ; `reviewer` qui relève les valeurs visuelles codées en dur dès cette spec (Yanis, accord sur les propositions de l'agent).
+
+### Corrections et limites
+
+- Spec laissée au statut « brouillon » tant que le spike des captures n'a pas eu lieu.
+
+### Prochaine étape
+
+Spike des captures PNG depuis un artefact, puis validation de la spec 009 par Yanis. Implémentation après la spec 008.
