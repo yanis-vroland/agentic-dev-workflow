@@ -87,6 +87,8 @@ files=(
   .github/scripts/verifier-modeles.sh
   tests/verifier-modeles.sh
   tests/restrict-learnings.sh
+  scripts/verifier-noms-exclus.sh
+  tests/verifier-noms-exclus.sh
 )
 while IFS= read -r file; do
   files+=("$file")
@@ -210,6 +212,8 @@ if [ -z "$last_negation" ] || [ "$last_negation" -lt "$last_pattern" ]; then
 fi
 
 has_line .claude/settings.local.json || append_line .claude/settings.local.json
+# Liste locale des noms exclus : jamais versionnée (spec 010, CA2)
+has_line /.excluded-names || append_line /.excluded-names
 
 # --- Activation du pre-commit ------------------------------------------------
 

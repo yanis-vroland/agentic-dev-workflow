@@ -30,6 +30,7 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 - Lit la liste dans `EXCLUDED_NAMES` (une par ligne) ou, à défaut, dans `.excluded-names`. Sans liste : avertissement et sortie en succès, pour ne pas bloquer un projet qui n'en a pas besoin.
 - Cherche sans tenir compte de la casse, par sous-chaîne : contenu et chemin des fichiers suivis ; pour chaque commit de la plage, message, auteur, committer et lignes ajoutées ; titre, description et nom de branche de la PR.
 - `--all` relit tout l'historique, toutes références comprises.
+- Refuse un fichier `.excluded-names` suivi par Git, quelle que soit la liste : la liste versionnée publierait ce qu'elle protège.
 - N'affiche jamais le nom trouvé : seulement l'identifiant du commit ou le chemin du fichier.
 
 ## Critères d'acceptation
@@ -62,12 +63,14 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 ### Contrôle par mutation
 
 - CA14 : Chaque protection du script est désactivée une fois et au moins un test de `tests/verifier-noms-exclus.sh` échoue (méthode de travail, règle 2).
+- CA15 : Étant donné un fichier `.excluded-names` suivi par Git, quand le script tourne avec une liste qui n'apparaît nulle part dans le dépôt, alors il échoue et nomme `.excluded-names`, sans afficher aucun nom. *(Critère ajouté pendant l'implémentation : le contrôle par mutation a montré que cette protection, héritée du projet d'origine, n'était couverte par aucun test. À valider par Yanis au merge.)*
 
 ## Cas limites et erreurs
 
 - Nom coupé par un retour à la ligne, écrit avec des caractères qui se ressemblent, ou sous une autre forme Unicode : non détecté, limite assumée et documentée.
 - Fichier en UTF-16 ou compressé (PNG, PDF, zip) : les lignes ajoutées ne sont lues que dans l'arbre final.
 - Liste vide ou ne contenant que des lignes blanches : traitée comme une absence de liste (CA3).
+- Liste absente en CI : avertissement et succès, comme en local (décision de Yanis, 2026-10-20). Limite assumée : un secret `EXCLUDED_NAMES` supprimé par erreur laisse la CI verte sans que personne ne le voie.
 - Nom d'un seul caractère ou très court : refusé par le script, qui exige au moins 3 caractères, pour éviter un faux positif permanent.
 
 ## Hors périmètre

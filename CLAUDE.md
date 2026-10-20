@@ -76,10 +76,22 @@ Le dépôt est la seule mémoire : une session doit pouvoir être fermée à tou
 - Documentation mise à jour si un comportement public change, dont le cahier des charges et l'architecture technique (section « Documents de référence »).
 - Si `docs/plan.md` existe : cases du plan cochées pour les tâches terminées par la PR, et aucune autre.
 
+## Noms exclus
+
+Aucun nom de client ni d'employeur réel dans le dépôt, qui sera public ([spec 010](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/specs/010-noms-exclus.md)). `scripts/verifier-noms-exclus.sh [plage | --all]` les refuse sans jamais les afficher ; la liste vit dans le secret `EXCLUDED_NAMES` ou, en local, dans `.excluded-names` (non versionné).
+
+**Une trace de contrôle ne cite jamais ce qu'elle cherche.** C'est la règle la plus facile à oublier, et celle qui a laissé fuiter un nom dans un projet construit avec cette chaîne : le contrôle s'était dénoncé lui-même, dans une entrée de journal.
+
+- À ne pas écrire : « recherche de Zorglub, Quibbler et Vantablex : 0 occurrence ».
+- À écrire : « recherche des noms de `EXCLUDED_NAMES` : 0 occurrence ».
+
+Vaut partout : journal, spec, ADR, message de commit, description de PR, issue, commentaire de code.
+
 ## Interdits
 
 - Lire, créer ou modifier un fichier `.env*`, sauf `.env.example`.
 - Committer un secret, une clé ou un token.
+- Écrire un nom exclu où que ce soit, y compris dans une trace de contrôle (voir « Noms exclus »).
 - Ajouter une dépendance sans la justifier dans la PR.
 - Pousser directement sur `main`.
 - Merger une PR : seul l'humain merge ([ADR-002](https://github.com/yanis-vroland/agentic-dev-workflow/blob/main/docs/adr/002-place-revue-humaine.md)).
