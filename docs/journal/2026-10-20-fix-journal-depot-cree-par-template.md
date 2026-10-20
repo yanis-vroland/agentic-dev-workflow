@@ -62,3 +62,22 @@ Correctif de `verifier-journal.sh`, puis contrôle par mutation.
 ### Prochaine étape
 
 README, procédure « Nouveau projet » : fichiers à retirer et journal du template.
+
+## 2026-10-20 11:20
+
+### Fait
+
+- README, procédure « Nouveau projet » : l'étape 2 retire aussi les fichiers qu'`init.sh` ne copie pas (ADR 002 à 005, `docs/demo/`, `docs/guide-adoption.md`, `renovate.json`), liste vérifiée contre `scripts/init.sh` ; l'étape 3 indique que le job « Journal » accepte la suppression (CA9 bis).
+- `docs/guide-adoption.md` renvoie au README pour la procédure : rien à aligner.
+
+### Décisions
+
+- Aucune nouvelle.
+
+### Corrections et limites
+
+- La PR #58, encore ouverte, ajoute `docs/specs/010-noms-exclus.md` au même `git rm` du README : conflit attendu, à résoudre par un rebase de cette PR après le merge de la #58.
+
+### Prochaine étape
+
+Yanis relit et merge. Après le merge de la #58 : rebase de cette PR par l'agent.

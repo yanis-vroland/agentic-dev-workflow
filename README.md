@@ -83,16 +83,19 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
 ### Nouveau projet
 
 1. Sur GitHub, cliquer sur **« Use this template »** pour créer le dépôt, puis le cloner.
-2. Supprimer les fichiers propres au template :
+2. Supprimer les fichiers propres au template, pour obtenir le même résultat qu'`init.sh`. Les ADR 002 à 005 ne sont pas copiés : `CLAUDE.md` y renvoie par lien vers le template.
 
    ```bash
-   git rm docs/adr/001-authentification-ci.md docs/specs/001-script-init.md \
+   git rm docs/adr/001-authentification-ci.md docs/adr/002-place-revue-humaine.md \
+     docs/adr/003-strategie-test-first.md docs/adr/004-choix-outil-agent.md \
+     docs/adr/005-choix-du-modele-par-agent.md docs/specs/001-script-init.md \
      docs/specs/002-hook-protect-secrets.md docs/specs/003-documents-de-reference.md \
      docs/specs/004-reprise-de-session.md docs/specs/005-capitalisation-des-pieges.md \
      docs/specs/006-revue-securite-et-hooks-qualite.md docs/specs/007-modele-par-agent.md \
      docs/specs/008-cadrage-et-plan-global.md docs/specs/009-design-system-et-maquette.md \
      scripts/init.sh scripts/lint-shell.sh \
-     tests/init-script.sh tests/lint-shell.sh .github/workflows/template-ci.yml
+     tests/init-script.sh tests/lint-shell.sh .github/workflows/template-ci.yml \
+     docs/demo/demo.gif docs/demo/demo.tape docs/guide-adoption.md renovate.json
    ```
 
    Puis vider les commandes de lint et de tests du template, à remplacer par celles du projet :
@@ -101,7 +104,7 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
    printf '{\n  "lint": "",\n  "test": ""\n}\n' > .claude/quality.json
    ```
 
-3. Vider le journal du template (un fichier par branche, créé par l'agent au premier commit) :
+3. Vider le journal du template (un fichier par branche, créé par l'agent au premier commit). Le job « Journal » de la CI accepte cette suppression, parce que ces fichiers sont dans le commit initial du dépôt ; un journal du projet, lui, ne peut jamais être supprimé ([spec 004](docs/specs/004-reprise-de-session.md), CA9 bis) :
 
    ```bash
    git rm -q 'docs/journal/*.md' && touch docs/journal/.gitkeep && git add docs/journal/.gitkeep
