@@ -1,6 +1,6 @@
 # Spec 010 : garde-fou des noms exclus
 
-Statut : brouillon (à valider par Yanis)
+Statut : validée (Yanis, 2026-10-20)
 Date : 2026-10-20
 
 ## Besoin
@@ -78,5 +78,7 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 
 ## Questions ouvertes
 
-1. **Périmètre de la PR** : tout en une fois, ou le script et ses tests d'abord (CA1 à CA8, CA12 à CA14), puis `verifier-avant-public.sh` et `/publier` (CA9 à CA11) dans une seconde ? La seconde option donne deux PR plus courtes à relire.
-2. **Rétroportage** : faut-il porter `verifier-avant-public.sh` dans Tidemark et FieldOps une fois la spec livrée, ou les laisser tels quels ?
+Aucune.
+
+1. **Périmètre** tranché le 2026-10-20 : deux PR. La première livre le script, ses tests, le socle et la règle de rédaction (CA1 à CA8, CA12 à CA14) ; la seconde `verifier-avant-public.sh` et `/publier` (CA9 à CA11). Recommandation de l'agent, retenue par Yanis : deux PR plus courtes à relire, et la première apporte déjà l'essentiel.
+2. **Rétroportage** dans Tidemark et FieldOps : à décider par Yanis après la livraison de la seconde PR.

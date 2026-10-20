@@ -22,3 +22,23 @@ Branche `feat/garde-noms-exclus`.
 ### Prochaine étape
 
 - Validation de la spec par Yanis, puis tests par le subagent `test-writer`, puis implémentation.
+
+## 2026-10-20 09:45
+
+### Fait
+
+- Spec 010 passée à « validée » ; questions ouvertes tranchées.
+
+### Décisions
+
+- Spec 010 validée par Yanis (2026-10-20).
+- Découpage en deux PR, recommandation de l'agent retenue par Yanis : script, tests, socle et règle de rédaction d'abord ; contrôle avant publication ensuite.
+- Rétroportage dans Tidemark et FieldOps reporté après la seconde PR (agent, à confirmer par Yanis le moment venu).
+
+### Corrections et limites
+
+- Aucune.
+
+### Prochaine étape
+
+- Tests de la première PR (CA1 à CA8, CA12 à CA14) par le subagent `test-writer`, rouges avant implémentation.
