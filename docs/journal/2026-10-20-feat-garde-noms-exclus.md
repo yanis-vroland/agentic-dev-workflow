@@ -42,3 +42,26 @@ Branche `feat/garde-noms-exclus`.
 ### Prochaine étape
 
 - Tests de la première PR (CA1 à CA8, CA12 à CA14) par le subagent `test-writer`, rouges avant implémentation.
+
+## 2026-10-20 11:30
+
+### Fait
+
+- Tests écrits par le subagent `test-writer`, committés rouges (d98e815) : `tests/verifier-noms-exclus.sh` (59 vérifications), compléments de `tests/init-script.sh` (CA1, CA2) et deux étapes de `template-ci.yml` (CA12, CA13).
+- Implémentation (cf891dd) : `scripts/verifier-noms-exclus.sh` porté depuis le projet d'origine ; copie par `init.sh` et ligne `/.excluded-names` du `.gitignore` ; deux étapes dans `garde-fous.yml` (test du garde-fou, et contrôle de la plage de la PR avec le secret) ; section « Noms exclus » du `CLAUDE.md` avec la règle des traces de contrôle ; `docs/templates/journal.md` créé, qui rappelle la règle dans sa rubrique « Fait ».
+- Résultats : 59 vérifications du garde-fou au vert, 302 de `init-script.sh`, shellcheck sans avertissement, étapes CA12 et CA13 vérifiées en local.
+- Contrôle par mutation des six protections du script : contenu d'un fichier suivi (10 échecs), chemin (2), message de commit (4), auteur et committer (8), lignes ajoutées (6), fichier `.excluded-names` suivi (2 après ajout du test).
+
+### Décisions
+
+- Liste absente : avertissement et succès, en CI comme en local (Yanis, 2026-10-20). Le projet d'origine échouait en CI. Limite assumée, écrite dans la spec : un secret supprimé par erreur laisse la CI verte.
+
+### Corrections et limites
+
+- CA15 ajouté à la spec pendant l'implémentation : le contrôle par mutation a montré qu'aucun test ne couvrait le refus d'un fichier `.excluded-names` suivi par Git. Test écrit, mutation vérifiée. **À valider par Yanis au merge.**
+- Trois premières tentatives de mutation sans effet (expressions `sed` qui ne correspondaient à rien) : refaites avec un script Python qui échoue si le motif est absent. Sans cela, j'aurais conclu à tort que les tests étaient aveugles.
+- `tests/verifier-noms-exclus.sh` n'était pas exécutable à sa création : corrigé, le CA1 le vérifie.
+
+### Prochaine étape
+
+- Revues `reviewer` et `security-reviewer`, puis PR ; seconde PR ensuite pour `verifier-avant-public.sh` et `/publier` (CA9 à CA11).
