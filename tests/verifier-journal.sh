@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Vérifie .github/scripts/verifier-journal.sh <base> <head> selon la spec
-# docs/specs/004-reprise-de-session.md (CA8 à CA16), sur des dépôts temporaires.
+# docs/specs/004-reprise-de-session.md (CA8 à CA16, dont CA9 bis), sur des dépôts temporaires.
 # Le script est lancé depuis la racine du dépôt, avec base = main et head = la
 # branche de la PR. Codes : 0 accepté, 1 refusé, 2 usage invalide.
 set -u
@@ -89,14 +89,32 @@ base_journal='# Journal : feat/ancienne
 
 - Fait : mise en place'
 
-# Nouveau dépôt : main avec un README et un journal déjà mergé ; affiche son chemin
+# Nouveau dépôt : main avec un README, puis un journal déjà mergé dans un
+# second commit ; affiche son chemin. Le journal n'est pas dans le commit
+# racine : sa suppression reste refusée (CA9), contrairement au CA9 bis.
 new_repo() {
   local r
   r=$(mktemp -d "$work/repo.XXXXXX")
   git init -q -b main "$r"
   write_file "$r" README.md "Projet de test"
-  write_file "$r" docs/journal/2026-10-01-feat-ancienne.md "$base_journal"
   commit_all "$r" "chore: initialisation"
+  write_file "$r" docs/journal/2026-10-01-feat-ancienne.md "$base_journal"
+  commit_all "$r" "docs: journal de feat/ancienne"
+  echo "$r"
+}
+
+# Dépôt créé par « Use this template » : le commit racine est la copie du
+# template, journaux compris ; affiche son chemin
+template_repo() {
+  local r
+  r=$(mktemp -d "$work/repo.XXXXXX")
+  git init -q -b main "$r"
+  write_file "$r" README.md "Copie du template"
+  write_file "$r" docs/journal/2026-10-01-feat-ancienne.md "$base_journal"
+  write_file "$r" docs/journal/2026-09-01-historique.md '# Journal de bord
+
+## 2026-09-01 : mise en place'
+  commit_all "$r" "Initial commit"
   echo "$r"
 }
 
@@ -184,6 +202,63 @@ commit_all "$r" "docs: renommage d'un journal mergé"
 run_script "$r" main feat/pr
 # L'ancien ou le nouveau nom peut être cité : les deux commencent ainsi
 verify 1 "CA9 : journal de la base renommé refusé, fichier cité" "2026-10-01-feat-"
+
+# --- CA9 bis : journaux du commit racine (dépôt créé par « Use this template »)
+
+r=$(template_repo)
+git -C "$r" checkout -q -b chore/init
+git -C "$r" rm -q 'docs/journal/*.md'
+write_file "$r" docs/journal/.gitkeep ""
+commit_all "$r" "chore: journal du template vidé"
+run_script "$r" main chore/init
+verify 0 "CA9 bis : journaux du commit racine supprimés acceptés" ""
+
+r=$(template_repo)
+git -C "$r" checkout -q -b chore/init
+git -C "$r" rm -q 'docs/journal/*.md'
+write_file "$r" docs/journal/2026-10-19-chore-init.md '# Journal : chore/init
+
+## 2026-10-19 17:00
+
+- Fait : nettoyage du template'
+commit_all "$r" "chore: journal du template remplacé par celui de la branche"
+run_script "$r" main chore/init
+verify 0 "CA9 bis : suppression des journaux du commit racine et ajout du journal de la branche acceptés" ""
+
+r=$(template_repo)
+git -C "$r" checkout -q -b chore/init
+printf '\n## 2026-10-19 10:00\n\n- Fait : ajout tardif\n' \
+  >>"$r/docs/journal/2026-10-01-feat-ancienne.md"
+commit_all "$r" "docs: modification d'un journal du commit racine"
+run_script "$r" main chore/init
+verify 1 "CA9 bis : journal du commit racine modifié refusé, fichier cité" "2026-10-01-feat-ancienne.md"
+
+r=$(template_repo)
+git -C "$r" checkout -q -b chore/init
+git -C "$r" mv docs/journal/2026-10-01-feat-ancienne.md docs/journal/2026-10-01-feat-renomme.md
+commit_all "$r" "docs: renommage d'un journal du commit racine"
+run_script "$r" main chore/init
+verify 1 "CA9 bis : journal du commit racine renommé refusé, fichier cité" "2026-10-01-feat-"
+
+# Un journal ajouté après le commit racine reste protégé, même à côté des
+# journaux du template supprimés dans la même PR
+r=$(template_repo)
+write_file "$r" docs/journal/2026-10-19-chore-init.md '# Journal : chore/init
+
+## 2026-10-19 17:00
+
+- Fait : nettoyage du template'
+commit_all "$r" "docs: journal du projet mergé"
+git -C "$r" checkout -q -b chore/menage
+git -C "$r" rm -q 'docs/journal/*.md'
+commit_all "$r" "chore: suppression de tous les journaux"
+run_script "$r" main chore/menage
+verify 1 "CA9 bis : journal ajouté après le commit racine supprimé refusé, fichier cité" "2026-10-19-chore-init.md"
+if grep -qF "2026-10-01-feat-ancienne.md" <<<"$output"; then
+  failed "CA9 bis : journal du commit racine non cité parmi les refus" "$(grep -F "2026-10-01-feat-ancienne.md" <<<"$output" | head -n 1)"
+else
+  pass "CA9 bis : journal du commit racine non cité parmi les refus"
+fi
 
 # --- CA10 : nom de fichier invalide (format ou date) -------------------------
 

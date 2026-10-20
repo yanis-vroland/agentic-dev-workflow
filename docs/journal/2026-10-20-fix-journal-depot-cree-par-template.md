@@ -18,3 +18,22 @@
 ### Prochaine étape
 
 Test de non-régression du CA9 bis, puis correctif de `verifier-journal.sh`.
+
+## 2026-10-20 11:17
+
+### Fait
+
+- Tests du CA9 bis dans `tests/verifier-journal.sh` : suppression des journaux du commit racine acceptée (seule, ou avec l'ajout du journal de la branche) ; modification et renommage refusés ; journal ajouté après le commit racine toujours protégé, sans citer à tort ceux du template.
+- Échec vérifié avant correctif, pour la bonne raison : 3 tests rouges, refus « fichier de journal déjà mergé » sur les journaux du commit racine.
+
+### Décisions
+
+- Aucune nouvelle.
+
+### Corrections et limites
+
+- **Fixture modifiée** : `new_repo` mettait le journal mergé dans le commit racine. Il est désormais ajouté dans un second commit, sinon le test CA9 de suppression contredirait le CA9 bis. Les assertions du CA9 sont inchangées.
+
+### Prochaine étape
+
+Correctif de `verifier-journal.sh`, puis contrôle par mutation.
