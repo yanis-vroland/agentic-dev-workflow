@@ -37,3 +37,28 @@ Test de non-régression du CA9 bis, puis correctif de `verifier-journal.sh`.
 ### Prochaine étape
 
 Correctif de `verifier-journal.sh`, puis contrôle par mutation.
+
+## 2026-10-20 11:20
+
+### Fait
+
+- Correctif dans `.github/scripts/verifier-journal.sh` : une suppression (statut D) est acceptée si le fichier existe dans un commit racine de `<head>` (`git rev-list --max-parents=0`, toutes les racines). Une suppression dont le contenu est réajouté sous un autre nom dans la même PR reste refusée : avec `--no-renames`, un renommage apparaît comme D + A.
+- Tests : `tests/verifier-journal.sh` au vert (37 OK) ; shellcheck et autres tests des garde-fous au vert.
+- Contrôle par mutation, chaque protection désactivée une fois :
+  - toute suppression acceptée : 2 tests échouent (CA9 suppression, CA9 bis journal ajouté après le commit racine) ;
+  - contrôle du renommage désactivé : 1 test échoue (CA9 bis renommage) ;
+  - exception du commit racine désactivée : 3 tests échouent (CA9 bis).
+- Vérifié sur le cas réel : le script corrigé accepte le diff de la PR #1 de `workflow-editorial-agents` (303f679...1ea05ef), que la version de `main` refuse.
+
+### Décisions
+
+- Détection du renommage par comparaison des contenus (blobs) : nécessaire pour tenir le CA9 bis tel que validé (agent).
+
+### Corrections et limites
+
+- Premier correctif sans le contrôle du renommage : le test CA9 bis du renommage l'a détecté (D accepté + A au nom valide).
+- Limite : un journal du commit racine supprimé et réajouté avec un contenu modifié sous un autre nom n'est pas vu comme un renommage ; le nouveau fichier passe alors les contrôles d'un journal ajouté (nom et entrées datés).
+
+### Prochaine étape
+
+README, procédure « Nouveau projet » : fichiers à retirer et journal du template.
