@@ -59,11 +59,13 @@ Il n'y a plus de section « Prochaines étapes » commune. La feuille de route e
 
 `.github/scripts/verifier-journal.sh <base> <head>`, lancé par un job « Journal » de `garde-fous.yml` sur chaque PR. Il refuse la PR (code 1, message en français qui cite le fichier et la règle) si :
 
-- un fichier de `docs/journal/` présent dans `<base>` est modifié, supprimé ou renommé ;
+- un fichier de `docs/journal/` présent dans `<base>` est modifié, supprimé ou renommé, sauf la suppression d'un fichier présent dans le commit racine du dépôt (voir ci-dessous) ;
 - un fichier ajouté a un nom hors du format `AAAA-MM-JJ-<slug>.md` (slug en minuscules, chiffres et `-`), ou une date de nom invalide ;
 - un titre de niveau 2 d'un fichier ajouté n'a pas le format `## AAAA-MM-JJ HH:MM`, ou porte une date invalide ;
 - les entrées d'un fichier ajouté ne sont pas dans l'ordre chronologique, ou l'une d'elles est antérieure à la date du nom du fichier ;
 - `docs/journal.md` est recréé ou modifié après la migration.
+
+Exception : la **suppression** d'un fichier de `docs/journal/` présent dans un commit racine du dépôt (commit sans parent, `git rev-list --max-parents=0 <head>`) est acceptée. Un dépôt créé par « Use this template » a pour commit racine la copie du template, journaux compris : la procédure « Nouveau projet » du README les supprime au premier nettoyage. Un journal du projet, créé après ce commit, n'est jamais dans un commit racine et reste protégé. La modification ou le renommage d'un tel fichier reste refusé. Dans le template lui-même, le commit racine ne contient aucun journal : l'exception n'y change rien.
 
 Une PR qui ne touche pas `docs/journal/` passe. Le job n'exige pas d'entrée de journal dans chaque PR : une PR de l'humain ou de Renovate n'en a pas besoin.
 
@@ -92,6 +94,7 @@ Modifie la spec 001 :
 
 - CA8 : Étant donné une PR qui ajoute un fichier de journal conforme, quand le script s'exécute, alors il réussit.
 - CA9 : Étant donné une PR qui modifie, supprime ou renomme un fichier de journal présent dans la base, quand le script s'exécute, alors il échoue en citant le fichier.
+- CA9 bis : Étant donné un dépôt dont le commit racine contient des fichiers de `docs/journal/` (dépôt créé par « Use this template »), quand une PR supprime ces fichiers, alors le script réussit ; quand elle les modifie ou les renomme, il échoue comme au CA9.
 - CA10 : Étant donné un fichier ajouté au nom invalide (format ou date), quand le script s'exécute, alors il échoue en citant le fichier.
 - CA11 : Étant donné un fichier ajouté avec un titre d'entrée invalide (format ou date), quand le script s'exécute, alors il échoue en citant le titre.
 - CA12 : Étant donné un fichier ajouté dont les entrées ne sont pas chronologiques, ou dont une entrée précède la date du nom, quand le script s'exécute, alors il échoue.
