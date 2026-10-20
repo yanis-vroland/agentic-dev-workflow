@@ -21,7 +21,12 @@ jobs:
     name: Tests des garde-fous
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth: 0 — sans l'historique complet, origin/main n'existe pas sur
+      # un événement pull_request et le contrôle des noms exclus (spec 010) sort
+      # en erreur au lieu de relire les commits de la PR.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Syntaxe des hooks, des scripts et de leurs tests (shellcheck)
         run: >-
@@ -61,7 +66,8 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
           PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: scripts/verifier-noms-exclus.sh "origin/${{ github.base_ref || 'main' }}..HEAD"
+          BASE_REF: ${{ github.base_ref || 'main' }}
+        run: scripts/verifier-noms-exclus.sh "origin/$BASE_REF..HEAD"
 
       - name: Modèle déclaré par chaque subagent (spec 007)
         run: .github/scripts/verifier-modeles.sh

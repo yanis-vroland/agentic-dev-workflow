@@ -65,3 +65,34 @@ Branche `feat/garde-noms-exclus`.
 ### Prochaine étape
 
 - Revues `reviewer` et `security-reviewer`, puis PR ; seconde PR ensuite pour `verifier-avant-public.sh` et `/publier` (CA9 à CA11).
+
+## 2026-10-20 13:15
+
+### Fait
+
+- Revues `reviewer` et `security-reviewer` avant la PR. Six points bloquants au total, tous corrigés et couverts par un test.
+- **Faux négatif silencieux** (sécurité, bloquant) : `grep -q` alimenté par un tuyau sortait à la première correspondance, tuait le producteur par SIGPIPE, et `pipefail` transformait la trouvaille en absence. Reproduit : un diff de 5,7 Mo avec le nom en première ligne passait inaperçu. Toutes les comparaisons passent désormais par un fichier (`matches_text`), et un test couvre le cas.
+- **Fichier `.excluded-names` suivi, en CI sans secret** (revue, bloquant) : le contrôle arrivait après la sortie anticipée « aucune liste », donc le cas le plus grave passait au vert. Le contrôle précède maintenant tout chargement de liste et sort en 1, quelle que soit la liste.
+- **`fetch-depth: 0`** sur le job `garde-fous` : sans l'historique complet, `origin/main` n'existe pas sur un événement `pull_request` et le contrôle sortait en erreur à chaque PR.
+- **Interpolation `${{ }}` dans un `run:`** : `github.base_ref` passe par `env:`, comme les autres variables de PR.
+- **Commits de fusion et renommages** : `--diff-merges=first-parent` et contrôle des chemins touchés ; sans eux, un nom introduit en résolvant un conflit, ou un renommage défait plus loin, ne laissait aucune trace.
+- **Plage recopiée** : une branche nommée d'après un nom exclu fuitait dans la sortie, en succès comme en erreur ; la plage est masquée si elle contient un nom.
+- **Deux tests qui passaient à vide** : le nom trop court (le dépôt contenait le nom court, et le test acceptait 1 ou 2) et la protection `in_ci`, jamais exercée. Corrigés, mutation vérifiée pour les deux.
+- **`.gitignore` du template** : il ne protégeait pas son propre `.excluded-names`, alors que `init.sh` l'ajoute aux projets dérivés.
+- **`init.sh` armait le garde-fou sans le dire** : une étape explique désormais comment créer le secret et le fichier local, sans quoi la CI reste verte sans rien vérifier.
+- README (documentation de référence de ce dépôt) : script et modèle de journal listés, `garde-fous.yml` redécrit, spec 010 dans le tableau des specs et dans la liste `git rm` d'adoption.
+- Résultats : 74 vérifications du garde-fou, 307 de `init-script.sh`, shellcheck sans avertissement.
+
+### Décisions
+
+- Aucune nouvelle. CA15 élargi (« quelle que soit la liste, en CI comme en local ») pour coller à la section « Le script » : c'est son rétrécissement qui avait laissé passer le trou.
+
+### Corrections et limites
+
+- Limites ajoutées à la spec : PR venue d'un fork (GitHub ne transmet pas les secrets, le garde-fou se saute), locale UTF-8 absente sous macOS, nom contenant une virgule.
+- Non suivi : épingler `actions/checkout` par SHA (défaut préexistant à cette PR, à traiter séparément) ; `docs/templates/journal.md` redit trois règles du `CLAUDE.md` (gardées sur place, un modèle doit se lire seul).
+- **Test humain à faire par Yanis** : lancer `scripts/verifier-noms-exclus.sh` sur un dépôt réel et vérifier les deux étapes de CI sur cette PR. La revue note à juste titre qu'un test humain aurait révélé le défaut de `fetch-depth`.
+
+### Prochaine étape
+
+- PR, revue IA et réponse ; puis seconde PR pour `verifier-avant-public.sh` et `/publier` (CA9 à CA11).

@@ -214,6 +214,8 @@ fi
 has_line .claude/settings.local.json || append_line .claude/settings.local.json
 # Liste locale des noms exclus : jamais versionnée (spec 010, CA2)
 has_line /.excluded-names || append_line /.excluded-names
+# Copié ne veut pas dire armé : sans liste, le garde-fou se saute lui-même
+steps+=("Garde-fou des noms exclus (spec 010) : créer le secret de CI avec « gh secret set EXCLUDED_NAMES » (un nom par ligne), et le fichier local .excluded-names, non versionné. Sans liste, la vérification est sautée et la CI reste verte.")
 
 # --- Activation du pre-commit ------------------------------------------------
 

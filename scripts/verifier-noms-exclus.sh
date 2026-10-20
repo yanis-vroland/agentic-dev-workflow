@@ -31,8 +31,18 @@
 # ou erreur de Git (une erreur ne vaut jamais « rien trouvé »).
 set -u -o pipefail
 
-# Casse des lettres accentuées (É et é) ; sans effet si la locale manque
-export LC_ALL=C.UTF-8
+# Casse des lettres accentuées (É et é). macOS ne fournit pas C.UTF-8 : sans
+# repli, la locale retombe sur C et grep -i cesse de replier les accents.
+for loc in C.UTF-8 en_US.UTF-8 fr_FR.UTF-8; do
+  if locale -a 2>/dev/null | grep -qix "${loc/UTF-8/utf8}\|$loc"; then
+    export LC_ALL=$loc
+    break
+  fi
+done
+if [ -z "${LC_ALL:-}" ]; then
+  echo "Avertissement : aucune locale UTF-8 disponible ; un nom accentué écrit dans une autre casse peut passer." >&2
+  export LC_ALL=C
+fi
 
 if [ $# -gt 1 ]; then
   echo "Usage : $0 [plage | --all]   (défaut : origin/main..HEAD)" >&2
@@ -50,7 +60,9 @@ if ! tmp=$(mktemp -d); then
   echo "Erreur : mktemp a échoué" >&2
   exit 2
 fi
-trap 'rm -rf "$tmp"' EXIT
+# INT TERM HUP aussi : sans eux, une interruption laisserait la liste des noms
+# en clair dans $tmp/patterns.
+trap 'rm -rf "$tmp"' EXIT INT TERM HUP
 patterns="$tmp/patterns"
 
 in_ci() {
@@ -72,9 +84,17 @@ normalize() {
   tr -d '\r' | tr ',' '\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | { grep -v '^$' || true; }
 }
 
+# Avant toute chose, et quelle que soit la liste : un .excluded-names suivi par
+# Git publierait les noms qu'il protège. Ce contrôle précède la sortie anticipée
+# « aucune liste », sans quoi le cas le plus grave passerait au vert en CI.
+if git ls-files --error-unmatch -- .excluded-names >/dev/null 2>&1; then
+  echo "Échec : .excluded-names est suivi par Git ; il contient la liste des noms. À retirer de l'index : git rm --cached .excluded-names" >&2
+  exit 1
+fi
+
 printf '%s' "${EXCLUDED_NAMES:-}" | normalize >"$patterns"
 source_name="la variable EXCLUDED_NAMES"
-# En CI, seul le secret compte : un fichier versionné ne doit pas en tenir lieu
+# En CI, seul le secret compte : un fichier local ne doit pas en tenir lieu
 if [ ! -s "$patterns" ] && ! in_ci && [ -f .excluded-names ]; then
   normalize <.excluded-names >"$patterns"
   source_name="le fichier .excluded-names"
@@ -93,9 +113,36 @@ while IFS= read -r name; do
   fi
 done <"$patterns"
 
+# matches : l'entrée standard contient-elle un nom de la liste ?
+#
+# Toujours alimentée par un fichier, jamais par un tuyau : « grep -q » sort à la
+# première correspondance, ce qui tue le producteur par SIGPIPE ; avec pipefail,
+# le tuyau rend alors 141 et la correspondance passe pour une absence. Un diff de
+# quelques centaines de kilooctets dont le nom est en tête suffisait à passer
+# inaperçu (revue de sécurité de la PR de la spec 010).
+matches() {
+  grep -qiF -f "$patterns"
+}
+
+# matches_text <texte> : même contrôle sur une chaîne, via un fichier
+matches_text() {
+  printf '%s\n' "$1" >"$tmp/text"
+  matches <"$tmp/text"
+}
+
+# La plage peut contenir un nom (branche « feat/<nom>-fix ») : ne jamais la
+# recopier telle quelle dans la sortie.
+safe_range() {
+  if matches_text "$range"; then
+    echo "la plage demandée (masquée : elle contient un nom exclu)"
+  else
+    echo "$range"
+  fi
+}
+
 # --all est compris tel quel par git rev-list
 if ! commits=$(git rev-list "$range" 2>/dev/null); then
-  echo "Erreur : plage de commits invalide : $range" >&2
+  echo "Erreur : plage de commits invalide : $(safe_range)" >&2
   exit 2
 fi
 
@@ -105,29 +152,26 @@ report() {
   found=1
 }
 
-# matches : l'entrée standard contient-elle un nom de la liste ?
-matches() {
-  grep -qiF -f "$patterns"
-}
-
 g() {
   git -c core.quotePath=false "$@"
 }
 
 # Fichiers suivis, séparés par NUL
 g ls-files -z >"$tmp/files" || git_error ls-files
+tr '\0' '\n' <"$tmp/files" >"$tmp/files-lines"
 
-# Un fichier .excluded-names suivi publierait la liste
-if tr '\0' '\n' <"$tmp/files" | grep -qx '\.excluded-names'; then
-  report "Fichier .excluded-names suivi par Git : à retirer de l'index (git rm --cached .excluded-names)"
-fi
-
-# Fichier à citer : son chemin, ou son objet si le chemin contient un nom
+# Fichier à citer : son chemin, ou son objet si le chemin contient un nom.
+# Appelée dans une substitution de commande : un exit n'y tuerait que le
+# sous-shell, donc une erreur de Git se signale sans prétendre « rien trouvé ».
 describe_file() {
   local blob
-  if printf '%s\n' "$1" | matches; then
-    blob=$(g ls-files -s -z -- ":(literal)$1" | tr '\0' '\n' | awk '{ print $2; exit }') || git_error ls-files
-    echo "objet $blob (chemin masqué : il contient lui-même un nom exclu)"
+  if matches_text "$1"; then
+    if ! g ls-files -s -z -- ":(literal)$1" >"$tmp/entry"; then
+      echo "objet indéterminé (git ls-files a échoué ; chemin masqué : il contient lui-même un nom exclu)"
+      return
+    fi
+    blob=$(tr '\0' '\n' <"$tmp/entry" | awk 'NR == 1 { print $2 }')
+    echo "objet ${blob:-indéterminé} (chemin masqué : il contient lui-même un nom exclu)"
   else
     echo "$1"
   fi
@@ -145,13 +189,15 @@ done <"$tmp/content"
 
 # Chemins des fichiers suivis
 while IFS= read -r -d '' path; do
-  if printf '%s\n' "$path" | matches; then
+  if matches_text "$path"; then
     report "Nom exclu dans le chemin du fichier : $(describe_file "$path")"
   fi
 done <"$tmp/files"
 
 # Commits de la plage
+relus=0
 for sha in $commits; do
+  relus=$((relus + 1))
   g log -1 --format=%B "$sha" >"$tmp/message" || git_error log
   if matches <"$tmp/message"; then
     report "Nom exclu dans le message du commit : $sha"
@@ -160,16 +206,35 @@ for sha in $commits; do
   if matches <"$tmp/identity"; then
     report "Nom exclu dans l'auteur ou le committer du commit : $sha"
   fi
-  # Lignes ajoutées seulement : une PR qui retire un nom doit passer
-  g show --format= --no-color --no-ext-diff "$sha" >"$tmp/diff" || git_error show
-  if grep '^+' "$tmp/diff" | matches; then
+  # Lignes ajoutées seulement : une PR qui retire un nom doit passer.
+  # --diff-merges=first-parent : sans lui, un commit de fusion n'affiche aucun
+  # diff, et un nom introduit en résolvant un conflit passerait inaperçu.
+  g show --format= --no-color --no-ext-diff --diff-merges=first-parent "$sha" >"$tmp/diff" ||
+    git_error show
+  grep '^+' "$tmp/diff" >"$tmp/added"
+  case $? in
+    0 | 1) ;;
+    *) git_error grep ;;
+  esac
+  if matches <"$tmp/added"; then
     report "Nom exclu dans les lignes ajoutées par le commit : $sha"
   fi
+  # Chemins touchés : un renommage vers un chemin qui contient un nom ne produit
+  # aucune ligne « + », et disparaîtrait des fichiers suivis s'il est défait.
+  g log -1 --format= --name-only --diff-merges=first-parent -z "$sha" >"$tmp/paths" ||
+    git_error log
+  while IFS= read -r -d '' path; do
+    [ -n "$path" ] || continue
+    if matches_text "$path"; then
+      report "Nom exclu dans un chemin touché par le commit : $sha"
+      break
+    fi
+  done <"$tmp/paths"
 done
 
 # Titre, description et branche de la PR (fournis par la CI)
 check_text() {
-  if [ -n "$2" ] && printf '%s\n' "$2" | matches; then
+  if [ -n "$2" ] && matches_text "$2"; then
     report "Nom exclu dans $1"
   fi
 }
@@ -181,5 +246,5 @@ if [ "$found" -ne 0 ]; then
   echo "Échec : un nom exclu (liste lue dans $source_name) apparaît ci-dessus. Corrige le fichier, ou réécris le commit avant le merge (git rebase), sans jamais citer le nom dans la PR." >&2
   exit 1
 fi
-echo "Aucun nom exclu dans les fichiers suivis ni dans les commits de $range."
+echo "Aucun nom exclu dans les fichiers suivis ni dans les ${relus:-0} commit(s) de $(safe_range)."
 exit 0

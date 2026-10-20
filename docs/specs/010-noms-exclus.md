@@ -63,7 +63,7 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 ### Contrôle par mutation
 
 - CA14 : Chaque protection du script est désactivée une fois et au moins un test de `tests/verifier-noms-exclus.sh` échoue (méthode de travail, règle 2).
-- CA15 : Étant donné un fichier `.excluded-names` suivi par Git, quand le script tourne avec une liste qui n'apparaît nulle part dans le dépôt, alors il échoue et nomme `.excluded-names`, sans afficher aucun nom. *(Critère ajouté pendant l'implémentation : le contrôle par mutation a montré que cette protection, héritée du projet d'origine, n'était couverte par aucun test. À valider par Yanis au merge.)*
+- CA15 : Étant donné un fichier `.excluded-names` suivi par Git, quand le script tourne, alors il échoue et nomme `.excluded-names`, sans afficher aucun nom — **quelle que soit la liste, y compris sans liste du tout, en CI comme en local**. Ce contrôle précède donc la sortie anticipée du CA3. *(Critère ajouté pendant l'implémentation, élargi après la revue, qui a montré qu'en CI sans secret le cas le plus grave passait au vert. À valider par Yanis au merge.)*
 
 ## Cas limites et erreurs
 
@@ -71,6 +71,9 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 - Fichier en UTF-16 ou compressé (PNG, PDF, zip) : les lignes ajoutées ne sont lues que dans l'arbre final.
 - Liste vide ou ne contenant que des lignes blanches : traitée comme une absence de liste (CA3).
 - Liste absente en CI : avertissement et succès, comme en local (décision de Yanis, 2026-10-20). Limite assumée : un secret `EXCLUDED_NAMES` supprimé par erreur laisse la CI verte sans que personne ne le voie.
+- **PR venue d'un fork** : GitHub ne transmet jamais les secrets à ces workflows, donc `EXCLUDED_NAMES` y est toujours vide et le garde-fou se saute. Limite assumée du choix précédent ; sur un dépôt public, c'est le cas le plus fréquent d'arrivée de contenu extérieur. Le CA15 continue de s'appliquer, lui, puisqu'il ne dépend d'aucune liste.
+- **Locale** : macOS ne fournit pas `C.UTF-8`. Le script essaie `en_US.UTF-8` puis `fr_FR.UTF-8`, et avertit si aucune locale UTF-8 n'est disponible ; sans elle, un nom accentué écrit dans une autre casse peut passer en local.
+- **Nom contenant une virgule** : la liste accepte un nom par ligne ou séparés par des virgules ; un nom qui en contient une est donc découpé. S'il tombe sous 3 caractères, le script sort en 2 plutôt que de vérifier à moitié.
 - Nom d'un seul caractère ou très court : refusé par le script, qui exige au moins 3 caractères, pour éviter un faux positif permanent.
 
 ## Hors périmètre

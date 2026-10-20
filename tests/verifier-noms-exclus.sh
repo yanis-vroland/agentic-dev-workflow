@@ -238,16 +238,18 @@ fi
 
 # --- Cas limite : nom de moins de 3 caractères -------------------------------
 
-r=$(repo_with_file docs/notes.md "Réunion avec Zorglub demain et qz")
+# Le dépôt ne contient aucun des noms passés : sans la protection, le script
+# conclurait « rien trouvé » (code 0) et le test passerait à vide.
+r=$(repo_with_file docs/notes.md "Contenu neutre, sans aucun nom de la liste")
 precondition "nom court" "$r" main..HEAD
 run_script "$r" $'Frobnitz\nqz' main..HEAD
-if [ "$code" -eq 1 ] || [ "$code" -eq 2 ]; then
-  pass "Cas limite : nom de moins de 3 caractères refusé par le script"
+if [ "$code" -eq 2 ] && grep -qF -- "moins de 3 caractères" <<<"$output"; then
+  pass "Cas limite : nom de moins de 3 caractères refusé par le script (code 2)"
 else
-  failed "Cas limite : nom de moins de 3 caractères refusé par le script" "attendu 1 ou 2, obtenu $code : $(head -n 1 <<<"$output")"
+  failed "Cas limite : nom de moins de 3 caractères refusé par le script (code 2)" "attendu 2, obtenu $code : $(head -n 1 <<<"$output")"
 fi
 # Le refus est un échec : le nom court ne doit pas apparaître non plus (CA8)
-if [ "$code" -ne 0 ] && [ "$code" -ne 127 ] && [ -n "$output" ] && ! grep -qiF -- "qz" <<<"$output"; then
+if [ "$code" -eq 2 ] && [ -n "$output" ] && ! grep -qiF -- "qz" <<<"$output"; then
   pass "CA8 : nom trop court refusé, aucun nom divulgué"
 else
   failed "CA8 : nom trop court refusé, aucun nom divulgué" "code $code, sortie : $(head -n 1 <<<"$output")"
@@ -427,5 +429,120 @@ if [ "$code" -eq 1 ] && ! grep -qiE -- "zorglub|quibbler|vantablex" "$stdout_fil
 else
   failed "CA8 : .excluded-names suivi, aucun nom divulgué" "code $code : $(head -n 1 <<<"$output")"
 fi
+
+# --- En CI, un .excluded-names local ne tient pas lieu de secret --------------
+# Protection « ! in_ci » du script : sans elle, un fichier local ferait croire à
+# une liste configurée alors que le secret manque.
+
+r=$(repo_with_file docs/notes.md "Réunion avec Zorglub demain")
+printf 'Zorglub\n' >"$r/.excluded-names"
+# Précondition : hors CI, le fichier est bien lu et le dépôt refusé.
+run_script_unset "$r" main..HEAD
+if [ "$code" -eq 1 ]; then
+  pass "CA14 : précondition, hors CI le fichier .excluded-names est lu"
+else
+  failed "CA14 : précondition, hors CI le fichier .excluded-names est lu" "attendu 1, obtenu $code : $(head -n 1 <<<"$output")"
+fi
+# En CI, sans secret : le fichier est ignoré, la vérification est sautée.
+(cd "$r" && CI=true "$script" main..HEAD) >"$stdout_file" 2>"$stderr_file"
+code=$?
+output=$(cat "$stdout_file" "$stderr_file")
+if [ "$code" -eq 0 ] && grep -qF -- "aucune liste" <<<"$output"; then
+  pass "Script : en CI, un .excluded-names local ne tient pas lieu de secret"
+else
+  failed "Script : en CI, un .excluded-names local ne tient pas lieu de secret" "attendu 0 et un avertissement, obtenu $code : $(head -n 1 <<<"$output")"
+fi
+
+# --- CA15 (suite) : un .excluded-names suivi est refusé même sans liste -------
+# Le contrôle précède la sortie anticipée « aucune liste » : en CI sans secret,
+# le cas le plus grave passait au vert (revue de la PR).
+
+r=$(new_repo)
+write_file "$r" .excluded-names $'Zorglub\nQuibbler\nVantablex'
+commit_all "$r" "chore: fichier ajouté par erreur"
+(cd "$r" && CI=true env -u EXCLUDED_NAMES "$script" main..HEAD) >"$stdout_file" 2>"$stderr_file"
+code=$?
+output=$(cat "$stdout_file" "$stderr_file")
+if [ "$code" -eq 1 ] && grep -qF -- ".excluded-names" <<<"$output"; then
+  pass "CA15 : .excluded-names suivi refusé en CI même sans secret"
+else
+  failed "CA15 : .excluded-names suivi refusé en CI même sans secret" "attendu 1, obtenu $code : $(head -n 1 <<<"$output")"
+fi
+if [ "$code" -eq 1 ] && ! grep -qiE -- "zorglub|quibbler|vantablex" "$stdout_file" "$stderr_file"; then
+  pass "CA8 : .excluded-names suivi en CI, aucun nom divulgué"
+else
+  failed "CA8 : .excluded-names suivi en CI, aucun nom divulgué" "code $code : $(head -n 1 <<<"$output")"
+fi
+
+# --- CA8 : une plage qui contient un nom n'est pas recopiée -------------------
+
+r=$(repo_with_file docs/notes.md "Contenu neutre")
+git -C "$r" checkout -q -b "feat/Zorglub-fix"
+run_script "$r" "$list" "main..feat/Zorglub-fix"
+if [ "$code" -eq 0 ] && ! grep -qiF -- "zorglub" "$stdout_file" "$stderr_file"; then
+  pass "CA8 : succès, la plage contenant un nom n'est pas recopiée"
+else
+  failed "CA8 : succès, la plage contenant un nom n'est pas recopiée" "code $code : $(head -n 1 <<<"$output")"
+fi
+run_script "$r" "$list" "main..feat/Zorglub-absente"
+if [ "$code" -eq 2 ] && ! grep -qiF -- "zorglub" "$stdout_file" "$stderr_file"; then
+  pass "CA8 : plage invalide contenant un nom, nom non divulgué"
+else
+  failed "CA8 : plage invalide contenant un nom, nom non divulgué" "code $code : $(head -n 1 <<<"$output")"
+fi
+
+# --- CA8/CA5 : trous trouvés par la revue de sécurité de la PR ---------------
+
+# Gros diff : « grep -q » dans un tuyau sortait à la première correspondance, le
+# producteur recevait SIGPIPE, et pipefail transformait la trouvaille en absence.
+r=$(new_repo)
+start_branch "$r"
+mkdir -p "$r/docs"
+{
+  echo "Zorglub en première ligne"
+  i=0
+  while [ "$i" -lt 60000 ]; do
+    echo "ligne de remplissage $i"
+    i=$((i + 1))
+  done
+} >"$r/docs/export.md"
+commit_all "$r" "docs: export volumineux"
+sha=$(git -C "$r" rev-parse HEAD)
+# Le nom n'est plus dans l'arbre final : seules les lignes ajoutées le portent.
+git -C "$r" rm -q docs/export.md
+commit_all "$r" "docs: retrait de l'export"
+precondition "gros diff" "$r" main..HEAD
+run_script "$r" "$list" main..HEAD
+verify_refused CA5 "nom en tête d'un diff volumineux, commit cité" "${sha:0:7}"
+
+# Commit de fusion : git show n'affiche aucun diff sans --diff-merges
+r=$(new_repo)
+git -C "$r" checkout -q -b feat/autre
+write_file "$r" docs/autre.md "Contenu neutre"
+commit_all "$r" "docs: autre"
+git -C "$r" checkout -q main
+write_file "$r" docs/main.md "Contenu neutre"
+commit_all "$r" "docs: main"
+start_branch "$r"
+git -C "$r" merge -q --no-ff feat/autre -m "merge: fusion" >/dev/null 2>&1
+write_file "$r" docs/conflit.md "Résolution citant Quibbler"
+git -C "$r" add -A
+git -C "$r" commit -q --amend --no-edit
+sha=$(git -C "$r" rev-parse HEAD)
+precondition "commit de fusion" "$r" main..HEAD
+run_script "$r" "$list" main..HEAD
+verify_refused CA5 "nom introduit par un commit de fusion, commit cité" "${sha:0:7}"
+
+# Renommage vers un chemin qui contient un nom, puis défait : aucune ligne « + »
+r=$(repo_with_file docs/notes.md "Contenu neutre")
+start_branch "$r"
+git -C "$r" mv docs/notes.md docs/notes-vantablex.md
+commit_all "$r" "docs: renommage"
+sha=$(git -C "$r" rev-parse HEAD)
+git -C "$r" mv docs/notes-vantablex.md docs/notes.md
+commit_all "$r" "docs: renommage défait"
+precondition "renommage défait" "$r" main..HEAD
+run_script "$r" "$list" main..HEAD
+verify_refused CA5 "nom dans un chemin renommé puis défait, commit cité" "${sha:0:7}"
 
 exit $fail

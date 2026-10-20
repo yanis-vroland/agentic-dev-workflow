@@ -840,6 +840,13 @@ done
 check "Spec 010 CA1 : précondition, garde-fous.yml copié" test -f "$t/.github/workflows/garde-fous.yml"
 check "Spec 010 CA1 : garde-fous.yml lance bash tests/verifier-noms-exclus.sh" \
   grep -qF -- "bash tests/verifier-noms-exclus.sh" "$t/.github/workflows/garde-fous.yml"
+# L'étape qui vérifie réellement le dépôt, pas seulement celle qui teste le script
+check "Spec 010 CA1 : garde-fous.yml lance scripts/verifier-noms-exclus.sh" \
+  grep -qF -- "scripts/verifier-noms-exclus.sh \"origin/" "$t/.github/workflows/garde-fous.yml"
+check "Spec 010 CA1 : garde-fous.yml passe le secret EXCLUDED_NAMES" \
+  grep -qF -- "EXCLUDED_NAMES: " "$t/.github/workflows/garde-fous.yml"
+check "Spec 010 CA1 : garde-fous.yml récupère l'historique complet (fetch-depth)" \
+  grep -qF -- "fetch-depth: 0" "$t/.github/workflows/garde-fous.yml"
 
 check "Spec 010 CA2 : .gitignore contient /.excluded-names" has_line "$t/.gitignore" "/.excluded-names"
 check "Spec 010 CA2 : Git ignore .excluded-names à la racine du projet" ignored "$t" ".excluded-names"
