@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Contrôle du journal d'une PR : un fichier par branche, jamais modifié après son
-# merge, noms et entrées datés. Deux PR ne peuvent donc pas entrer en conflit.
+# merge (sauf suppression des journaux du commit racine, hérités du template),
+# noms et entrées datés. Deux PR ne peuvent donc pas entrer en conflit.
 # Spec : docs/specs/004-reprise-de-session.md
 # Usage : verifier-journal.sh <base> <head>, depuis la racine du dépôt.
 # Codes : 0 accepté, 1 refusé, 2 usage ou erreur Git.
@@ -17,6 +18,28 @@ if ! changes=$(git diff --name-status --no-renames "$base...$head" -- docs/journ
   echo "Erreur : impossible de comparer $base et $head." >&2
   exit 2
 fi
+
+# Commits racines (sans parent) : dans un dépôt créé par « Use this template »,
+# c'est la copie du template, dont les journaux peuvent être supprimés (CA9 bis)
+if ! roots=$(git rev-list --max-parents=0 "$head"); then
+  echo "Erreur : impossible de lire les commits racines de $head." >&2
+  exit 2
+fi
+
+# in_root_commit <chemin> : le fichier existe dans un commit racine
+in_root_commit() {
+  local root
+  for root in $roots; do
+    git cat-file -e "$root:$1" 2>/dev/null && return 0
+  done
+  return 1
+}
+
+# Contenus des fichiers ajoutés : un journal du commit racine supprimé puis
+# ajouté sous un autre nom est un renommage, refusé comme au CA9
+added_blobs=$(while IFS=$'\t' read -r status path; do
+  [ "$status" = A ] && git rev-parse -q --verify "$head:$path" 2>/dev/null
+done <<<"$changes")
 
 fail=0
 refuse() {
@@ -78,6 +101,13 @@ while IFS=$'\t' read -r status path; do
     continue
   fi
   name=${path#docs/journal/}
+  # Journal hérité du template : suppression seule acceptée (CA9 bis)
+  if [ "$status" = D ] && in_root_commit "$path"; then
+    blob=$(git rev-parse -q --verify "$base:$path" 2>/dev/null) || blob=""
+    if [ -z "$blob" ] || ! grep -qxF "$blob" <<<"$added_blobs"; then
+      continue
+    fi
+  fi
   if [ "$status" != A ]; then
     refuse "$path : fichier de journal déjà mergé, modifié ou supprimé. Chaque branche écrit dans son propre fichier."
     continue
