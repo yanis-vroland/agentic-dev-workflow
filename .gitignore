@@ -158,3 +158,6 @@ vite.config.ts.timestamp-*
 
 # Configuration des IDE JetBrains (personnelle)
 .idea/
+
+# Liste locale des noms exclus (spec 010) : ne doit jamais être versionnée
+/.excluded-names

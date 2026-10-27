@@ -91,6 +91,7 @@ La CI installe elle-même gitleaks en version fixée, et vérifie l'archive avec
      docs/specs/004-reprise-de-session.md docs/specs/005-capitalisation-des-pieges.md \
      docs/specs/006-revue-securite-et-hooks-qualite.md docs/specs/007-modele-par-agent.md \
      docs/specs/008-cadrage-et-plan-global.md docs/specs/009-design-system-et-maquette.md \
+     docs/specs/010-noms-exclus.md \
      scripts/init.sh scripts/lint-shell.sh \
      tests/init-script.sh tests/lint-shell.sh .github/workflows/template-ci.yml
    ```
@@ -208,6 +209,7 @@ Le template a été construit avec sa propre chaîne, du 7 au 13 octobre 2026 : 
 | [Spec 007](docs/specs/007-modele-par-agent.md) et [ADR-005](docs/adr/005-choix-du-modele-par-agent.md), modèle par subagent | #39 |
 | [Spec 008](docs/specs/008-cadrage-et-plan-global.md), cadrage et plan global conduits par l'agent (frictions de Tidemark) | #44 (spec et tests), #46 (implémentation), #50 et #51 (suites) |
 | [Spec 009](docs/specs/009-design-system-et-maquette.md), design system et maquette avant les tests (frictions de Tidemark) | #45 (spec), #52 (implémentation) |
+| [Spec 010](docs/specs/010-noms-exclus.md), garde-fou des noms exclus (frictions de Tidemark) | #53 |
 | [ADR-001](docs/adr/001-authentification-ci.md) à [ADR-003](docs/adr/003-strategie-test-first.md) | ADR-001 dans #1 ; ADR-002 et ADR-003 dans #21, tirés des constats des PR #4 à #13 |
 | [ADR-004](docs/adr/004-choix-outil-agent.md), outil d'agent (proposé) | #36 |
 
@@ -291,7 +293,8 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `.claude/agents/learning-curator.md` | subagent qui capitalise un piège découvert au test humain, sans `Bash`, écritures limitées par `restrict-learnings.sh` ; modèle `sonnet` |
 | `.claude/agents/security-reviewer.md` | subagent de revue de sécurité du diff (OWASP Top 10 2025), en lecture seule ; modèle `opus` |
 | `.githooks/pre-commit` | détection de secrets avant chaque commit |
-| `.github/workflows/garde-fous.yml` | CI générique : tests des hooks, test du pre-commit, détection de secrets, contrôle du journal |
+| `.github/workflows/garde-fous.yml` | CI générique : tests des hooks, test du pre-commit, détection de secrets, contrôle du journal, garde-fou des noms exclus |
+| `scripts/verifier-noms-exclus.sh` | refuse un nom de client ou d'employeur réel dans les fichiers suivis et les commits, sans jamais l'afficher ([spec 010](docs/specs/010-noms-exclus.md)) |
 | `.github/workflows/ai-review.yml` | revue IA de chaque PR |
 | `.github/workflows/template-ci.yml` | CI propre au template, non copiée par `init.sh` |
 | `.github/scripts/verifier-revue-ia.sh` | fait échouer la revue IA si elle n'a pas tourné ou a subi des refus |
@@ -299,6 +302,7 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `.github/scripts/verifier-journal.sh` | refuse une PR qui modifie un journal déjà mergé, ou dont les noms et dates du journal sont invalides |
 | `.github/pull_request_template.md` | modèle de PR : spec liée, critères couverts, vérifications humaines, corrections |
 | `docs/templates/spec.md` | modèle de spec |
+| `docs/templates/journal.md` | modèle d'entrée de journal, une par branche |
 | `docs/templates/cahier-des-charges-fonctionnel.md` | modèle du cahier des charges : acteurs, glossaire, règles métier, parcours, fonctionnalités |
 | `docs/templates/architecture-technique.md` | modèle de l'architecture technique : données, contrats, sécurité, infrastructure, index des ADR |
 | `docs/specs/` | specs du projet |

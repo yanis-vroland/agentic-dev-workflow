@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Syntaxe des scripts du template et de leurs tests (shellcheck)
-        run: shellcheck scripts/*.sh tests/init-script.sh tests/lint-shell.sh
+        run: shellcheck scripts/*.sh tests/init-script.sh tests/lint-shell.sh tests/verifier-noms-exclus.sh
 
       - name: Validité de settings.json
         run: jq empty .claude/settings.json
@@ -205,6 +205,39 @@ jobs:
           fi
           if [ -z "$(sed -n 's/^description:[[:space:]]*//p' "$f" | head -n 1)" ]; then
             echo "description vide ou absente dans $f"
+            exit 1
+          fi
+
+      - name: Règle de rédaction des traces de contrôle dans CLAUDE.md (spec 010, CA12)
+        run: |
+          f=CLAUDE.md
+          rule="une trace de contrôle ne cite jamais ce qu'elle cherche"
+          if ! grep -qiF -- "$rule" "$f"; then
+            echo "Règle absente de $f : « $rule »"
+            exit 1
+          fi
+          # Formulation correcte
+          if ! grep -qF -- 'recherche des noms de `EXCLUDED_NAMES` : 0 occurrence' "$f"; then
+            echo "Formulation correcte absente de $f : recherche des noms de \`EXCLUDED_NAMES\` : 0 occurrence"
+            exit 1
+          fi
+          # Contre-exemple : une seconde trace « 0 occurrence » qui, elle, cite des noms
+          if [ "$(grep -cF -- '0 occurrence' "$f")" -lt 2 ]; then
+            echo "Contre-exemple absent de $f : il faut une trace à ne pas suivre, en plus de la formulation correcte"
+            exit 1
+          fi
+
+      - name: Rappel de la règle dans la rubrique Fait du modèle de journal (spec 010, CA13)
+        run: |
+          f=docs/templates/journal.md
+          if [ ! -f "$f" ]; then
+            echo "Modèle absent : $f"
+            exit 1
+          fi
+          # Rubrique Fait : de son titre au titre suivant
+          if ! awk '/^#+[[:space:]]/{in_s = ($0 ~ /^#+[[:space:]]+Fait[[:space:]]*$/)} in_s' "$f" |
+            grep -qiF -- "ne cite jamais ce qu'elle cherche"; then
+            echo "La rubrique Fait de $f ne rappelle pas la règle des traces de contrôle"
             exit 1
           fi
 

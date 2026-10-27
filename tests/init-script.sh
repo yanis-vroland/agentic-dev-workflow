@@ -4,7 +4,8 @@
 # par les critères CA1 à CA3 de docs/specs/005-capitalisation-des-pieges.md,
 # par les critères CA17, CA18 et CA23 de docs/specs/006-revue-securite-et-hooks-qualite.md,
 # par le critère CA13 de docs/specs/007-modele-par-agent.md,
-# et par les critères CA6 à CA8 de docs/specs/008-cadrage-et-plan-global.md.
+# par les critères CA6 à CA8 de docs/specs/008-cadrage-et-plan-global.md,
+# et par les critères CA1 et CA2 de docs/specs/010-noms-exclus.md.
 # Chaque vérification cite le critère d'acceptation (CAn) ou le cas limite testé.
 # CA20 n'est pas couvert ici : il est vérifié par la CI elle-même.
 # Les fonctions de vérification sont appelées via check, que shellcheck ne suit pas.
@@ -820,5 +821,34 @@ check "Spec 009 CA2 : .claude/skills/maquette/SKILL.md copié" \
   test -f "$t/.claude/skills/maquette/SKILL.md"
 check "Spec 009 CA2 : .claude/skills/maquette/SKILL.md identique au template" \
   same_file "$template/.claude/skills/maquette/SKILL.md" "$t/.claude/skills/maquette/SKILL.md"
+
+# --- Spec 010 : garde-fou des noms exclus (CA1 et CA2) -----------------------
+# Les critères cités ici sont ceux de docs/specs/010-noms-exclus.md.
+
+for file in scripts/verifier-noms-exclus.sh tests/verifier-noms-exclus.sh; do
+  check "Spec 010 CA1 : précondition, $file existe dans le template" \
+    test -f "$template/$file"
+done
+t=$(new_repo)
+run_init "$t"
+check_code 0 "Spec 010 CA1 : code de sortie 0"
+for file in scripts/verifier-noms-exclus.sh tests/verifier-noms-exclus.sh; do
+  check "Spec 010 CA1 : $file copié" test -f "$t/$file"
+  check "Spec 010 CA1 : $file identique au template" same_file "$template/$file" "$t/$file"
+  check "Spec 010 CA1 : $file exécutable" is_executable "$t/$file"
+done
+check "Spec 010 CA1 : précondition, garde-fous.yml copié" test -f "$t/.github/workflows/garde-fous.yml"
+check "Spec 010 CA1 : garde-fous.yml lance bash tests/verifier-noms-exclus.sh" \
+  grep -qF -- "bash tests/verifier-noms-exclus.sh" "$t/.github/workflows/garde-fous.yml"
+# L'étape qui vérifie réellement le dépôt, pas seulement celle qui teste le script
+check "Spec 010 CA1 : garde-fous.yml lance scripts/verifier-noms-exclus.sh" \
+  grep -qF -- "scripts/verifier-noms-exclus.sh \"origin/" "$t/.github/workflows/garde-fous.yml"
+check "Spec 010 CA1 : garde-fous.yml passe le secret EXCLUDED_NAMES" \
+  grep -qF -- "EXCLUDED_NAMES: " "$t/.github/workflows/garde-fous.yml"
+check "Spec 010 CA1 : garde-fous.yml récupère l'historique complet (fetch-depth)" \
+  grep -qF -- "fetch-depth: 0" "$t/.github/workflows/garde-fous.yml"
+
+check "Spec 010 CA2 : .gitignore contient /.excluded-names" has_line "$t/.gitignore" "/.excluded-names"
+check "Spec 010 CA2 : Git ignore .excluded-names à la racine du projet" ignored "$t" ".excluded-names"
 
 exit $fail
