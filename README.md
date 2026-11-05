@@ -171,7 +171,7 @@ Déclarer dans `.claude/quality.json` les commandes que les hooks lancent ([spec
 
 ## Configuration GitHub
 
-1. **Application GitHub Claude** : dans Claude Code, lancer `/install-github-app` et suivre les étapes.
+1. **Application GitHub Claude** : dans Claude Code, lancer `/install-github-app` et suivre les étapes. La commande propose aussi d'ajouter ses propres workflows (`.github/workflows/claude.yml` et `claude-code-review.yml`), qui doublent `ai-review.yml` : chaque PR serait relue deux fois. Ne pas les accepter, ou supprimer leur PR sans la merger (constat de Tidemark, issue #53).
 2. **Secret `CLAUDE_CODE_OAUTH_TOKEN`** : générer un jeton avec `claude setup-token`. L'ajouter ensuite au dépôt, dans *Settings > Secrets and variables > Actions*, ou avec `gh secret set CLAUDE_CODE_OAUTH_TOKEN`. La revue IA s'authentifie avec ce jeton ; le choix d'un jeton d'abonnement plutôt que d'une clé API est expliqué dans l'[ADR-001](docs/adr/001-authentification-ci.md).
 3. **Ruleset sur `main`** (*Settings > Rules > Rulesets*) :
    - PR obligatoire ;
