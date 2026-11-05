@@ -396,8 +396,15 @@ expect_code "Cas limite : verifier-noms-exclus.sh absent, sortie 2" 2
 
 r=$(new_repo)
 precondition "avec une liste" "$r"
+push_pr "$r" 8 docs/pr-8.md "Contenu neutre de la PR 8"
 run_avp_unset "$r"
 verify_refused "Cas limite" "sans liste de noms" "aucune liste"
+# Sans liste, rien n'a été cherché dans les PR non plus : pas de ligne « OK »
+if [ "$code" -eq 1 ] && ! grep -qE -- "^ *OK +références de PR" <<<"$output"; then
+  pass "Cas limite : sans liste, les références de PR ne sont pas déclarées vérifiées"
+else
+  failed "Cas limite : sans liste, les références de PR ne sont pas déclarées vérifiées" "code $code ou ligne OK présente"
+fi
 run_avp "$r" $'\n  \n'
 verify_refused "Cas limite" "liste faite de lignes blanches" "aucune liste"
 (cd "$r" && CI=true env -u EXCLUDED_NAMES scripts/verifier-avant-public.sh) \
