@@ -21,3 +21,22 @@ Branche `feat/verifier-avant-public`.
 ### Prochaine étape
 
 - Tests par le subagent `test-writer`, vérification de leur échec, puis accord de Yanis avant l'implémentation.
+
+## 2026-11-05 20:00
+
+### Fait
+
+- Tests écrits par `test-writer` : `tests/verifier-avant-public.sh` (55 vérifications, CA9 à CA11 et cas limites) et bloc « Spec 010 Socle » dans `tests/init-script.sh` (11 vérifications).
+- Échec vérifié pour la bonne raison : 54 sur 55 échouent parce que le script et la skill sont absents (la seule qui passe est une précondition indépendante du script) ; seules les 11 vérifications du socle échouent dans `init-script.sh`. shellcheck sans avertissement.
+
+### Décisions
+
+- Contrat proposé par l'agent, à valider par Yanis : sans liste de noms, sans `origin`, le script sort en 1 (dépôt non déclaré publiable).
+
+### Corrections et limites
+
+- Aucune.
+
+### Prochaine étape
+
+- Accord de Yanis sur le contrat, puis implémentation.
