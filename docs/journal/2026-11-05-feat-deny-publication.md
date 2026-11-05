@@ -22,3 +22,21 @@ Branche `feat/deny-publication`.
 ### Prochaine étape
 
 - Modifier `.claude/settings.json`, puis PR.
+
+## 2026-11-05 20:53
+
+### Fait
+
+- `.claude/settings.json` : trois `deny` ajoutés. Spec 010 : cas limite « Permissions ». Les trois vérifications passent ; `tests/hooks.sh` et `tests/init-script.sh` au vert, JSON valide.
+
+### Décisions
+
+- Aucune nouvelle.
+
+### Corrections et limites
+
+- Test humain sans objet : la règle s'applique au prochain démarrage de Claude Code, et la vérifier exigerait de tenter l'action interdite.
+
+### Prochaine étape
+
+- PR, revue IA, merge par Yanis.

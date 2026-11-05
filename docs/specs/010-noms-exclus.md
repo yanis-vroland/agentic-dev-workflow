@@ -85,6 +85,7 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
   - le chemin d'un fichier d'environnement suivi n'est cité que si le contrôle des noms a réussi ;
   - le bilan liste ce qui n'est **pas** vérifié (titres, descriptions et commentaires des PR et des issues, releases, wiki, journaux d'Actions, commits orphelins accessibles par leur SHA, fichiers binaires), et `/publier` le fait relire à l'humain ;
   - seul l'humain crée ou modifie la liste des noms ; `/publier` donne la commande de mise en public avec le dépôt `OWNER/REPO` explicite.
+- **Permissions** : `.claude/settings.json` interdit à l'agent `Read(./.excluded-names)`, `Edit(./.excluded-names)` et `Bash(gh repo edit *)`. Ce qui n'était qu'une consigne de `/publier` devient une garantie technique ; une lecture par une autre commande `Bash` reste possible, et la consigne demeure (Yanis, 2026-11-05).
 - **Fichier `.env` suivi (CA9)** : seuls les fichiers suivis aujourd'hui sont regardés, `.env.example` excepté ; l'historique relève de `gitleaks` (Yanis, 2026-11-05).
 - **Socle** : `init.sh` copie toute `.claude/skills/`, donc `/publier` ; `verifier-avant-public.sh` et son test sont copiés avec elle, pour que la skill fonctionne dans un projet dérivé (Yanis, 2026-11-05).
 
