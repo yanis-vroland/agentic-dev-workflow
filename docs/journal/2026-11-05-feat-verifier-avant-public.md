@@ -94,3 +94,21 @@ Branche `feat/verifier-avant-public`.
 ### Prochaine étape
 
 - Test humain par Yanis, puis PR.
+
+## 2026-11-05 20:20
+
+### Fait
+
+- Essai du script par l'agent sur ce dépôt et son vrai `origin` (40 PR, 2 s), sans liste : le bilan disait « 40 PR vérifiée(s) » alors que rien n'avait été cherché. Test rouge committé, puis correction : sans liste, la ligne des références de PR est « non vérifiées, faute de liste de noms ». 111 vérifications au vert.
+
+### Décisions
+
+- Aucune.
+
+### Corrections et limites
+
+- Cet essai n'est pas le test humain : il a tourné sans liste, donc sans rien chercher.
+
+### Prochaine étape
+
+- Test humain par Yanis, avec sa liste, puis PR.

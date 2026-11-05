@@ -148,6 +148,10 @@ fi
 if [ "$has_origin" -eq 1 ] && ! fetch_origin "+refs/pull/*:$ns/pull/*"; then
   summary+=("ERREUR références de PR : récupération depuis origin impossible ($fetch_hint)")
   error=1
+elif [ "$has_origin" -eq 1 ] && [ "$names_code" -eq 3 ]; then
+  # Sans liste, rien n'a été cherché dans les PR non plus
+  summary+=("ÉCHEC  références de PR : non vérifiées, faute de liste de noms")
+  failed=1
 elif [ "$has_origin" -eq 1 ] && [ "$tracked_dirty" -eq 1 ]; then
   summary+=("ÉCHEC  références de PR : non vérifiées tant que les fichiers suivis contiennent un nom ; relancer après la correction")
   failed=1
