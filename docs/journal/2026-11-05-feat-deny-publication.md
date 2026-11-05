@@ -2,7 +2,7 @@
 
 Branche `feat/deny-publication`.
 
-## 2026-11-05 20:50
+## 2026-11-05 20:41
 
 ### Fait
 
@@ -23,7 +23,7 @@ Branche `feat/deny-publication`.
 
 - Modifier `.claude/settings.json`, puis PR.
 
-## 2026-11-05 20:53
+## 2026-11-05 20:43
 
 ### Fait
 
@@ -40,3 +40,22 @@ Branche `feat/deny-publication`.
 ### Prochaine étape
 
 - PR, revue IA, merge par Yanis.
+
+## 2026-11-05 20:48
+
+### Fait
+
+- Revue IA de la PR #61 : rien de bloquant. Corrigé : la spec 010 ne prête plus à Yanis l'ajout de `Edit(./.excluded-names)`, marqué « proposé par l'agent, à valider par Yanis au merge » ; le test vérifie les règles dans `permissions.deny` par `jq`, et non n'importe où dans le fichier (mutation : la règle déplacée dans `allow` fait échouer le test) ; limite du contournement par `gh api` consignée dans la spec.
+- Heures des deux entrées précédentes recalées sur celles des commits (écrites à l'avance).
+
+### Décisions
+
+- Agent : pas de règle `deny` sur `gh api`, un motif de ce genre restant contournable ; limite documentée à la place.
+
+### Corrections et limites
+
+- Le test humain « sans objet » était à tort : le comportement de l'agent change. Test humain demandé à Yanis dans une nouvelle session.
+
+### Prochaine étape
+
+- Test humain de Yanis et validation de `Edit`, réponse à la revue IA, merge.

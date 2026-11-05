@@ -646,7 +646,8 @@ fi
 # lire la liste des noms ni changer la visibilité du dépôt (deny de settings.json)
 settings="$template/.claude/settings.json"
 for rule in 'Read(./.excluded-names)' 'Edit(./.excluded-names)' 'Bash(gh repo edit *)'; do
-  if [ -f "$settings" ] && grep -qF -- "\"$rule\"" "$settings"; then
+  # Dans permissions.deny précisément : ailleurs (allow), la règle autoriserait
+  if [ -f "$settings" ] && jq -e --arg r "$rule" '.permissions.deny | index($r)' "$settings" >/dev/null 2>&1; then
     pass "Revue sécurité : $rule interdit dans .claude/settings.json"
   else
     failed "Revue sécurité : $rule interdit dans .claude/settings.json"
