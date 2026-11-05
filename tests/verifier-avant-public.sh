@@ -642,4 +642,15 @@ else
   failed "Revue sécurité : la skill fait relire ce qui n'est pas vérifié"
 fi
 
+# Garantie technique, pas seulement le texte de la skill : l'agent ne peut ni
+# lire la liste des noms ni changer la visibilité du dépôt (deny de settings.json)
+settings="$template/.claude/settings.json"
+for rule in 'Read(./.excluded-names)' 'Edit(./.excluded-names)' 'Bash(gh repo edit *)'; do
+  if [ -f "$settings" ] && grep -qF -- "\"$rule\"" "$settings"; then
+    pass "Revue sécurité : $rule interdit dans .claude/settings.json"
+  else
+    failed "Revue sécurité : $rule interdit dans .claude/settings.json"
+  fi
+done
+
 exit $fail
