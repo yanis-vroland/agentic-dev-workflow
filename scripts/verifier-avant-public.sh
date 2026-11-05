@@ -163,6 +163,8 @@ elif [ "$has_origin" -eq 1 ]; then
     exposed=()
     numbers=()
     pr_error=0
+    : >"$tmp/clean-shas"
+    : >"$tmp/refused-shas"
     while IFS= read -r ref; do
       n=${ref#"$ns/pull/"}
       n=${n%%/*}
@@ -174,8 +176,21 @@ elif [ "$has_origin" -eq 1 ]; then
         continue
       fi
       while IFS= read -r sha; do
-        check_names "$sha^!" >/dev/null
-        case $? in
+        # Résultat mémorisé par SHA : head et merge d'une même PR, ou plusieurs
+        # PR, partagent des commits, et chaque appel relit les fichiers suivis
+        if grep -qxF -- "$sha" "$tmp/clean-shas"; then
+          continue
+        elif grep -qxF -- "$sha" "$tmp/refused-shas"; then
+          result=1
+        else
+          check_names "$sha^!" >/dev/null
+          result=$?
+          case $result in
+            0 | 3) echo "$sha" >>"$tmp/clean-shas" ;;
+            1) echo "$sha" >>"$tmp/refused-shas" ;;
+          esac
+        fi
+        case $result in
           0 | 3) ;;
           1)
             case " ${exposed[*]-} " in *" #$n "*) ;; *) exposed+=("#$n") ;; esac

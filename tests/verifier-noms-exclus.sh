@@ -569,4 +569,20 @@ else
   echo "SAUTÉ  Cas limite « Locale » : aucune locale UTF-8 sur ce système"
 fi
 
+# Piège docs/learnings/pipefail-grep-q-sigpipe.md : sous pipefail, un tuyau
+# terminé par grep -q ou head échoue quand le producteur reçoit SIGPIPE. Le test
+# précédent ne le voit pas sous Linux, où la sortie de locale -a tient dans le
+# tampon du tuyau : ce test de contenu le voit partout. Commentaires ignorés.
+for f in "$template/scripts/verifier-noms-exclus.sh" "$template/scripts/verifier-avant-public.sh"; do
+  [ -f "$f" ] || continue
+  rel=${f#"$template/"}
+  if ! grep -q 'pipefail' "$f"; then
+    pass "Piège pipefail : $rel n'utilise pas pipefail"
+  elif bad=$(grep -nE '^[^#]*\|[[:space:]]*(grep[[:space:]]+-[a-zA-Z]*q[a-zA-Z]*|head)([[:space:]]|$)' "$f"); then
+    failed "Piège pipefail : aucun tuyau terminé par grep -q ou head dans $rel" "$(head -n 1 <<<"$bad")"
+  else
+    pass "Piège pipefail : aucun tuyau terminé par grep -q ou head dans $rel"
+  fi
+done
+
 exit $fail

@@ -151,3 +151,23 @@ Branche `feat/verifier-avant-public`.
 ### Prochaine étape
 
 - PR, revue IA et réponse à la revue ; merge par Yanis.
+
+## 2026-11-05 20:44
+
+### Fait
+
+- PR #60 ouverte ; CI au vert (4 jobs) ; revue IA : rien de bloquant, 2 points à corriger, 5 suggestions.
+- Corrigé : `/publier` ne consigne plus « dans le journal de la branche en cours » sur `main` (où l'on ne pousse jamais) : elle donne seulement le résultat ; résultat du contrôle 2 mémorisé par SHA (commits partagés entre `head` et `merge`, ou entre PR, relus une seule fois) ; test de contenu « aucun tuyau terminé par `grep -q` ou `head` » dans les deux scripts en `pipefail`, qui protège aussi sous Linux où le test de locale ne voit pas le SIGPIPE (mutation vérifiée sur trois formes de tuyau, après correction d'une regex qui ratait `-qi`) ; README : test du contrôle avant publication dans la ligne de `garde-fous.yml`.
+- Constat : les revues IA de #58 et #59 ont échoué en 4 à 6 s le 2026-10-20, avant toute étape ; journaux expirés, cause inconnue. Ces deux PR ont été mergées sans revue IA.
+
+### Décisions
+
+- Agent : non suivi, l'option `--strict` du script de base pour détecter l'absence de liste par un code de sortie : change le contrat d'un script déjà mergé, hors du périmètre de cette PR ; un test couvre la détection actuelle.
+
+### Corrections et limites
+
+- En attente de Yanis : validation explicite des ajouts à la spec 010 (« Ajouts après les revues »), et décision sur les `deny` de `.claude/settings.json`.
+
+### Prochaine étape
+
+- Réponse à la revue IA dans la PR, puis décisions de Yanis.

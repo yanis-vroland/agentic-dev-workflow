@@ -297,7 +297,7 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `.claude/agents/learning-curator.md` | subagent qui capitalise un piège découvert au test humain, sans `Bash`, écritures limitées par `restrict-learnings.sh` ; modèle `sonnet` |
 | `.claude/agents/security-reviewer.md` | subagent de revue de sécurité du diff (OWASP Top 10 2025), en lecture seule ; modèle `opus` |
 | `.githooks/pre-commit` | détection de secrets avant chaque commit |
-| `.github/workflows/garde-fous.yml` | CI générique : tests des hooks, test du pre-commit, détection de secrets, contrôle du journal, garde-fou des noms exclus |
+| `.github/workflows/garde-fous.yml` | CI générique : tests des hooks, test du pre-commit, détection de secrets, contrôle du journal, garde-fou des noms exclus, test du contrôle avant publication |
 | `scripts/verifier-noms-exclus.sh` | refuse un nom de client ou d'employeur réel dans les fichiers suivis et les commits, sans jamais l'afficher ([spec 010](docs/specs/010-noms-exclus.md)) |
 | `scripts/verifier-avant-public.sh` | contrôle avant la mise en public : noms exclus sur tout l'historique, références de PR (`refs/pull/*`) qui exposent un ancien commit, fichiers d'environnement suivis ; lancé par `/publier` |
 | `.github/workflows/ai-review.yml` | revue IA de chaque PR |
