@@ -171,3 +171,23 @@ Branche `feat/verifier-avant-public`.
 ### Prochaine étape
 
 - Réponse à la revue IA dans la PR, puis décisions de Yanis.
+
+## 2026-11-05 20:37
+
+### Fait
+
+- Réponse à la revue IA publiée dans la PR #60, et liée depuis sa description.
+- Spec 010 : « à valider par Yanis au merge » remplacé par « Yanis, 2026-11-05 » sur les ajouts après les revues.
+
+### Décisions
+
+- Yanis : ajouts à la spec 010 après les revues validés.
+- Yanis : `Read(./.excluded-names)` et `Bash(gh repo edit *)` à ajouter aux `deny` de `.claude/settings.json`, dans une PR séparée après #60.
+
+### Corrections et limites
+
+- Aucune.
+
+### Prochaine étape
+
+- Merge de #60 par Yanis, puis PR des `deny`.

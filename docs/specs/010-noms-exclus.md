@@ -77,7 +77,7 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 - **Nom contenant une virgule** : la liste accepte un nom par ligne ou séparés par des virgules ; un nom qui en contient une est donc découpé. S'il tombe sous 3 caractères, le script sort en 2 plutôt que de vérifier à moitié.
 - Nom d'un seul caractère ou très court : refusé par le script, qui exige au moins 3 caractères, pour éviter un faux positif permanent.
 - **Références de PR (CA9, CA10)** : le script récupère les `refs/pull/*/head` du dépôt distant `origin` dans un espace de noms temporaire, puis applique le contrôle des noms aux seuls commits qu'aucune branche ni étiquette n'atteint. Sans dépôt distant, il le dit et ne conclut pas au succès sur ce point. Seul le support GitHub peut purger `refs/pull` : c'est la marche à suivre indiquée (Yanis, 2026-11-05).
-- **Ajouts après les revues** *(proposés par l'agent le 2026-11-05, à valider par Yanis au merge)* :
+- **Ajouts après les revues** *(proposés par l'agent après les revues ; Yanis, 2026-11-05)* :
   - c'est `origin` qui devient public, pas le clone local : ses branches et étiquettes sont aussi récupérées dans l'espace temporaire et relues par le contrôle des noms ; les références de PR ne le sont qu'après, pour qu'une PR seule en cause ne demande pas une réécriture de l'historique ;
   - `refs/pull/*/merge` est contrôlée comme `refs/pull/*/head` ;
   - un clone superficiel est refusé (sortie 2) : l'historique y est incomplet sans erreur ;
