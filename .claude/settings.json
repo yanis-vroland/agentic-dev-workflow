@@ -8,7 +8,10 @@
       "Edit(./.env.local)",
       "Bash(git push --force *)",
       "Bash(git push origin main *)",
-      "Bash(rm -rf *)"
+      "Bash(rm -rf *)",
+      "Read(./.excluded-names)",
+      "Edit(./.excluded-names)",
+      "Bash(gh repo edit *)"
     ]
   },
   "hooks": {
