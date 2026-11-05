@@ -132,3 +132,22 @@ Branche `feat/verifier-avant-public`.
 ### Prochaine étape
 
 - Yanis relance le scénario 1 (avertissement disparu attendu), puis les scénarios 2 et 3.
+
+## 2026-11-05 20:50
+
+### Fait
+
+- Test humain terminé par Yanis : scénario 1 relancé (185 commits, 40 PR, plus d'avertissement de locale, sortie 0), scénario 2 sans liste (sortie 1), scénario 3 `/publier` : « tout est good ».
+- Piège capitalisé par `learning-curator` : `docs/learnings/pipefail-grep-q-sigpipe.md`. Règle appliquée aussitôt : recherche des tuyaux terminés par `grep -q` ou `head` dans tous les scripts en `pipefail` du dépôt : aucun autre cas.
+
+### Décisions
+
+- Aucune.
+
+### Corrections et limites
+
+- Test humain positif après 1 boucle négative (locale).
+
+### Prochaine étape
+
+- PR, revue IA et réponse à la revue ; merge par Yanis.
