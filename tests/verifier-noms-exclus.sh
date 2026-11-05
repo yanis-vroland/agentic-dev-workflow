@@ -545,4 +545,28 @@ precondition "renommage défait" "$r" main..HEAD
 run_script "$r" "$list" main..HEAD
 verify_refused CA5 "nom dans un chemin renommé puis défait, commit cité" "${sha:0:7}"
 
+# Cas limite « Locale » : quand le système fournit une locale UTF-8, le script la
+# trouve. Sous pipefail, « locale -a | grep -q » échouait toujours (SIGPIPE de
+# locale -a) : l'avertissement sortait, et la casse des accents n'était plus repliée.
+if locale -a 2>/dev/null | tr '[:upper:]' '[:lower:]' >"$work/locales" &&
+  grep -qxE 'c\.utf-?8|en_us\.utf-?8|fr_fr\.utf-?8' "$work/locales"; then
+  r=$(repo_with_file docs/notes.md "Contenu neutre")
+  run_script "$r" "$neutral_list" main..HEAD
+  if [ "$code" -eq 0 ] && ! grep -qi -- "aucune locale" <<<"$output"; then
+    pass "Cas limite : locale UTF-8 disponible, trouvée sans avertissement"
+  else
+    failed "Cas limite : locale UTF-8 disponible, trouvée sans avertissement" "code $code, sortie : $(grep -i locale <<<"$output" | head -n 1)"
+  fi
+  # Effet observable : É et é sont la même lettre
+  r=$(repo_with_file docs/notes.md "Réunion chez ÉLODIA")
+  run_script "$r" "élodia" main..HEAD
+  if [ "$code" -eq 1 ]; then
+    pass "Cas limite : nom accentué trouvé dans une autre casse"
+  else
+    failed "Cas limite : nom accentué trouvé dans une autre casse" "attendu 1, obtenu $code"
+  fi
+else
+  echo "SAUTÉ  Cas limite « Locale » : aucune locale UTF-8 sur ce système"
+fi
+
 exit $fail
