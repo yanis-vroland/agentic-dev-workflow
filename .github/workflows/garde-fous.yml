@@ -35,6 +35,7 @@ jobs:
           tests/session-start.sh tests/verifier-journal.sh tests/quality-hooks.sh
           tests/verifier-modeles.sh tests/restrict-learnings.sh
           scripts/verifier-noms-exclus.sh tests/verifier-noms-exclus.sh
+          scripts/verifier-avant-public.sh tests/verifier-avant-public.sh
 
       - name: Tests des hooks de Claude Code
         run: bash tests/hooks.sh
@@ -59,6 +60,9 @@ jobs:
 
       - name: Test du garde-fou des noms exclus (spec 010)
         run: bash tests/verifier-noms-exclus.sh
+
+      - name: Test du contrôle avant publication (spec 010)
+        run: bash tests/verifier-avant-public.sh
 
       - name: Noms exclus dans les fichiers suivis et les commits (spec 010)
         env:

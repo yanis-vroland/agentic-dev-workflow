@@ -212,7 +212,7 @@ Le template a été construit avec sa propre chaîne, du 7 au 13 octobre 2026 : 
 | [Spec 007](docs/specs/007-modele-par-agent.md) et [ADR-005](docs/adr/005-choix-du-modele-par-agent.md), modèle par subagent | #39 |
 | [Spec 008](docs/specs/008-cadrage-et-plan-global.md), cadrage et plan global conduits par l'agent (frictions de Tidemark) | #44 (spec et tests), #46 (implémentation), #50 et #51 (suites) |
 | [Spec 009](docs/specs/009-design-system-et-maquette.md), design system et maquette avant les tests (frictions de Tidemark) | #45 (spec), #52 (implémentation) |
-| [Spec 010](docs/specs/010-noms-exclus.md), garde-fou des noms exclus (frictions de Tidemark) | #53 |
+| [Spec 010](docs/specs/010-noms-exclus.md), garde-fou des noms exclus et contrôle avant publication (frictions de Tidemark) | #53 (spec), #58 (garde-fou), #60 (`/publier`) |
 | [ADR-001](docs/adr/001-authentification-ci.md) à [ADR-003](docs/adr/003-strategie-test-first.md) | ADR-001 dans #1 ; ADR-002 et ADR-003 dans #21, tirés des constats des PR #4 à #13 |
 | [ADR-004](docs/adr/004-choix-outil-agent.md), outil d'agent (proposé) | #36 |
 
@@ -291,13 +291,15 @@ Constatées pendant la construction du template ; elles restent vraies aujourd'h
 | `.claude/skills/spec/` | `/spec` : rédiger une spec à partir d'un besoin |
 | `.claude/skills/implement/` | `/implement` : implémenter une spec validée en test-first |
 | `.claude/skills/review/` | `/review` : relire la branche avant la PR |
+| `.claude/skills/publier/` | `/publier` : dire si le dépôt peut devenir public ; refuse tant que `verifier-avant-public.sh` échoue, et ne change jamais la visibilité elle-même |
 | `.claude/agents/reviewer.md` | subagent de revue, utilisé aussi par la revue IA en CI ; modèle `opus` |
 | `.claude/agents/test-writer.md` | subagent qui écrit les tests à partir des critères d'acceptation ; modèle `sonnet` |
 | `.claude/agents/learning-curator.md` | subagent qui capitalise un piège découvert au test humain, sans `Bash`, écritures limitées par `restrict-learnings.sh` ; modèle `sonnet` |
 | `.claude/agents/security-reviewer.md` | subagent de revue de sécurité du diff (OWASP Top 10 2025), en lecture seule ; modèle `opus` |
 | `.githooks/pre-commit` | détection de secrets avant chaque commit |
-| `.github/workflows/garde-fous.yml` | CI générique : tests des hooks, test du pre-commit, détection de secrets, contrôle du journal, garde-fou des noms exclus |
+| `.github/workflows/garde-fous.yml` | CI générique : tests des hooks, test du pre-commit, détection de secrets, contrôle du journal, garde-fou des noms exclus, test du contrôle avant publication |
 | `scripts/verifier-noms-exclus.sh` | refuse un nom de client ou d'employeur réel dans les fichiers suivis et les commits, sans jamais l'afficher ([spec 010](docs/specs/010-noms-exclus.md)) |
+| `scripts/verifier-avant-public.sh` | contrôle avant la mise en public : noms exclus sur tout l'historique, références de PR (`refs/pull/*`) qui exposent un ancien commit, fichiers d'environnement suivis ; lancé par `/publier` |
 | `.github/workflows/ai-review.yml` | revue IA de chaque PR |
 | `.github/workflows/template-ci.yml` | CI propre au template, non copiée par `init.sh` |
 | `.github/scripts/verifier-revue-ia.sh` | fait échouer la revue IA si elle n'a pas tourné ou a subi des refus |
