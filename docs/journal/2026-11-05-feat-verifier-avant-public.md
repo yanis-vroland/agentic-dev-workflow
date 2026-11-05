@@ -112,3 +112,23 @@ Branche `feat/verifier-avant-public`.
 ### Prochaine étape
 
 - Test humain par Yanis, avec sa liste, puis PR.
+
+## 2026-11-05 20:35
+
+### Fait
+
+- Test humain, scénario 1 (Yanis, avec sa liste) : positif sur le fond (183 commits, 40 PR, aucun nom affiché, sortie 0), mais avertissement « aucune locale UTF-8 disponible » sous macOS, qui en fournit pourtant.
+- Cause : dans `scripts/verifier-noms-exclus.sh` (PR #58), `locale -a | grep -q` sous `pipefail` échoue toujours : `grep -q` s'arrête à la première correspondance et `locale -a` reçoit SIGPIPE. Reproduit 20 fois sur 20. Le script retombait sur la locale C : un nom accentué écrit dans une autre casse passait. Même piège que celui corrigé dans #58 pour les comparaisons.
+- Test rouge committé (`tests/verifier-noms-exclus.sh`, cas limite « Locale » : pas d'avertissement quand une locale UTF-8 existe, et nom accentué trouvé dans une autre casse), puis correction : liste des locales lue une fois dans une variable, hors tuyau. Toutes les suites au vert.
+
+### Décisions
+
+- Agent : correction faite dans cette PR, puisqu'elle relève de la même spec et que le contrôle avant publication en dépend.
+
+### Corrections et limites
+
+- Boucle négative n° 1 du test humain : symptôme, cause et correctif ci-dessus. Le même script existe dans Tidemark : à reporter lors du rétroportage (spec 010, question 2).
+
+### Prochaine étape
+
+- Yanis relance le scénario 1 (avertissement disparu attendu), puis les scénarios 2 et 3.

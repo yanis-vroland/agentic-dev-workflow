@@ -33,8 +33,11 @@ set -u -o pipefail
 
 # Casse des lettres accentuées (É et é). macOS ne fournit pas C.UTF-8 : sans
 # repli, la locale retombe sur C et grep -i cesse de replier les accents.
+# Liste lue une fois, hors tuyau : sous pipefail, « locale -a | grep -q » échoue
+# dès que grep s'arrête avant la fin (SIGPIPE de locale -a).
+locales=$(locale -a 2>/dev/null)
 for loc in C.UTF-8 en_US.UTF-8 fr_FR.UTF-8; do
-  if locale -a 2>/dev/null | grep -qix "${loc/UTF-8/utf8}\|$loc"; then
+  if grep -qix "${loc/UTF-8/utf8}\|$loc" <<<"$locales"; then
     export LC_ALL=$loc
     break
   fi
