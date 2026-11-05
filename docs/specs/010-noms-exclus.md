@@ -2,6 +2,7 @@
 
 Statut : validée (Yanis, 2026-10-20)
 Date : 2026-10-20
+Design : sans objet (scripts shell et skill, aucun écran ; Yanis, 2026-11-05)
 
 ## Besoin
 
@@ -75,6 +76,9 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 - **Locale** : macOS ne fournit pas `C.UTF-8`. Le script essaie `en_US.UTF-8` puis `fr_FR.UTF-8`, et avertit si aucune locale UTF-8 n'est disponible ; sans elle, un nom accentué écrit dans une autre casse peut passer en local.
 - **Nom contenant une virgule** : la liste accepte un nom par ligne ou séparés par des virgules ; un nom qui en contient une est donc découpé. S'il tombe sous 3 caractères, le script sort en 2 plutôt que de vérifier à moitié.
 - Nom d'un seul caractère ou très court : refusé par le script, qui exige au moins 3 caractères, pour éviter un faux positif permanent.
+- **Références de PR (CA9, CA10)** : le script récupère les `refs/pull/*/head` du dépôt distant `origin` dans un espace de noms temporaire, puis applique le contrôle des noms aux seuls commits qu'aucune branche ni étiquette n'atteint. Sans dépôt distant, il le dit et ne conclut pas au succès sur ce point. Seul le support GitHub peut purger `refs/pull` : c'est la marche à suivre indiquée (Yanis, 2026-11-05).
+- **Fichier `.env` suivi (CA9)** : seuls les fichiers suivis aujourd'hui sont regardés, `.env.example` excepté ; l'historique relève de `gitleaks` (Yanis, 2026-11-05).
+- **Socle** : `init.sh` copie toute `.claude/skills/`, donc `/publier` ; `verifier-avant-public.sh` et son test sont copiés avec elle, pour que la skill fonctionne dans un projet dérivé (Yanis, 2026-11-05).
 
 ## Hors périmètre
 
