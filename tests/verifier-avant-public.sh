@@ -368,6 +368,100 @@ code=$?
 output=$(cat "$stdout_file" "$stderr_file")
 expect_code "Cas limite : hors dépôt Git, sortie 2" 2
 
+# --- Revue de sécurité : ce que le dépôt distant expose -----------------------
+
+# Branche présente seulement dans origin (poussée d'un autre poste) : c'est le
+# dépôt distant qui devient public, pas le clone local
+r=$(new_repo)
+precondition "avant la branche distante" "$r"
+git -C "$r" checkout -q -b autre-poste
+write_file "$r" docs/autre.md "Compte rendu Zorglub"
+commit_all "$r" "docs: notes d'un autre poste"
+remote_sha=$(git -C "$r" rev-parse HEAD)
+git -C "$r" push -q origin autre-poste
+git -C "$r" checkout -q main
+git -C "$r" branch -q -D autre-poste
+git -C "$r" update-ref -d refs/remotes/origin/autre-poste 2>/dev/null
+if git -C "$r" cat-file -e "$remote_sha" 2>/dev/null &&
+  git -C "$r" rev-list --all | grep -qx "$remote_sha"; then
+  failed "Revue sécurité : précondition, le commit n'est atteint par aucune ref locale"
+else
+  pass "Revue sécurité : précondition, le commit n'est atteint par aucune ref locale"
+fi
+run_avp "$r" "$list"
+verify_refused "Revue sécurité" "nom sur une branche présente seulement dans origin" "noms exclus"
+verify_refs_clean "Revue sécurité (branche distante)" 1
+
+# Étiquette présente seulement dans origin
+r=$(new_repo)
+git -C "$r" checkout -q -b tmp-tag
+write_file "$r" docs/tag.md "Livraison Quibbler"
+commit_all "$r" "docs: livraison"
+git -C "$r" push -q origin "HEAD:refs/tags/v0.1"
+git -C "$r" checkout -q main
+git -C "$r" branch -q -D tmp-tag
+git -C "$r" tag -d v0.1 >/dev/null 2>&1
+run_avp "$r" "$list"
+verify_refused "Revue sécurité" "nom sur une étiquette présente seulement dans origin" "noms exclus"
+
+# Clone superficiel : rev-list --all s'y arrête sans erreur, jamais un succès
+r=$(new_repo)
+shallow=$(mktemp -d "$work/shallow.XXXXXX")
+rmdir "$shallow"
+git clone -q --depth 1 "file://$r.origin" "$shallow" 2>/dev/null
+run_avp "$shallow" "$neutral_list"
+expect_code "Revue sécurité : clone superficiel, sortie 2" 2
+output_has "Revue sécurité : clone superficiel, la sortie le dit" "superficiel|shallow"
+
+# refs/pull/N/merge seule atteint le commit refusé
+r=$(new_repo)
+git -C "$r" checkout -q -b tmp-merge
+write_file "$r" docs/fusion.md "Fusion pour Vantablex"
+commit_all "$r" "docs: fusion de test"
+git -C "$r" push -q origin "HEAD:refs/pull/12/merge"
+git -C "$r" checkout -q main
+git -C "$r" branch -q -D tmp-merge
+precondition "refs/pull/12/merge, liste neutre" "$r"
+run_avp "$r" "$list"
+verify_refused "Revue sécurité" "refs/pull/12/merge expose un nom" "(#|PR |pull/)12([^0-9]|$)"
+if [ "$code" -eq 1 ] && grep -qE -- "#12/" <<<"$output"; then
+  failed "Revue sécurité : numéro de PR cité sans suffixe" "« #12/... » dans la sortie"
+elif [ "$code" -eq 1 ]; then
+  pass "Revue sécurité : numéro de PR cité sans suffixe"
+else
+  failed "Revue sécurité : numéro de PR cité sans suffixe" "pas d'échec (code $code) : contrôle sans objet"
+fi
+
+# Aucune référence de PR : pas présenté comme « vérifiées »
+r=$(new_repo)
+run_avp "$r" "$list"
+expect_code "Revue sécurité : aucune référence de PR, sortie 0" 0
+output_has "Revue sécurité : aucune référence de PR, la sortie le dit" "aucune référence de PR"
+
+# Chemin d'un fichier d'environnement qui contient un nom : jamais affiché
+r=$(new_repo)
+write_file "$r" "config/zorglub/$dotenv.local" "FAKE_VALUE=valeur-factice"
+commit_all "$r" "chore: fichier ajouté par erreur"
+run_avp "$r" "$list"
+verify_refused "Revue sécurité" "nom dans le chemin d'un fichier $dotenv suivi" "$dotenv"
+
+# Ce que le script ne vérifie pas est dit, en succès comme en échec
+r=$(new_repo)
+run_avp "$r" "$list"
+output_has "Revue sécurité : le bilan liste ce qui n'est pas vérifié" "non vérifié"
+output_has "Revue sécurité : le bilan cite les titres et descriptions de PR et les issues" \
+  "issues"
+
+# Refs temporaires laissées par un lancement interrompu : supprimées au départ
+r=$(new_repo)
+git -C "$r" update-ref refs/verifier-avant-public-99999/pull/1/head HEAD
+run_avp "$r" "$list"
+if git -C "$r" for-each-ref --format='%(refname)' | grep -q '^refs/verifier-avant-public-'; then
+  failed "Revue sécurité : refs temporaires orphelines supprimées"
+else
+  pass "Revue sécurité : refs temporaires orphelines supprimées"
+fi
+
 # --- CA11 : skill /publier (test de contenu) ----------------------------------
 
 if [ -f "$skill" ]; then
@@ -442,6 +536,29 @@ if [ -f "$skill" ] && ! grep -qE -- '!`.*gh repo edit|allowed-tools:.*gh repo ed
   pass "CA11 : la skill n'exécute ni n'autorise gh repo edit"
 else
   failed "CA11 : la skill n'exécute ni n'autorise gh repo edit"
+fi
+
+# Revue de sécurité : la liste est l'affaire de l'humain, jamais de l'agent
+if skill_has x "seul l.humain (crée|cré|remplit|écrit)"; then
+  pass "Revue sécurité : seul l'humain crée la liste des noms"
+else
+  failed "Revue sécurité : seul l'humain crée la liste des noms"
+fi
+if skill_has x "un nom inventé suffit"; then
+  failed "Revue sécurité : la skill n'invite pas à une liste factice"
+else
+  pass "Revue sécurité : la skill n'invite pas à une liste factice"
+fi
+# Le dépôt à rendre public est nommé, pas laissé au choix de gh
+if [ -f "$skill" ] && grep -qE -- 'gh repo edit [A-Z<]' "$skill"; then
+  pass "Revue sécurité : la commande de mise en public nomme le dépôt"
+else
+  failed "Revue sécurité : la commande de mise en public nomme le dépôt"
+fi
+if skill_has x "non vérifié"; then
+  pass "Revue sécurité : la skill fait relire ce qui n'est pas vérifié"
+else
+  failed "Revue sécurité : la skill fait relire ce qui n'est pas vérifié"
 fi
 
 exit $fail
