@@ -64,7 +64,7 @@ Branche `feat/verifier-avant-public`.
 
 - Revues `security-reviewer` et `reviewer`, puis test humain par Yanis.
 
-## 2026-11-05 20:10
+## 2026-11-05 20:11
 
 ### Fait
 
@@ -95,7 +95,7 @@ Branche `feat/verifier-avant-public`.
 
 - Test humain par Yanis, puis PR.
 
-## 2026-11-05 20:20
+## 2026-11-05 20:14
 
 ### Fait
 
@@ -113,7 +113,7 @@ Branche `feat/verifier-avant-public`.
 
 - Test humain par Yanis, avec sa liste, puis PR.
 
-## 2026-11-05 20:35
+## 2026-11-05 20:22
 
 ### Fait
 
@@ -133,7 +133,7 @@ Branche `feat/verifier-avant-public`.
 
 - Yanis relance le scénario 1 (avertissement disparu attendu), puis les scénarios 2 et 3.
 
-## 2026-11-05 20:50
+## 2026-11-05 20:29
 
 ### Fait
 
@@ -152,7 +152,7 @@ Branche `feat/verifier-avant-public`.
 
 - PR, revue IA et réponse à la revue ; merge par Yanis.
 
-## 2026-11-05 20:44
+## 2026-11-05 20:35
 
 ### Fait
 
