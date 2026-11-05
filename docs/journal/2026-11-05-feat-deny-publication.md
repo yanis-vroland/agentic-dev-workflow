@@ -59,3 +59,23 @@ Branche `feat/deny-publication`.
 ### Prochaine étape
 
 - Test humain de Yanis et validation de `Edit`, réponse à la revue IA, merge.
+
+## 2026-11-05 20:51
+
+### Fait
+
+- Test humain **délégué à l'agent** par Yanis : session Claude Code neuve (`claude -p`) sur cette branche, avec une liste factice d'un nom inventé dans un `.excluded-names` non suivi, et les trois actions **explicitement autorisées** par `--allowedTools` pour vérifier que `deny` l'emporte. Résultat : lecture par `Read` refusée, écriture par `Write` refusée (couverte par `Edit(./.excluded-names)`), `gh repo edit --help` refusé ; fichier inchangé (taille et date identiques avant et après, contrôlées sans le relire). Positif, sans boucle négative.
+- Spec 010 : `Edit(./.excluded-names)` validé par Yanis.
+
+### Décisions
+
+- Yanis : `Edit(./.excluded-names)` validé ; test humain délégué à l'agent ; fermeture des issues #54 et #55 par l'agent.
+
+### Corrections et limites
+
+- `Bash(gh repo edit *)` bloque aussi `gh repo edit --help` : voulu.
+- La liste factice n'a pas pu être supprimée par l'agent (suppression refusée par les permissions) : à supprimer par Yanis, sans quoi les scripts de ce clone s'en serviraient.
+
+### Prochaine étape
+
+- Merge de #61 par Yanis.
