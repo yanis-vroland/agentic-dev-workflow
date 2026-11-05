@@ -212,7 +212,7 @@ Le template a été construit avec sa propre chaîne, du 7 au 13 octobre 2026 : 
 | [Spec 007](docs/specs/007-modele-par-agent.md) et [ADR-005](docs/adr/005-choix-du-modele-par-agent.md), modèle par subagent | #39 |
 | [Spec 008](docs/specs/008-cadrage-et-plan-global.md), cadrage et plan global conduits par l'agent (frictions de Tidemark) | #44 (spec et tests), #46 (implémentation), #50 et #51 (suites) |
 | [Spec 009](docs/specs/009-design-system-et-maquette.md), design system et maquette avant les tests (frictions de Tidemark) | #45 (spec), #52 (implémentation) |
-| [Spec 010](docs/specs/010-noms-exclus.md), garde-fou des noms exclus (frictions de Tidemark) | #53 |
+| [Spec 010](docs/specs/010-noms-exclus.md), garde-fou des noms exclus et contrôle avant publication (frictions de Tidemark) | #53 (spec), #58 (garde-fou), PR de `feat/verifier-avant-public` (`/publier`) |
 | [ADR-001](docs/adr/001-authentification-ci.md) à [ADR-003](docs/adr/003-strategie-test-first.md) | ADR-001 dans #1 ; ADR-002 et ADR-003 dans #21, tirés des constats des PR #4 à #13 |
 | [ADR-004](docs/adr/004-choix-outil-agent.md), outil d'agent (proposé) | #36 |
 

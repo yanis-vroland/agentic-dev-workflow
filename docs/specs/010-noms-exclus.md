@@ -77,6 +77,14 @@ Le template n'a ni cahier des charges ni architecture technique propres (spec 00
 - **Nom contenant une virgule** : la liste accepte un nom par ligne ou séparés par des virgules ; un nom qui en contient une est donc découpé. S'il tombe sous 3 caractères, le script sort en 2 plutôt que de vérifier à moitié.
 - Nom d'un seul caractère ou très court : refusé par le script, qui exige au moins 3 caractères, pour éviter un faux positif permanent.
 - **Références de PR (CA9, CA10)** : le script récupère les `refs/pull/*/head` du dépôt distant `origin` dans un espace de noms temporaire, puis applique le contrôle des noms aux seuls commits qu'aucune branche ni étiquette n'atteint. Sans dépôt distant, il le dit et ne conclut pas au succès sur ce point. Seul le support GitHub peut purger `refs/pull` : c'est la marche à suivre indiquée (Yanis, 2026-11-05).
+- **Ajouts après les revues** *(proposés par l'agent le 2026-11-05, à valider par Yanis au merge)* :
+  - c'est `origin` qui devient public, pas le clone local : ses branches et étiquettes sont aussi récupérées dans l'espace temporaire et relues par le contrôle des noms ; les références de PR ne le sont qu'après, pour qu'une PR seule en cause ne demande pas une réécriture de l'historique ;
+  - `refs/pull/*/merge` est contrôlée comme `refs/pull/*/head` ;
+  - un clone superficiel est refusé (sortie 2) : l'historique y est incomplet sans erreur ;
+  - tant qu'un fichier suivi contient un nom, aucune PR n'est citée : le contrôle la citerait à tort ;
+  - le chemin d'un fichier d'environnement suivi n'est cité que si le contrôle des noms a réussi ;
+  - le bilan liste ce qui n'est **pas** vérifié (titres, descriptions et commentaires des PR et des issues, releases, wiki, journaux d'Actions, commits orphelins accessibles par leur SHA, fichiers binaires), et `/publier` le fait relire à l'humain ;
+  - seul l'humain crée ou modifie la liste des noms ; `/publier` donne la commande de mise en public avec le dépôt `OWNER/REPO` explicite.
 - **Fichier `.env` suivi (CA9)** : seuls les fichiers suivis aujourd'hui sont regardés, `.env.example` excepté ; l'historique relève de `gitleaks` (Yanis, 2026-11-05).
 - **Socle** : `init.sh` copie toute `.claude/skills/`, donc `/publier` ; `verifier-avant-public.sh` et son test sont copiés avec elle, pour que la skill fonctionne dans un projet dérivé (Yanis, 2026-11-05).
 

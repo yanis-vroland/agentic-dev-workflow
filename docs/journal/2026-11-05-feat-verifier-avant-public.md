@@ -2,7 +2,7 @@
 
 Branche `feat/verifier-avant-public`.
 
-## 2026-11-05 19:40
+## 2026-11-05 19:36
 
 ### Fait
 
@@ -22,7 +22,7 @@ Branche `feat/verifier-avant-public`.
 
 - Tests par le subagent `test-writer`, vérification de leur échec, puis accord de Yanis avant l'implémentation.
 
-## 2026-11-05 20:00
+## 2026-11-05 19:42
 
 ### Fait
 
@@ -41,7 +41,7 @@ Branche `feat/verifier-avant-public`.
 
 - Accord de Yanis sur le contrat, puis implémentation.
 
-## 2026-11-05 20:30
+## 2026-11-05 19:48
 
 ### Fait
 
@@ -63,3 +63,34 @@ Branche `feat/verifier-avant-public`.
 ### Prochaine étape
 
 - Revues `security-reviewer` et `reviewer`, puis test humain par Yanis.
+
+## 2026-11-05 20:10
+
+### Fait
+
+- Revues `security-reviewer` et `reviewer` sur `788588d`. Cinq points bloquants au total, tous corrigés, chacun avec un test committé rouge avant la correction (`115c8e8`, `213e9b0`) :
+  - le contrôle ne lisait que le clone local, alors que c'est `origin` qui devient public : branches et étiquettes distantes désormais récupérées et relues ; clone superficiel refusé (sortie 2) ;
+  - la skill invitait l'agent à créer une liste factice : seul l'humain crée la liste ;
+  - chaque PR était relue sur tout son historique (lent, et toutes les PR citées pour un nom sur `main`) : seuls les commits qu'aucune branche n'atteint sont attribués à une PR ;
+  - les références de PR, récupérées avant le contrôle 1, y étaient relues et faisaient demander une réécriture de l'historique pour CA10 : elles sont récupérées après ;
+  - un nom dans un fichier suivi faisait citer toutes les PR : aucune PR n'est citée tant que les fichiers suivis échouent.
+- Points « À corriger » traités : `refs/pull/*/merge` contrôlée ; chemin d'un fichier d'environnement masqué tant que le contrôle des noms échoue ; erreurs de Git lues depuis des fichiers et non plus des substitutions de processus ; « aucune référence de PR » distingué de « vérifiées » ; rubrique « Non vérifié » dans le bilan, relue par `/publier` ; commande de mise en public avec `OWNER/REPO` explicite ; message de `git fetch` masqué (il contient l'URL) avec une piste ; Ctrl-C sort en 2 ; refs orphelines d'un lancement interrompu supprimées au départ ; tests renforcés sur les lignes du bilan plutôt que sur les en-têtes.
+- Contrôle par mutation : 12 protections du script désactivées une à une, au moins un test échoue pour chacune. Deux ont d'abord survécu : `--refmap=` (mutation mal appliquée, revérifiée) et la suppression des refs orphelines au départ (test ajouté).
+- Spec 010 : ajouts après les revues consignés dans « Cas limites », marqués à valider par Yanis au merge. README : ligne spec 010 complétée.
+- Heures des trois entrées précédentes corrigées sur celles des commits (elles avaient été écrites à l'avance).
+
+### Décisions
+
+- Agent, à valider par Yanis au merge : les ajouts de périmètre ci-dessus (spec 010, « Ajouts après les revues »).
+- Non suivi, soumis à Yanis : ajouter `Read(./.excluded-names)` et `Bash(gh repo edit *)` aux `deny` de `.claude/settings.json` (revue de sécurité). L'agent ne modifie pas sa propre configuration de permissions sans accord.
+
+### Corrections et limites
+
+- La limite notée à 19:48 (toutes les PR citées si un fichier suivi contient un nom) est levée.
+- Limite : la détection de l'absence de liste repose sur le texte de l'avertissement du script de base ; un test la couvre.
+- Limite : seuls les fichiers d'environnement nommés exactement ou préfixés comme le prévoit la spec sont détectés ; `.envrc` ne l'est pas.
+- Test humain non fait : à faire par Yanis sur ce dépôt, avec le vrai `origin` GitHub.
+
+### Prochaine étape
+
+- Test humain par Yanis, puis PR.

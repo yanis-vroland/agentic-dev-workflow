@@ -524,6 +524,17 @@ if git -C "$r" for-each-ref --format='%(refname)' | grep -q '^refs/verifier-avan
 else
   pass "Revue sécurité : refs temporaires orphelines supprimées"
 fi
+# ... et supprimées avant le contrôle : une ancienne ref de PR orpheline ne doit
+# pas être relue comme un historique à réécrire
+r=$(new_repo)
+git -C "$r" checkout -q -b tmp-orpheline
+write_file "$r" docs/orphelin.md "Note Vantablex"
+commit_all "$r" "docs: note"
+git -C "$r" update-ref refs/verifier-avant-public-99999/pull/3/head HEAD
+git -C "$r" checkout -q main
+git -C "$r" branch -q -D tmp-orpheline
+run_avp "$r" "$list"
+expect_code "Revue sécurité : ref orpheline supprimée avant le contrôle, sortie 0" 0
 
 # --- CA11 : skill /publier (test de contenu) ----------------------------------
 
