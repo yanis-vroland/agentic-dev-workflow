@@ -40,3 +40,26 @@ Branche `feat/verifier-avant-public`.
 ### Prochaine étape
 
 - Accord de Yanis sur le contrat, puis implémentation.
+
+## 2026-11-05 20:30
+
+### Fait
+
+- `scripts/verifier-avant-public.sh` : trois contrôles lancés même si l'un échoue (noms exclus avec `--all`, références de PR récupérées dans `refs/verifier-avant-public-<pid>/` puis supprimées, fichiers d'environnement suivis), bilan final, codes 0, 1 et 2.
+- `.claude/skills/publier/SKILL.md` : lance le script, refuse de proposer la mise en public tant qu'il échoue, donne la marche à suivre par échec, ne lance jamais la commande de mise en public.
+- Socle : script et test ajoutés à la liste de `init.sh` ; test branché dans `garde-fous.yml` (shellcheck et étape dédiée) et dans le shellcheck de `template-ci.yml`. README : deux lignes dans le tableau des fichiers.
+- Résultats : 66 vérifications de `tests/verifier-avant-public.sh`, 318 de `init-script.sh`, 74 de `verifier-noms-exclus.sh`, 52 de `hooks.sh`, tout au vert ; shellcheck sans avertissement.
+
+### Décisions
+
+- Yanis : contrat validé (sans liste ou sans `origin`, sortie 1 ; argument inattendu, sortie 2).
+- Agent : l'absence de liste est détectée par l'avertissement du script de base plutôt qu'en dupliquant sa logique de lecture de la liste.
+
+### Corrections et limites
+
+- Une seule correction pendant l'implémentation : la skill disait « Tu ne lances jamais », que le test de CA11 ne reconnaît pas ; reformulée en « Ne lance jamais ».
+- Limite : le contrôle d'une référence de PR relit aussi les fichiers suivis de `HEAD` ; si ceux-ci contiennent un nom, toutes les PR sont citées. Le premier contrôle le signale déjà.
+
+### Prochaine étape
+
+- Revues `security-reviewer` et `reviewer`, puis test humain par Yanis.

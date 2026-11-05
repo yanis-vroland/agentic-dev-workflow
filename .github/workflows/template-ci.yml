@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Syntaxe des scripts du template et de leurs tests (shellcheck)
-        run: shellcheck scripts/*.sh tests/init-script.sh tests/lint-shell.sh tests/verifier-noms-exclus.sh
+        run: shellcheck scripts/*.sh tests/init-script.sh tests/lint-shell.sh tests/verifier-noms-exclus.sh tests/verifier-avant-public.sh
 
       - name: Validité de settings.json
         run: jq empty .claude/settings.json

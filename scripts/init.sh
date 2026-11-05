@@ -89,6 +89,8 @@ files=(
   tests/restrict-learnings.sh
   scripts/verifier-noms-exclus.sh
   tests/verifier-noms-exclus.sh
+  scripts/verifier-avant-public.sh
+  tests/verifier-avant-public.sh
 )
 while IFS= read -r file; do
   files+=("$file")
