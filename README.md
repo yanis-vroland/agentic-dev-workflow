@@ -171,7 +171,9 @@ Déclarer dans `.claude/quality.json` les commandes que les hooks lancent ([spec
 
 ## Configuration GitHub
 
-1. **Application GitHub Claude** : dans Claude Code, lancer `/install-github-app` et suivre les étapes.
+1. **Application GitHub Claude** : dans Claude Code, lancer `/install-github-app` et suivre les étapes. La commande propose aussi d'ajouter ses propres workflows (constat de Tidemark, issue #53) :
+   - « Claude Code Review » (par exemple `claude-code-review.yml`) double `ai-review.yml` : chaque PR serait relue deux fois, hors des contrôles de `verifier-revue-ia.sh`. Ne pas l'accepter ;
+   - « @Claude Code » (par exemple `claude.yml`) répond aux mentions `@claude` dans les issues et les PR. La chaîne n'en a pas besoin ; ne l'accepter que pour cet usage, en sachant qu'il consomme le même jeton.
 2. **Secret `CLAUDE_CODE_OAUTH_TOKEN`** : générer un jeton avec `claude setup-token`. L'ajouter ensuite au dépôt, dans *Settings > Secrets and variables > Actions*, ou avec `gh secret set CLAUDE_CODE_OAUTH_TOKEN`. La revue IA s'authentifie avec ce jeton ; le choix d'un jeton d'abonnement plutôt que d'une clé API est expliqué dans l'[ADR-001](docs/adr/001-authentification-ci.md).
 3. **Ruleset sur `main`** (*Settings > Rules > Rulesets*) :
    - PR obligatoire ;
@@ -212,7 +214,7 @@ Le template a été construit avec sa propre chaîne, du 7 au 13 octobre 2026 : 
 | [Spec 007](docs/specs/007-modele-par-agent.md) et [ADR-005](docs/adr/005-choix-du-modele-par-agent.md), modèle par subagent | #39 |
 | [Spec 008](docs/specs/008-cadrage-et-plan-global.md), cadrage et plan global conduits par l'agent (frictions de Tidemark) | #44 (spec et tests), #46 (implémentation), #50 et #51 (suites) |
 | [Spec 009](docs/specs/009-design-system-et-maquette.md), design system et maquette avant les tests (frictions de Tidemark) | #45 (spec), #52 (implémentation) |
-| [Spec 010](docs/specs/010-noms-exclus.md), garde-fou des noms exclus et contrôle avant publication (frictions de Tidemark) | #53 (spec), #58 (garde-fou), #60 (`/publier`) |
+| [Spec 010](docs/specs/010-noms-exclus.md), garde-fou des noms exclus et contrôle avant publication (frictions de Tidemark) | #58 (spec et garde-fou), #60 (`/publier`) |
 | [ADR-001](docs/adr/001-authentification-ci.md) à [ADR-003](docs/adr/003-strategie-test-first.md) | ADR-001 dans #1 ; ADR-002 et ADR-003 dans #21, tirés des constats des PR #4 à #13 |
 | [ADR-004](docs/adr/004-choix-outil-agent.md), outil d'agent (proposé) | #36 |
 
