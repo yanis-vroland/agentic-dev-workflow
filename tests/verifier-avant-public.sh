@@ -3,7 +3,7 @@
 # docs/specs/010-noms-exclus.md (CA9, CA10, CA11, et les cas limites « Références de
 # PR », « Fichier .env suivi » et « Socle »), sur des dépôts temporaires.
 #
-# Contrat attendu du script (proposé, à valider avec la spec) :
+# Contrat du script (validé par Yanis le 2026-11-05) :
 # - `scripts/verifier-avant-public.sh`, sans argument, lancé dans un dépôt Git ;
 # - il s'appuie sur `scripts/verifier-noms-exclus.sh` du même dépôt (le test copie
 #   les deux scripts sous scripts/ dans chaque dépôt temporaire) ;
@@ -20,10 +20,10 @@
 # - les refs récupérées depuis origin sont temporaires : aucune ref locale nouvelle
 #   ne reste après le script, en succès comme en échec ;
 # - sans dépôt distant origin : le contrôle des refs de PR ne peut pas se faire, le
-#   script le dit (mot « origin ») et sort en 1 (choix proposé : pas publiable) ;
+#   script le dit (mot « origin ») et sort en 1 (pas publiable) ;
 # - sans liste de noms (verifier-noms-exclus.sh sortirait 0 avec un avertissement) :
 #   sortie 1 et message « aucune liste » : on ne déclare pas publiable un dépôt
-#   dans lequel on n'a rien cherché (choix proposé, principe 4 de la spec) ;
+#   dans lequel on n'a rien cherché (principe 4 de la spec) ;
 # - .excluded-names suivi par Git : sortie 1, le fichier est cité (hérité du script
 #   de base).
 #
@@ -256,6 +256,10 @@ output_has "CA9 : la sortie dit que les noms exclus ont été vérifiés sur l'h
 output_has "CA9 : la sortie dit que les références de PR ont été vérifiées" \
   "références de PR|refs/pull"
 output_has "CA9 : la sortie dit que les fichiers .env suivis ont été vérifiés" "\\.env"
+# Lignes du bilan, pas seulement les en-têtes de section
+output_has "CA9 : bilan, ligne OK des noms exclus" "^ *OK +noms exclus"
+output_has "CA9 : bilan, ligne OK des références de PR" "^ *OK +références de PR : 2 PR"
+output_has "CA9 : bilan, ligne OK des fichiers .env" "^ *OK +fichiers \\.env"
 verify_refs_clean "CA9 (succès)" 0
 
 # --- CA9 : noms exclus dans l'historique -------------------------------------
@@ -319,7 +323,46 @@ elif grep -qiE -- "(#|PR |pull/)8([^0-9]|$)" <<<"$output"; then
 else
   pass "CA10 : la PR propre 8 n'est pas citée"
 fi
+# L'historique est propre : seule la purge des références règle le cas, pas une
+# réécriture
+if [ "$code" -eq 1 ] && grep -qE -- "^ *OK +noms exclus" <<<"$output" &&
+  ! grep -qi -- "réécrire l'historique" <<<"$output"; then
+  pass "CA10 : historique propre, le contrôle des noms exclus reste OK"
+else
+  failed "CA10 : historique propre, le contrôle des noms exclus reste OK" "code $code ou réécriture demandée à tort"
+fi
 verify_refs_clean "CA10 (échec)" 1
+
+# Seuls les commits qu'aucune branche n'atteint sont attribués à une PR : un nom
+# dans un ancien commit de main ne fait pas citer une PR propre dérivée de main
+r=$(new_repo)
+write_file "$r" docs/vieux.md "Ancien compte rendu Quibbler"
+commit_all "$r" "docs: compte rendu"
+git -C "$r" rm -q docs/vieux.md
+commit_all "$r" "docs: retrait du compte rendu"
+git -C "$r" push -q origin main
+push_pr "$r" 8 docs/pr-8.md "Contenu neutre de la PR 8"
+run_avp "$r" "$list"
+verify_refused "Cas limite" "nom dans un ancien commit de main" "noms exclus"
+if [ "$code" -eq 1 ] && ! grep -qiE -- "(#|PR |pull/)8([^0-9]|$)" <<<"$output"; then
+  pass "Cas limite : nom dans main, la PR propre 8 n'est pas citée"
+else
+  failed "Cas limite : nom dans main, la PR propre 8 n'est pas citée" "code $code ou PR 8 citée"
+fi
+
+# Un nom dans un fichier suivi ne fait pas citer les PR propres
+r=$(new_repo)
+write_file "$r" docs/actuel.md "Contrat Zorglub"
+commit_all "$r" "docs: contrat"
+git -C "$r" push -q origin main
+push_pr "$r" 8 docs/pr-8.md "Contenu neutre de la PR 8"
+run_avp "$r" "$list"
+verify_refused "Cas limite" "nom dans un fichier suivi" "noms exclus"
+if [ "$code" -eq 1 ] && ! grep -qiE -- "(#|PR |pull/)8([^0-9]|$)" <<<"$output"; then
+  pass "Cas limite : nom dans un fichier suivi, la PR propre 8 n'est pas citée"
+else
+  failed "Cas limite : nom dans un fichier suivi, la PR propre 8 n'est pas citée" "code $code ou PR 8 citée"
+fi
 
 # --- Cas limite : pas de dépôt distant origin --------------------------------
 
@@ -327,7 +370,27 @@ r=$(new_repo)
 precondition "avec origin" "$r"
 git -C "$r" remote remove origin
 run_avp "$r" "$list"
-verify_refused "Cas limite" "sans origin, contrôle des refs de PR non fait" "origin"
+verify_refused "Cas limite" "sans origin, contrôle des refs de PR non fait" "pas de dépôt (distant )?origin"
+
+# Récupération impossible depuis origin : erreur, et l'URL n'est pas affichée
+r=$(new_repo)
+git -C "$r" remote set-url origin "$work/inexistant-zorglub"
+run_avp "$r" "$list"
+expect_code "Cas limite : origin injoignable, sortie 2" 2
+if leaked=$(file_leaks_a_name "$stdout_file" "${names[@]}") ||
+  leaked=$(file_leaks_a_name "$stderr_file" "${names[@]}"); then
+  failed "Cas limite : origin injoignable, l'URL n'est pas affichée" "le nom $leaked apparaît"
+elif [ "$code" -eq 2 ]; then
+  pass "Cas limite : origin injoignable, l'URL n'est pas affichée"
+else
+  failed "Cas limite : origin injoignable, l'URL n'est pas affichée" "pas d'erreur (code $code) : contrôle sans objet"
+fi
+
+# Script de base absent : erreur, jamais un succès
+r=$(new_repo)
+rm -f "$r/scripts/verifier-noms-exclus.sh"
+run_avp "$r" "$list"
+expect_code "Cas limite : verifier-noms-exclus.sh absent, sortie 2" 2
 
 # --- Cas limite : pas de liste de noms ---------------------------------------
 
